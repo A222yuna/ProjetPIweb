@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accueil — Cabinet de psychologie{% endblock %}
+
+{% block body %}
+    <div class="home-split">
+        <section class="hero" style="margin:0;height:100%;display:flex;flex-direction:column;justify-content:center">
+            <h1>Un accompagnement psychologique à votre rythme</h1>
+            <p class="lead">Recherchez et publiez sur les consultations (table <code>post</code>), prenez rendez-vous (maquette), et accédez au tableau de bord admin sur la même adresse que le site.</p>
+            <div class="hero-actions">
+                <a href="{{ path('app_consultation') }}" class="btn btn-primary">Consultations &amp; publications</a>
+                <a href="{{ path('app_reservation') }}" class="btn btn-outline">Prendre RDV</a>
+                <a href="{{ path('app_admin_dashboard') }}" class="btn btn-outline">Administration</a>
+            </div>
+        </section>
+        <figure>
+            <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=900&q=80" width="900" height="1200" alt="Moment de calme et bien-être" loading="lazy">
+        </figure>
+    </div>
+
+    <h2 class="section-title">Aperçu de l’activité (données réelles)</h2>
+    <p class="muted" style="margin-top:-0.5rem;margin-bottom:1.25rem">Compteurs issus de la base <code>psychologie_app</code>.</p>
+
+    <div class="stats">
+        <div class="stat"><div class="num">{{ userCount }}</div><div class="muted">Utilisateurs</div></div>
+        <div class="stat"><div class="num">{{ postCount }}</div><div class="muted">Publications</div></div>
+        <div class="stat"><div class="num">{{ cabinetCount }}</div><div class="muted">Cabinets</div></div>
+        <div class="stat"><div class="num">{{ programmeCount }}</div><div class="muted">Programmes bien-être</div></div>
+    </div>
+
+    <h2 class="section-title">Dernières publications</h2>
+    {% if recentPosts is empty %}
+        <p class="muted">Aucune publication. Ajoutez-en depuis la page <a href="{{ path('app_consultation') }}">Consultations</a>.</p>
+    {% else %}
+        <div class="card">
+            <ul class="plain">
+                {% for post in recentPosts %}
+                    <li>
+                        <a href="{{ path('app_post_show', { id: post.id }) }}">{{ post.titre }}</a>
+                        <span class="muted"> — {{ post.categorie }} · {{ post.date|date('d/m/Y H:i') }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+{% endblock %}

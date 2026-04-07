@@ -1,0 +1,20 @@
+{% extends 'base_psychologue.html.twig' %}
+
+{% block title %}Nouvelle disponibilite{% endblock %}
+
+{% block psychologue_body %}
+    <div class="card">
+        <h1 class="h5">Nouvelle disponibilite</h1>
+        {{ form_start(form, { attr: { class: 'stack-form' } }) }}
+            {{ form_row(form.cabinet) }}
+            {{ form_row(form.jour) }}
+            {{ form_row(form.heureDebut) }}
+            {{ form_row(form.heureFin) }}
+            {{ form_row(form.dureeConsultation) }}
+            <div class="stack-form-actions">
+                <button class="btn btn-primary">Enregistrer</button>
+                <a class="btn btn-outline-secondary" href="{{ path('app_psychologue_planning_index') }}">Retour</a>
+            </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}
