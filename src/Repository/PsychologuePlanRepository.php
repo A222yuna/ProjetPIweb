@@ -15,9 +15,7 @@ class PsychologuePlanRepository extends ServiceEntityRepository
         parent::__construct($registry, PsychologuePlan::class);
     }
 
-    /**
-     * @return PsychologuePlan[]
-     */
+    /** @return PsychologuePlan[] */
     public function findForPsychologue(User $psychologue): array
     {
         return $this->createQueryBuilder('p')
@@ -25,6 +23,35 @@ class PsychologuePlanRepository extends ServiceEntityRepository
             ->orderBy('p.createdAt', 'DESC')
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * Recherche + tri dynamique
+     * @return PsychologuePlan[]
+     */
+    public function findForPsychologueFiltered(
+        User $psychologue,
+        string $search = '',
+        string $sortBy = 'createdAt',
+        string $sortDir = 'DESC'
+    ): array {
+        $qb = $this->createQueryBuilder('p')
+            ->andWhere('p.psychologue = :psy')
+            ->setParameter('psy', $psychologue);
+
+        // RECHERCHE sur jour et période
+        if ($search !== '') {
+            $qb->andWhere('p.dayOfWeek LIKE :q OR p.period LIKE :q')
+               ->setParameter('q', '%'.$search.'%');
+        }
+
+        $allowedSorts = ['dayOfWeek', 'period', 'maxAppointments', 'createdAt'];
+        $sortBy = \in_array($sortBy, $allowedSorts, true) ? $sortBy : 'createdAt';
+        $sortDir = $sortDir === 'ASC' ? 'ASC' : 'DESC';
+
+        $qb->orderBy('p.'.$sortBy, $sortDir);
+
+        return $qb->getQuery()->getResult();
     }
 
     public function existsDuplicatePlan(User $psychologue, string $dayOfWeek, string $period, ?int $excludeId = null): bool

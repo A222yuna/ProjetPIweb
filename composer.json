@@ -1,4 +1,6 @@
 {
+    "name": "psychologie-symfony/app",
+    "description": "Symfony application for psychologie-symfony project",
     "type": "project",
     "license": "proprietary",
     "minimum-stability": "stable",

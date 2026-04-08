@@ -15,9 +15,7 @@ class DisponibiliteRepository extends ServiceEntityRepository
         parent::__construct($registry, Disponibilite::class);
     }
 
-    /**
-     * @return Disponibilite[]
-     */
+    /** @return Disponibilite[] */
     public function findForPsychologue(User $psychologue): array
     {
         return $this->createQueryBuilder('d')
@@ -28,6 +26,51 @@ class DisponibiliteRepository extends ServiceEntityRepository
             ->addOrderBy('d.heureDebut', 'ASC')
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * Recherche + tri + pagination
+     * @return array{items: Disponibilite[], total: int}
+     */
+    public function findForPsychologuePaginatedFiltered(
+        User $psychologue,
+        string $search = '',
+        string $sortBy = 'jour',
+        string $sortDir = 'ASC',
+        int $page = 1,
+        int $perPage = 10
+    ): array {
+        $allowedSorts = ['jour', 'heureDebut', 'heureFin', 'dureeConsultation'];
+        $sortBy  = \in_array($sortBy, $allowedSorts, true) ? $sortBy : 'jour';
+        $sortDir = $sortDir === 'DESC' ? 'DESC' : 'ASC';
+
+        $qb = $this->createQueryBuilder('d')
+            ->leftJoin('d.cabinet', 'c')->addSelect('c')
+            ->leftJoin('c.psyCabinets', 'pc')
+            ->andWhere('pc.psychologue = :psy')
+            ->setParameter('psy', $psychologue);
+
+        // RECHERCHE sur ville du cabinet ou durée
+        if ($search !== '') {
+            $qb->andWhere('c.ville LIKE :q OR c.adresse LIKE :q OR CAST(d.dureeConsultation AS string) LIKE :q')
+               ->setParameter('q', '%'.$search.'%');
+        }
+
+        $qb->orderBy('d.'.$sortBy, $sortDir);
+
+        $total = (int)(clone $qb)
+            ->select('COUNT(d.id)')
+            ->resetDQLPart('orderBy')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $items = (clone $qb)
+            ->setFirstResult(($page - 1) * $perPage)
+            ->setMaxResults($perPage)
+            ->getQuery()
+            ->getResult();
+
+        return ['items' => $items, 'total' => $total];
     }
 
     public function isOwnedByPsychologue(Disponibilite $disponibilite, User $psychologue): bool
@@ -57,9 +100,7 @@ class DisponibiliteRepository extends ServiceEntityRepository
         return $count > 0;
     }
 
-    /**
-     * @return Disponibilite[]
-     */
+    /** @return Disponibilite[] */
     public function findWithCreneauxByCabinet(?int $cabinetId = null): array
     {
         $qb = $this->createQueryBuilder('d')

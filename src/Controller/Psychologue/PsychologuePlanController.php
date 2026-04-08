@@ -18,13 +18,38 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class PsychologuePlanController extends AbstractController
 {
     #[Route('/', name: 'app_psychologue_plans_index', methods: ['GET'])]
-    public function index(PsychologuePlanRepository $plans): Response
+    public function index(Request $request, PsychologuePlanRepository $plans): Response
     {
         $user = $this->getUser();
         \assert($user instanceof User);
 
+        // --- RECHERCHE & TRI ---
+        $search  = $request->query->getString('search');
+        $sortBy  = $request->query->getString('sort', 'createdAt');
+        $sortDir = strtoupper($request->query->getString('dir', 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
+
+        $allowedSorts = ['dayOfWeek', 'period', 'maxAppointments', 'createdAt'];
+        if (!\in_array($sortBy, $allowedSorts, true)) {
+            $sortBy = 'createdAt';
+        }
+
+        $allPlans = $plans->findForPsychologueFiltered($user, $search, $sortBy, $sortDir);
+
+        // --- STATISTIQUES ---
+        $stats = [
+            'total'   => \count($allPlans),
+            'day'     => \count(array_filter($allPlans, fn($p) => $p->getPeriod() === 'DAY')),
+            'night'   => \count(array_filter($allPlans, fn($p) => $p->getPeriod() === 'NIGHT')),
+            'maxRdv'  => array_sum(array_map(fn($p) => $p->getMaxAppointments(), $allPlans)),
+        ];
+
         return $this->render('psychologue/plans/index.html.twig', [
-            'plans' => $plans->findForPsychologue($user),
+            'plans'    => $allPlans,
+            'stats'    => $stats,
+            'search'   => $search,
+            'sort'     => $sortBy,
+            'dir'      => $sortDir,
+            'next_dir' => $sortDir === 'ASC' ? 'DESC' : 'ASC',
         ]);
     }
 
@@ -41,7 +66,7 @@ final class PsychologuePlanController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             // RULE 1 — No duplicate plan
             if ($plans->existsDuplicatePlan($user, (string) $plan->getDayOfWeek(), (string) $plan->getPeriod())) {
-                $this->addFlash('error', 'Vous avez déjà un planning pour ce jour et cette période');
+                $this->addFlash('error', 'Vous avez déjà un planning pour ce jour et cette période.');
                 return $this->redirectToRoute('app_psychologue_plans_new');
             }
 
@@ -49,12 +74,12 @@ final class PsychologuePlanController extends AbstractController
             $em->persist($plan);
             $em->flush();
 
-            $this->addFlash('success', 'Planning créé avec succès');
+            $this->addFlash('success', 'Planning créé avec succès ✓');
             return $this->redirectToRoute('app_psychologue_plans_index');
         }
 
         return $this->render('psychologue/plans/form.html.twig', [
-            'form' => $form,
+            'form'    => $form,
             'is_edit' => false,
         ]);
     }
@@ -67,11 +92,10 @@ final class PsychologuePlanController extends AbstractController
 
         $plan = $plans->find($id);
         if (!$plan) {
-            throw $this->createNotFoundException();
+            throw $this->createNotFoundException('Plan introuvable.');
         }
-        // RULE 10 — ownership
         if ($plan->getPsychologue()?->getId() !== $user->getId()) {
-            throw $this->createAccessDeniedException();
+            throw $this->createAccessDeniedException('Ce plan ne vous appartient pas.');
         }
 
         $form = $this->createForm(PsychologuePlanType::class, $plan);
@@ -79,19 +103,19 @@ final class PsychologuePlanController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             if ($plans->existsDuplicatePlan($user, (string) $plan->getDayOfWeek(), (string) $plan->getPeriod(), $plan->getId())) {
-                $this->addFlash('error', 'Vous avez déjà un planning pour ce jour et cette période');
+                $this->addFlash('error', 'Vous avez déjà un planning pour ce jour et cette période.');
                 return $this->redirectToRoute('app_psychologue_plans_edit', ['id' => $plan->getId()]);
             }
 
             $em->flush();
-            $this->addFlash('success', 'Planning mis à jour');
+            $this->addFlash('success', 'Planning mis à jour ✓');
             return $this->redirectToRoute('app_psychologue_plans_index');
         }
 
         return $this->render('psychologue/plans/form.html.twig', [
-            'form' => $form,
+            'form'    => $form,
             'is_edit' => true,
-            'plan' => $plan,
+            'plan'    => $plan,
         ]);
     }
 
@@ -115,9 +139,8 @@ final class PsychologuePlanController extends AbstractController
 
         $em->remove($plan);
         $em->flush();
-        $this->addFlash('success', 'Planning supprimé');
+        $this->addFlash('success', 'Planning supprimé.');
 
         return $this->redirectToRoute('app_psychologue_plans_index');
     }
 }
-

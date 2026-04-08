@@ -22,19 +22,40 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class CreneauController extends AbstractController
 {
     #[Route('/', name: 'app_patient_creneaux_index', methods: ['GET'])]
-    public function index(CreneauRepository $creneaux): Response
+    public function index(Request $request, CreneauRepository $creneaux): Response
     {
         $user = $this->getUser();
         \assert($user instanceof User);
 
-        $items = $creneaux->findForPatient($user);
-        usort($items, static function (Creneau $a, Creneau $b): int {
-            $ad = ($a->getDateCreneau()?->format('Y-m-d') ?? '') . ' ' . ($a->getHeure()?->format('H:i:s') ?? '');
-            $bd = ($b->getDateCreneau()?->format('Y-m-d') ?? '') . ' ' . ($b->getHeure()?->format('H:i:s') ?? '');
-            return strcmp($bd, $ad);
-        });
+        // --- RECHERCHE & TRI & FILTRE ---
+        $search     = $request->query->getString('search');
+        $filterStatut = $request->query->getString('statut'); // RESERVE | ANNULE | ''
+        $sortBy     = $request->query->getString('sort', 'dateCreneau');
+        $sortDir    = strtoupper($request->query->getString('dir', 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
+        $page       = max(1, $request->query->getInt('page', 1));
+        $perPage    = 8;
 
-        return $this->render('patient/creneaux/index.html.twig', ['creneaux' => $items]);
+        $allowedSorts = ['dateCreneau', 'heure', 'statut'];
+        if (!\in_array($sortBy, $allowedSorts, true)) {
+            $sortBy = 'dateCreneau';
+        }
+
+        $result = $creneaux->findForPatientPaginatedFiltered(
+            $user, $search, $filterStatut, $sortBy, $sortDir, $page, $perPage
+        );
+
+        return $this->render('patient/creneaux/index.html.twig', [
+            'creneaux'      => $result['items'],
+            'total'         => $result['total'],
+            'page'          => $page,
+            'per_page'      => $perPage,
+            'total_pages'   => max(1, (int) ceil($result['total'] / $perPage)),
+            'search'        => $search,
+            'filter_statut' => $filterStatut,
+            'sort'          => $sortBy,
+            'dir'           => $sortDir,
+            'next_dir'      => $sortDir === 'ASC' ? 'DESC' : 'ASC',
+        ]);
     }
 
     #[Route('/book', name: 'app_patient_creneaux_book', methods: ['GET', 'POST'])]
@@ -53,27 +74,12 @@ final class CreneauController extends AbstractController
         $form = $this->createForm(CreneauType::class, $creneau);
         $form->handleRequest($request);
 
-        // For GET view only: show disponibilites with creneaux existing
         $available = $disponibilites->findWithCreneauxByCabinet();
-        $availableGrouped = [];
-        foreach ($available as $d) {
-            $key = sprintf(
-                '#%d - %s (%s-%s)',
-                $d->getId() ?? 0,
-                $d->getCabinet()?->getVille() ?? 'Cabinet',
-                $d->getHeureDebut()?->format('H:i') ?? '--:--',
-                $d->getHeureFin()?->format('H:i') ?? '--:--'
-            );
-            $availableGrouped[$key] = [];
-            for ($i = 0; $i < 7; $i++) {
-                $date = (new \DateTimeImmutable('today'))->modify("+$i day");
-                $availableGrouped[$key][] = $date->format('d/m/Y');
-            }
-        }
+        $availableGrouped = $this->buildAvailableGrouped($available);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $dispo = $creneau->getDisponibilite();
-            $date = $creneau->getDateCreneau();
+            $date  = $creneau->getDateCreneau();
             $heure = $creneau->getHeure();
 
             if (!$dispo || !$date || !$heure) {
@@ -81,86 +87,60 @@ final class CreneauController extends AbstractController
                 return $this->redirectToRoute('app_patient_creneaux_book');
             }
 
-            // Slot integrity checks: date must match disponibilite weekday and time must fit the window.
-            $selectedIsoDay = (int) $date->format('N'); // 1 (Mon) ... 7 (Sun)
-            if ($selectedIsoDay !== $dispo->getJour()) {
-                $this->addFlash('error', 'La date choisie ne correspond pas au jour de disponibilité sélectionné');
-                return $this->redirectToRoute('app_patient_creneaux_book');
-            }
-            $start = $dispo->getHeureDebut();
-            $end = $dispo->getHeureFin();
-            if (!$start || !$end) {
-                $this->addFlash('error', 'Disponibilité invalide : horaires incomplets.');
-                return $this->redirectToRoute('app_patient_creneaux_book');
-            }
-            $slotMinute = ((int) $heure->format('H') * 60) + (int) $heure->format('i');
-            $startMinute = ((int) $start->format('H') * 60) + (int) $start->format('i');
-            $endMinute = ((int) $end->format('H') * 60) + (int) $end->format('i');
-            $duration = $dispo->getDureeConsultation();
-            if ($slotMinute < $startMinute || $slotMinute >= $endMinute) {
-                $this->addFlash('error', 'L\'heure choisie est hors de la plage de disponibilité');
-                return $this->redirectToRoute('app_patient_creneaux_book');
-            }
-            if ($slotMinute + $duration > $endMinute) {
-                $this->addFlash('error', 'Le créneau choisi dépasse l\'heure de fin de disponibilité');
-                return $this->redirectToRoute('app_patient_creneaux_book');
-            }
-            if ((($slotMinute - $startMinute) % $duration) !== 0) {
-                $this->addFlash('error', 'L\'heure choisie ne respecte pas la durée de consultation');
-                return $this->redirectToRoute('app_patient_creneaux_book');
-            }
-
             // RULE 5 — No past booking
             $today = new \DateTimeImmutable('today');
             if ($date < $today) {
-                $this->addFlash('error', 'Vous ne pouvez pas réserver un créneau dans le passé');
+                $this->addFlash('error', 'Vous ne pouvez pas réserver un créneau dans le passé.');
+                return $this->redirectToRoute('app_patient_creneaux_book');
+            }
+
+            // RULE — Heure dans la fenêtre de disponibilité
+            $heureMin  = $dispo->getHeureDebut();
+            $heureMax  = $dispo->getHeureFin();
+            if ($heureMin && $heureMax && ($heure < $heureMin || $heure >= $heureMax)) {
+                $this->addFlash('error', sprintf(
+                    "L'heure doit être entre %s et %s.",
+                    $heureMin->format('H:i'),
+                    $heureMax->format('H:i')
+                ));
                 return $this->redirectToRoute('app_patient_creneaux_book');
             }
 
             // RULE 4 — No double booking
             if ($creneauxRepo->isSlotAlreadyBooked($dispo, $date, $heure)) {
-                $this->addFlash('error', 'Ce créneau est déjà réservé, veuillez en choisir un autre');
+                $this->addFlash('error', 'Ce créneau est déjà réservé, veuillez en choisir un autre.');
                 return $this->redirectToRoute('app_patient_creneaux_book');
             }
 
-            // Find psychologue + plan based on date/heure
+            // Trouver psychologue via cabinet
+            $psy = null;
             $cabinet = $dispo->getCabinet();
-
-            $dayOfWeek = strtoupper($date->format('l')); // Monday...
-            $dayOfWeek = match ($dayOfWeek) {
-                'MONDAY' => 'MONDAY',
-                'TUESDAY' => 'TUESDAY',
-                'WEDNESDAY' => 'WEDNESDAY',
-                'THURSDAY' => 'THURSDAY',
-                'FRIDAY' => 'FRIDAY',
-                'SATURDAY' => 'SATURDAY',
-                'SUNDAY' => 'SUNDAY',
-                default => 'MONDAY',
-            };
-            $period = ((int) $heure->format('H') < 18) ? 'DAY' : 'NIGHT';
-
-            $plan = null;
-            if ($cabinet) {
-                foreach ($cabinet->getPsyCabinets() as $psyCabinet) {
-                    $candidate = $psyCabinet->getPsychologue();
-                    if (!$candidate instanceof User) {
-                        continue;
-                    }
-                    $candidatePlan = $plans->findOneForPsychologueDayPeriod($candidate, $dayOfWeek, $period);
-                    if ($candidatePlan) {
-                        $plan = $candidatePlan;
-                        break;
-                    }
-                }
+            if ($cabinet && $cabinet->getPsyCabinets()->count() > 0) {
+                $psy = $cabinet->getPsyCabinets()->first()?->getPsychologue();
             }
+            if (!$psy instanceof User) {
+                $this->addFlash('error', 'Psychologue introuvable pour ce cabinet.');
+                return $this->redirectToRoute('app_patient_creneaux_book');
+            }
+
+            $dayMap = [
+                'MONDAY'    => 'MONDAY',    'TUESDAY'  => 'TUESDAY',
+                'WEDNESDAY' => 'WEDNESDAY', 'THURSDAY' => 'THURSDAY',
+                'FRIDAY'    => 'FRIDAY',    'SATURDAY' => 'SATURDAY',
+                'SUNDAY'    => 'SUNDAY',
+            ];
+            $dayOfWeek = $dayMap[strtoupper($date->format('l'))] ?? 'MONDAY';
+            $period    = ((int)$heure->format('H') < 18) ? 'DAY' : 'NIGHT';
+
+            $plan = $plans->findOneForPsychologueDayPeriod($psy, $dayOfWeek, $period);
             if (!$plan) {
-                $this->addFlash('error', 'Aucun planning trouvé pour ce cabinet sur ce jour et cette période');
+                $this->addFlash('error', 'Aucun planning trouvé pour ce psychologue sur ce jour/période.');
                 return $this->redirectToRoute('app_patient_creneaux_book');
             }
 
             // RULE 6 — Respect max_appointments
             if ($appointments->countScheduledForPlan($plan) >= $plan->getMaxAppointments()) {
-                $this->addFlash('error', 'Ce psychologue a atteint son nombre maximum de rendez-vous');
+                $this->addFlash('error', 'Ce psychologue a atteint son nombre maximum de rendez-vous.');
                 return $this->redirectToRoute('app_patient_creneaux_book');
             }
 
@@ -176,15 +156,53 @@ final class CreneauController extends AbstractController
             $em->persist($appointment);
             $em->flush();
 
-            $this->addFlash('success', 'Votre créneau a été réservé avec succès');
+            $this->addFlash('success', 'Votre créneau a été réservé avec succès ✓');
             return $this->redirectToRoute('app_patient_creneaux_index');
         }
 
         return $this->render('patient/creneaux/book.html.twig', [
-            'form' => $form,
-            'disponibilites' => $available,
+            'form'             => $form,
+            'disponibilites'   => $available,
             'available_grouped' => $availableGrouped,
         ]);
+    }
+
+    /**
+     * @param array<int, \App\Entity\Disponibilite> $disponibilites
+     * @return array<string, array<int, string>>
+     */
+    private function buildAvailableGrouped(array $disponibilites): array
+    {
+        $groups = [];
+        $labels = [1 => 'Lundi', 2 => 'Mardi', 3 => 'Mercredi', 4 => 'Jeudi', 5 => 'Vendredi', 6 => 'Samedi', 7 => 'Dimanche'];
+        $today = new \DateTimeImmutable('today');
+        $cutoff = $today->modify('+7 days');
+
+        foreach ($disponibilites as $disponibilite) {
+            $cabinet = $disponibilite->getCabinet();
+            $label = sprintf(
+                '%s %s - %s (%d min)',
+                $cabinet ? ($cabinet->getVille() . ' / ' . $cabinet->getAdresse()) : 'Cabinet',
+                $labels[$disponibilite->getJour()] ?? 'Jour',
+                $disponibilite->getHeureDebut()?->format('H:i') . '–' . $disponibilite->getHeureFin()?->format('H:i'),
+                $disponibilite->getDureeConsultation()
+            );
+
+            $dates = [];
+            for ($date = $today; $date <= $cutoff; $date = $date->modify('+1 day')) {
+                if ((int) $date->format('N') === $disponibilite->getJour()) {
+                    $dates[] = $date->format('d/m');
+                }
+            }
+
+            if ($dates === []) {
+                $dates[] = 'Aucune date dans les 7 prochains jours';
+            }
+
+            $groups[$label] = $dates;
+        }
+
+        return $groups;
     }
 
     #[Route('/{id}/cancel', name: 'app_patient_creneaux_cancel', methods: ['POST'])]
@@ -203,65 +221,39 @@ final class CreneauController extends AbstractController
         if (!$creneau) {
             throw $this->createNotFoundException();
         }
-
         // RULE 7 — Only owner can cancel
         if ($creneau->getPatient()?->getId() !== $user->getId()) {
             throw $this->createAccessDeniedException();
         }
-
-        if (!$this->isCsrfTokenValid('cancel_creneau_'.$creneau->getId(), (string) $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('cancel_creneau_'.$creneau->getId(), (string)$request->request->get('_token'))) {
             $this->addFlash('error', 'Jeton CSRF invalide.');
             return $this->redirectToRoute('app_patient_creneaux_index');
         }
 
-        if ($creneau->getStatut() === Creneau::STATUT_ANNULE) {
-            $this->addFlash('warning', 'Ce créneau est déjà annulé.');
-            return $this->redirectToRoute('app_patient_creneaux_index');
-        }
+        // Trouver l'appointment lié
+        $dispo   = $creneau->getDisponibilite();
+        $date    = $creneau->getDateCreneau();
+        $heure   = $creneau->getHeure();
+        $cabinet = $dispo?->getCabinet();
+        $psy     = $cabinet && $cabinet->getPsyCabinets()->count() > 0
+                   ? $cabinet->getPsyCabinets()->first()?->getPsychologue()
+                   : null;
 
-        // Find linked plan using same logic as booking
-        $dispo = $creneau->getDisponibilite();
-        $date = $creneau->getDateCreneau();
-        $heure = $creneau->getHeure();
-        if (!$dispo || !$date || !$heure) {
-            $this->addFlash('error', 'Créneau invalide.');
-            return $this->redirectToRoute('app_patient_creneaux_index');
-        }
-        $cabinet = $dispo->getCabinet();
-        $dayOfWeek = strtoupper($date->format('l'));
-        $dayOfWeek = match ($dayOfWeek) {
-            'MONDAY' => 'MONDAY',
-            'TUESDAY' => 'TUESDAY',
-            'WEDNESDAY' => 'WEDNESDAY',
-            'THURSDAY' => 'THURSDAY',
-            'FRIDAY' => 'FRIDAY',
-            'SATURDAY' => 'SATURDAY',
-            'SUNDAY' => 'SUNDAY',
-            default => 'MONDAY',
-        };
-        $period = ((int) $heure->format('H') < 18) ? 'DAY' : 'NIGHT';
-        $plan = null;
-        if ($cabinet) {
-            foreach ($cabinet->getPsyCabinets() as $psyCabinet) {
-                $candidate = $psyCabinet->getPsychologue();
-                if (!$candidate instanceof User) {
-                    continue;
-                }
-                $candidatePlan = $plans->findOneForPsychologueDayPeriod($candidate, $dayOfWeek, $period);
-                if ($candidatePlan) {
-                    $plan = $candidatePlan;
-                    break;
-                }
-            }
-        }
+        $plan        = null;
+        $appointment = null;
 
-        $appointment = $plan
-            ? $appointments->findLatestForPatientAndPlanByStatuses($user, $plan, [Appointment::STATUS_SCHEDULED, Appointment::STATUS_COMPLETED])
-            : null;
+        if ($psy instanceof User && $date && $heure) {
+            $dayMap    = ['MONDAY'=>'MONDAY','TUESDAY'=>'TUESDAY','WEDNESDAY'=>'WEDNESDAY',
+                          'THURSDAY'=>'THURSDAY','FRIDAY'=>'FRIDAY','SATURDAY'=>'SATURDAY','SUNDAY'=>'SUNDAY'];
+            $dayOfWeek = $dayMap[strtoupper($date->format('l'))] ?? 'MONDAY';
+            $period    = ((int)$heure->format('H') < 18) ? 'DAY' : 'NIGHT';
+            $plan      = $plans->findOneForPsychologueDayPeriod($psy, $dayOfWeek, $period);
+            $appointment = $plan ? $appointments->findLatestNonCancelledForPatientAndPlan($user, $plan) : null;
+        }
 
         // RULE 8 — Cannot cancel completed appointment
         if ($appointment && $appointment->getStatus() === Appointment::STATUS_COMPLETED) {
-            $this->addFlash('error', "Impossible d'annuler un rendez-vous déjà terminé");
+            $this->addFlash('error', "Impossible d'annuler un rendez-vous déjà terminé.");
             return $this->redirectToRoute('app_patient_creneaux_index');
         }
 
@@ -273,9 +265,7 @@ final class CreneauController extends AbstractController
         }
 
         $em->flush();
-        $this->addFlash('success', 'Votre rendez-vous a été annulé avec succès');
-
+        $this->addFlash('success', 'Votre rendez-vous a été annulé.');
         return $this->redirectToRoute('app_patient_creneaux_index');
     }
 }
-

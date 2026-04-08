@@ -34,13 +34,13 @@ class Appointment
     #[Assert\Choice(choices: [self::STATUS_SCHEDULED, self::STATUS_CANCELLED, self::STATUS_COMPLETED], message: 'Statut invalide')]
     private string $status = self::STATUS_SCHEDULED;
 
-    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $createdAt = null;
+    #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE)]
+    private ?\DateTimeImmutable $createdAt = null;
 
     public function __construct()
     {
-        // DATETIME_MUTABLE column expects a mutable DateTime instance.
-        $this->createdAt = new \DateTime();
+        // DATETIME_IMMUTABLE column expects a immutable DateTime instance.
+        $this->createdAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -84,12 +84,12 @@ class Appointment
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): static
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
 

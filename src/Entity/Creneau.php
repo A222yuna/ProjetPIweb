@@ -27,14 +27,14 @@ class Creneau
     #[ORM\JoinColumn(name: 'patient_id_user', referencedColumnName: 'id_user', nullable: false, onDelete: 'CASCADE')]
     private ?User $patient = null;
 
-    #[ORM\Column(name: 'date_creneau', type: Types::DATE_MUTABLE)]
+    #[ORM\Column(name: 'date_creneau', type: Types::DATE_IMMUTABLE)]
     #[Assert\NotBlank(message: 'La date est obligatoire')]
     #[Assert\GreaterThanOrEqual(value: 'today', message: 'La date ne peut pas être dans le passé')]
-    private ?\DateTimeInterface $dateCreneau = null;
+    private ?\DateTimeImmutable $dateCreneau = null;
 
-    #[ORM\Column(type: Types::TIME_MUTABLE)]
+    #[ORM\Column(type: Types::TIME_IMMUTABLE)]
     #[Assert\NotBlank(message: "L'heure est obligatoire")]
-    private ?\DateTimeInterface $heure = null;
+    private ?\DateTimeImmutable $heure = null;
 
     #[ORM\Column(length: 20, options: ['default' => 'RESERVE'])]
     #[Assert\NotBlank]
@@ -71,24 +71,24 @@ class Creneau
         return $this;
     }
 
-    public function getDateCreneau(): ?\DateTimeInterface
+    public function getDateCreneau(): ?\DateTimeImmutable
     {
         return $this->dateCreneau;
     }
 
-    public function setDateCreneau(\DateTimeInterface $dateCreneau): static
+    public function setDateCreneau(\DateTimeImmutable $dateCreneau): static
     {
         $this->dateCreneau = $dateCreneau;
 
         return $this;
     }
 
-    public function getHeure(): ?\DateTimeInterface
+    public function getHeure(): ?\DateTimeImmutable
     {
         return $this->heure;
     }
 
-    public function setHeure(\DateTimeInterface $heure): static
+    public function setHeure(\DateTimeImmutable $heure): static
     {
         $this->heure = $heure;
 

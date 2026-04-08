@@ -50,8 +50,8 @@ class PsychologuePlan
     #[Assert\Range(min: 1, max: 20, notInRangeMessage: 'Entre 1 et 20 rendez-vous maximum')]
     private int $maxAppointments = 5;
 
-    #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $createdAt = null;
+    #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE)]
+    private ?\DateTimeImmutable $createdAt = null;
 
     /** @var Collection<int, Appointment> */
     #[ORM\OneToMany(targetEntity: Appointment::class, mappedBy: 'plan')]
@@ -116,12 +116,12 @@ class PsychologuePlan
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): static
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
 

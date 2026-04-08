@@ -27,13 +27,13 @@ class Disponibilite
     #[Assert\Range(min: 1, max: 7, notInRangeMessage: 'Jour invalide')]
     private int $jour = 0;
 
-    #[ORM\Column(name: 'heure_debut', type: Types::TIME_MUTABLE)]
+    #[ORM\Column(name: 'heure_debut', type: Types::TIME_IMMUTABLE)]
     #[Assert\NotBlank(message: "L'heure de début est obligatoire")]
-    private ?\DateTimeInterface $heureDebut = null;
+    private ?\DateTimeImmutable $heureDebut = null;
 
-    #[ORM\Column(name: 'heure_fin', type: Types::TIME_MUTABLE)]
+    #[ORM\Column(name: 'heure_fin', type: Types::TIME_IMMUTABLE)]
     #[Assert\NotBlank(message: "L'heure de fin est obligatoire")]
-    private ?\DateTimeInterface $heureFin = null;
+    private ?\DateTimeImmutable $heureFin = null;
 
     #[ORM\Column(name: 'duree_consultation')]
     #[Assert\NotBlank(message: 'La durée est obligatoire')]
@@ -79,24 +79,24 @@ class Disponibilite
         return $this;
     }
 
-    public function getHeureDebut(): ?\DateTimeInterface
+    public function getHeureDebut(): ?\DateTimeImmutable
     {
         return $this->heureDebut;
     }
 
-    public function setHeureDebut(\DateTimeInterface $heureDebut): static
+    public function setHeureDebut(\DateTimeImmutable $heureDebut): static
     {
         $this->heureDebut = $heureDebut;
 
         return $this;
     }
 
-    public function getHeureFin(): ?\DateTimeInterface
+    public function getHeureFin(): ?\DateTimeImmutable
     {
         return $this->heureFin;
     }
 
-    public function setHeureFin(\DateTimeInterface $heureFin): static
+    public function setHeureFin(\DateTimeImmutable $heureFin): static
     {
         $this->heureFin = $heureFin;
 
