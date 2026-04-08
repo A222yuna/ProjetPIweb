@@ -1,0 +1,73 @@
+{% extends 'base_psychologue.html.twig' %}
+
+{% block title %}Planning psychologue{% endblock %}
+
+{% block psychologue_body %}
+    <h1 class="h4 mb-3">Mon planning</h1>
+    <div class="row g-3 mb-3">
+        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Plans</small><div class="h5 mb-0">{{ plans|length }}</div></div></div>
+        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Disponibilites</small><div class="h5 mb-0">{{ disponibilites|length }}</div></div></div>
+        <div class="col-md-3"><div class="card p-3"><small class="text-muted">RDV</small><div class="h5 mb-0">{{ appointments|length }}</div></div></div>
+        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Page</small><div class="h6 mb-0">{{ page }}/{{ total_pages }}</div></div></div>
+    </div>
+    <div class="mb-3 d-flex gap-2">
+        <a class="btn btn-primary btn-sm" href="{{ path('app_psychologue_planning_plan_new') }}">Nouveau plan</a>
+        <a class="btn btn-outline-primary btn-sm" href="{{ path('app_psychologue_planning_dispo_new') }}">Nouvelle disponibilite</a>
+    </div>
+
+    <div class="card mb-3">
+        <h2 class="h6">Plans</h2>
+        <ul>
+            {% for p in plans %}
+                <li>{{ p.dayOfWeek }} - {{ p.period }} ({{ p.maxAppointments }} max)</li>
+            {% else %}
+                <li>Aucun plan.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2 class="h6">Disponibilites</h2>
+        <ul>
+            {% for d in disponibilites %}
+                <li>Jour {{ d.jour }} - {{ d.heureDebut|date('H:i') }} / {{ d.heureFin|date('H:i') }} ({{ d.dureeConsultation }} min)</li>
+            {% else %}
+                <li>Aucune disponibilite.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="card p-3 mt-3">
+        <h2 class="h6">Rendez-vous patients</h2>
+        <ul class="mb-0">
+            {% for a in appointments %}
+                <li class="mb-2">
+                    #{{ a.id }} - {{ a.patient ? a.patient.prenom ~ ' ' ~ a.patient.nom : 'Patient' }}
+                    {% if a.status == 'SCHEDULED' %}<span class="badge text-bg-primary">SCHEDULED</span>{% endif %}
+                    {% if a.status == 'COMPLETED' %}<span class="badge text-bg-success">COMPLETED</span>{% endif %}
+                    {% if a.status == 'CANCELLED' %}<span class="badge text-bg-danger">CANCELLED</span>{% endif %}
+                    {% if a.status == 'SCHEDULED' %}
+                        <form method="post" action="{{ path('app_psychologue_appointment_complete', { id: a.id }) }}" style="display:inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token('psy_appointment_' ~ a.id) }}">
+                            <button type="submit" class="btn btn-sm btn-outline-success">Completer</button>
+                        </form>
+                        <form method="post" action="{{ path('app_psychologue_appointment_cancel', { id: a.id }) }}" style="display:inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token('psy_appointment_' ~ a.id) }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Annuler</button>
+                        </form>
+                    {% endif %}
+                </li>
+            {% else %}
+                <li>Aucun rendez-vous pour vos plans.</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% if total_pages > 1 %}
+        <div class="mt-3 d-flex gap-2 flex-wrap">
+            {% for p in 1..total_pages %}
+                <a class="btn btn-sm {{ p == page ? 'btn-primary' : 'btn-outline-primary' }}"
+                   href="{{ path('app_psychologue_planning_index', { page: p }) }}">{{ p }}</a>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

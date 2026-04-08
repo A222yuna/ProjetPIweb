@@ -1,0 +1,71 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Le cabinet — Cabinet de psychologie{% endblock %}
+
+{% block body %}
+    <p class="page-eyebrow">Présentation</p>
+    <h1>Un cadre accueillant et confidentiel</h1>
+    <p class="page-lead muted">Espace de parole sécurisant pour adultes, adolescents et couples. Secret professionnel et déontologie.</p>
+
+    <div class="grid-2">
+        <div class="card card-elevated">
+            <h2>Notre approche</h2>
+            <p class="muted" style="margin-bottom:0">Accompagnement centré sur vos objectifs, en séances régulières ou ponctuelles selon le cadre défini ensemble.</p>
+        </div>
+        <div class="card card-soft">
+            <h2>Le lieu</h2>
+            <ul class="list-check muted" style="margin:0">
+                <li>Consultation sur rendez-vous</li>
+                <li>Ambiance calme et confidentielle</li>
+                <li>Accès et horaires à préciser sur la page Contact</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="grid-2 layout-split">
+        <div class="card">
+            <h2 style="margin-top:0">Programmes bien-être</h2>
+            {% if programmes is empty %}
+                <p class="muted">Aucun programme disponible pour le moment.</p>
+            {% else %}
+                <ul class="plain">
+                    {% for programme in programmes %}
+                        <li>
+                            <strong>{{ programme.nom }}</strong>
+                            <div class="muted">
+                                {{ programme.duree }} jours
+                                {% if programme.niveauDifficulte %} · Niveau {{ programme.niveauDifficulte }}{% endif %}
+                                {% if programme.psychologue %} · {{ programme.psychologue.prenom }} {{ programme.psychologue.nom }}{% endif %}
+                            </div>
+                            {% if programme.objectif %}
+                                <p class="muted" style="margin:0.4rem 0 0">{{ programme.objectif }}</p>
+                            {% endif %}
+                            {% if programme.activites is not empty %}
+                                <p class="muted" style="margin:0.4rem 0 0">
+                                    {{ programme.activites|length }} activité(s)
+                                </p>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+
+        <div class="card card-soft">
+            <h2 style="margin-top:0">Avis &amp; notes des cabinets</h2>
+            {% if cabinetRatings is empty %}
+                <p class="muted">Aucune évaluation enregistrée.</p>
+            {% else %}
+                <ul class="plain">
+                    {% for r in cabinetRatings %}
+                        <li>
+                            <strong>{{ r.ville }}</strong>
+                            <div class="muted">{{ r.adresse }}</div>
+                            <div class="muted">Note moyenne: {{ r.avgNote|number_format(1, ',', ' ') }}/5 ({{ r.ratingCount }} avis)</div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

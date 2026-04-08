@@ -1,0 +1,5 @@
+{% extends app.user and app.user.role == 'Admin' ? 'base_admin.html.twig' : (app.user and app.user.role == 'Psychologue' ? 'base_psychologue.html.twig' : 'base_patient.html.twig') %}
+
+{% block admin_body %}{% include 'account/_profile_content.html.twig' %}{% endblock %}
+{% block psychologue_body %}{% include 'account/_profile_content.html.twig' %}{% endblock %}
+{% block patient_body %}{% include 'account/_profile_content.html.twig' %}{% endblock %}

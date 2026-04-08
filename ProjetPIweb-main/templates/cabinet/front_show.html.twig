@@ -1,0 +1,19 @@
+{% extends 'front.html.twig' %}
+
+{% block title %}Details cabinet{% endblock %}
+
+{% block front_body %}
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <h3>{{ cabinet.ville }}</h3>
+            <p class="mb-1"><strong>Adresse:</strong> {{ cabinet.adresse }}</p>
+            <p class="mb-1"><strong>Horaires:</strong> {{ cabinet.horaires ?: '-' }}</p>
+            <p class="mb-3"><strong>Description:</strong> {{ cabinet.description ?: '-' }}</p>
+            <div class="d-flex gap-2">
+                <a href="{{ path('app_cabinet_front_index') }}" class="btn btn-outline-secondary">Retour</a>
+                <button type="button" class="btn btn-outline-primary">Voir sur carte</button>
+                <button type="button" class="btn btn-success">Prendre rendez-vous</button>
+            </div>
+        </div>
+    </div>
+{% endblock %}
