@@ -1,0 +1,53 @@
+{% extends 'base_patient.html.twig' %}
+
+{% block title %}Mes créneaux{% endblock %}
+
+{% block patient_body %}
+    <h1 class="h4 mb-3">Mes créneaux</h1>
+    <div class="d-flex gap-2 mb-3">
+        <a class="btn btn-sm btn-primary" href="{{ path('app_patient_creneaux_book') }}">Réserver un créneau</a>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_patient_rendezvous_index') }}">Voir mes rendez-vous</a>
+    </div>
+
+    <div class="card p-3">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Heure</th>
+                        <th>Statut</th>
+                        <th>Psychologue</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for c in creneaux %}
+                    {% set psy = c.disponibilite and c.disponibilite.cabinet and c.disponibilite.cabinet.psyCabinets|length ? c.disponibilite.cabinet.psyCabinets|first.psychologue : null %}
+                    <tr>
+                        <td>{{ c.dateCreneau ? c.dateCreneau|date('d/m/Y') : '-' }}</td>
+                        <td>{{ c.heure ? c.heure|date('H:i') : '-' }}</td>
+                        <td>
+                            {% if c.statut == 'RESERVE' %}<span class="badge text-bg-primary">RESERVE</span>{% else %}<span class="badge text-bg-secondary">ANNULE</span>{% endif %}
+                        </td>
+                        <td>{% if psy %}{{ psy.prenom }} {{ psy.nom }}{% else %}-{% endif %}</td>
+                        <td>
+                            {% if c.statut == 'RESERVE' %}
+                                <form method="post" action="{{ path('app_patient_creneaux_cancel', { id: c.id }) }}" style="display:inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('cancel_creneau_' ~ c.id) }}">
+                                    <button class="btn btn-sm btn-outline-danger" type="submit">Annuler</button>
+                                </form>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5">Aucun créneau.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+

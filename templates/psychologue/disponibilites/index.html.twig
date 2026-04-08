@@ -1,0 +1,48 @@
+{% extends 'base_psychologue.html.twig' %}
+
+{% block title %}Disponibilités - Psychologue{% endblock %}
+
+{% block psychologue_body %}
+    <h1 class="h4 mb-3">Mes disponibilités</h1>
+    <div class="d-flex gap-2 mb-3">
+        <a class="btn btn-sm btn-primary" href="{{ path('app_psychologue_disponibilites_new') }}">Nouvelle disponibilité</a>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_psychologue_plans_index') }}">Voir mes plans</a>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_psychologue_appointments_index') }}">Voir mes appointments</a>
+    </div>
+
+    <div class="card p-3">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Jour</th>
+                        <th>Heure début</th>
+                        <th>Heure fin</th>
+                        <th>Durée (min)</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for d in disponibilites %}
+                    <tr>
+                        <td>{{ d.jour }}</td>
+                        <td>{{ d.heureDebut ? d.heureDebut|date('H:i') : '-' }}</td>
+                        <td>{{ d.heureFin ? d.heureFin|date('H:i') : '-' }}</td>
+                        <td>{{ d.dureeConsultation }}</td>
+                        <td>
+                            <a class="btn btn-sm btn-outline-primary" href="{{ path('app_psychologue_disponibilites_edit', { id: d.id }) }}">Edit</a>
+                            <form method="post" action="{{ path('app_psychologue_disponibilites_delete', { id: d.id }) }}" style="display:inline">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete_disponibilite_' ~ d.id) }}">
+                                <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5">Aucune disponibilité.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+

@@ -2,14 +2,10 @@
 
 namespace App\Controller\Psychologue;
 
-use App\Entity\Disponibilite;
-use App\Entity\PsychologuePlan;
+use App\Entity\Appointment;
 use App\Entity\User;
-use App\Form\DisponibiliteType;
-use App\Form\PsychologuePlanType;
 use App\Repository\DisponibiliteRepository;
 use App\Repository\PsychologuePlanRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -38,7 +34,7 @@ final class PlanningController extends AbstractController
 
         return $this->render('psychologue/planning/index.html.twig', [
             'plans' => $plans->findBy(['psychologue' => $user], ['id' => 'DESC']),
-            'disponibilites' => $dispos->findBy([], ['id' => 'DESC']),
+            'disponibilites' => $dispos->findForPsychologue($user),
             'appointments' => $result['items'],
             'page' => $page,
             'total_pages' => max(1, (int) ceil($result['total'] / 10)),
@@ -46,42 +42,15 @@ final class PlanningController extends AbstractController
     }
 
     #[Route('/plan/new', name: 'app_psychologue_planning_plan_new', methods: ['GET', 'POST'])]
-    public function newPlan(Request $request, EntityManagerInterface $em): Response
+    public function newPlan(): Response
     {
-        $plan = new PsychologuePlan();
-        $form = $this->createForm(PsychologuePlanType::class, $plan);
-        $form->handleRequest($request);
-        if ($form->isSubmitted() && $form->isValid()) {
-            $user = $this->getUser();
-            if (!$user instanceof User) {
-                throw $this->createAccessDeniedException();
-            }
-            $plan->setPsychologue($user);
-            $em->persist($plan);
-            $em->flush();
-            $this->addFlash('success', 'Plan psychologue cree.');
-
-            return $this->redirectToRoute('app_psychologue_planning_index');
-        }
-
-        return $this->render('psychologue/planning/new_plan.html.twig', ['form' => $form]);
+        return $this->redirectToRoute('app_psychologue_plans_new');
     }
 
     #[Route('/disponibilite/new', name: 'app_psychologue_planning_dispo_new', methods: ['GET', 'POST'])]
-    public function newDisponibilite(Request $request, EntityManagerInterface $em): Response
+    public function newDisponibilite(): Response
     {
-        $dispo = new Disponibilite();
-        $form = $this->createForm(DisponibiliteType::class, $dispo);
-        $form->handleRequest($request);
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em->persist($dispo);
-            $em->flush();
-            $this->addFlash('success', 'Disponibilite ajoutee.');
-
-            return $this->redirectToRoute('app_psychologue_planning_index');
-        }
-
-        return $this->render('psychologue/planning/new_disponibilite.html.twig', ['form' => $form]);
+        return $this->redirectToRoute('app_psychologue_disponibilites_new');
     }
 
     #[Route('/appointments/{id}/complete', name: 'app_psychologue_appointment_complete', methods: ['POST'])]
@@ -89,9 +58,9 @@ final class PlanningController extends AbstractController
         int $id,
         Request $request,
         \App\Repository\AppointmentRepository $appointments,
-        EntityManagerInterface $em
+        \Doctrine\ORM\EntityManagerInterface $em
     ): Response {
-        return $this->updateAppointmentStatus($id, 'COMPLETED', $request, $appointments, $em);
+        return $this->updateAppointmentStatus($id, Appointment::STATUS_COMPLETED, $request, $appointments, $em);
     }
 
     #[Route('/appointments/{id}/cancel', name: 'app_psychologue_appointment_cancel', methods: ['POST'])]
@@ -99,9 +68,9 @@ final class PlanningController extends AbstractController
         int $id,
         Request $request,
         \App\Repository\AppointmentRepository $appointments,
-        EntityManagerInterface $em
+        \Doctrine\ORM\EntityManagerInterface $em
     ): Response {
-        return $this->updateAppointmentStatus($id, 'CANCELLED', $request, $appointments, $em);
+        return $this->updateAppointmentStatus($id, Appointment::STATUS_CANCELLED, $request, $appointments, $em);
     }
 
     private function updateAppointmentStatus(
@@ -109,7 +78,7 @@ final class PlanningController extends AbstractController
         string $status,
         Request $request,
         \App\Repository\AppointmentRepository $appointments,
-        EntityManagerInterface $em
+        \Doctrine\ORM\EntityManagerInterface $em
     ): Response {
         $user = $this->getUser();
         if (!$user instanceof User) {
@@ -120,12 +89,18 @@ final class PlanningController extends AbstractController
             !$appointment
             || $appointment->getPlan()?->getPsychologue()?->getId() !== $user->getId()
         ) {
-            throw $this->createNotFoundException();
+            throw $this->createAccessDeniedException();
         }
         if (!$this->isCsrfTokenValid('psy_appointment_'.$appointment->getId(), (string) $request->request->get('_token'))) {
             $this->addFlash('error', 'Jeton CSRF invalide.');
             return $this->redirectToRoute('app_psychologue_planning_index');
         }
+
+        if ($appointment->getStatus() !== Appointment::STATUS_SCHEDULED) {
+            $this->addFlash('warning', 'Seuls les rendez-vous SCHEDULED peuvent être modifiés.');
+            return $this->redirectToRoute('app_psychologue_planning_index');
+        }
+
         $appointment->setStatus($status);
         $em->flush();
         $this->addFlash('success', 'Statut du rendez-vous mis a jour: '.$status);

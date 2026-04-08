@@ -8,8 +8,10 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Validator\Constraints\GreaterThanOrEqual;
+use Symfony\Component\Validator\Constraints\Choice;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Positive;
+use Symfony\Component\Validator\Constraints\Range;
 
 final class PsychologuePlanType extends AbstractType
 {
@@ -26,14 +28,24 @@ final class PsychologuePlanType extends AbstractType
                     'Samedi' => 'SATURDAY',
                     'Dimanche' => 'SUNDAY',
                 ],
-                'constraints' => [new NotBlank()],
+                'constraints' => [
+                    new NotBlank(message: 'Le jour est obligatoire'),
+                    new Choice(choices: PsychologuePlan::DAY_OF_WEEK_CHOICES),
+                ],
             ])
             ->add('period', ChoiceType::class, [
                 'choices' => ['Jour' => 'DAY', 'Nuit' => 'NIGHT'],
-                'constraints' => [new NotBlank()],
+                'constraints' => [
+                    new NotBlank(message: 'La période est obligatoire'),
+                    new Choice(choices: PsychologuePlan::PERIOD_CHOICES),
+                ],
             ])
             ->add('maxAppointments', IntegerType::class, [
-                'constraints' => [new GreaterThanOrEqual(1)],
+                'constraints' => [
+                    new NotBlank(message: 'Le nombre max est obligatoire'),
+                    new Positive(message: 'Doit être un nombre positif'),
+                    new Range(min: 1, max: 20, notInRangeMessage: 'Entre 1 et 20 rendez-vous maximum'),
+                ],
             ]);
     }
 

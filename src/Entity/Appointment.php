@@ -11,6 +11,10 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'appointments')]
 class Appointment
 {
+    public const STATUS_SCHEDULED = 'SCHEDULED';
+    public const STATUS_CANCELLED = 'CANCELLED';
+    public const STATUS_COMPLETED = 'COMPLETED';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -25,16 +29,18 @@ class Appointment
     private ?PsychologuePlan $plan = null;
 
     #[ORM\Column(length: 20, options: ['default' => 'SCHEDULED'])]
-    #[Assert\NotBlank]
+    #[Assert\NotBlank(message: 'Le statut est obligatoire')]
     #[Assert\Length(max: 20)]
-    private string $status = 'SCHEDULED';
+    #[Assert\Choice(choices: [self::STATUS_SCHEDULED, self::STATUS_CANCELLED, self::STATUS_COMPLETED], message: 'Statut invalide')]
+    private string $status = self::STATUS_SCHEDULED;
 
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
     public function __construct()
     {
-        $this->createdAt = new \DateTimeImmutable();
+        // DATETIME_MUTABLE column expects a mutable DateTime instance.
+        $this->createdAt = new \DateTime();
     }
 
     public function getId(): ?int

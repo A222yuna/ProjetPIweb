@@ -13,6 +13,18 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'psychologue_plans')]
 class PsychologuePlan
 {
+    public const DAY_OF_WEEK_CHOICES = [
+        'MONDAY',
+        'TUESDAY',
+        'WEDNESDAY',
+        'THURSDAY',
+        'FRIDAY',
+        'SATURDAY',
+        'SUNDAY',
+    ];
+
+    public const PERIOD_CHOICES = ['DAY', 'NIGHT'];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -23,17 +35,19 @@ class PsychologuePlan
     private ?User $psychologue = null;
 
     #[ORM\Column(name: 'day_of_week', length: 15)]
-    #[Assert\NotBlank]
-    #[Assert\Length(max: 15)]
+    #[Assert\NotBlank(message: 'Le jour est obligatoire')]
+    #[Assert\Choice(choices: self::DAY_OF_WEEK_CHOICES, message: 'Jour invalide')]
     private ?string $dayOfWeek = null;
 
     #[ORM\Column(length: 10)]
-    #[Assert\NotBlank]
-    #[Assert\Length(max: 10)]
+    #[Assert\NotBlank(message: 'La période est obligatoire')]
+    #[Assert\Choice(choices: self::PERIOD_CHOICES, message: 'Période invalide')]
     private ?string $period = null;
 
     #[ORM\Column(name: 'max_appointments', options: ['default' => 5])]
-    #[Assert\Positive]
+    #[Assert\NotBlank(message: 'Le nombre max est obligatoire')]
+    #[Assert\Positive(message: 'Doit être un nombre positif')]
+    #[Assert\Range(min: 1, max: 20, notInRangeMessage: 'Entre 1 et 20 rendez-vous maximum')]
     private int $maxAppointments = 5;
 
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_MUTABLE)]

@@ -1,0 +1,79 @@
+{% extends 'base_patient.html.twig' %}
+
+{% block title %}Réserver un créneau{% endblock %}
+
+{% block patient_body %}
+    <h1 class="h4 mb-3">Réserver un créneau</h1>
+    <p class="text-muted">Choisissez une disponibilité, une date et une heure.</p>
+
+    <div class="card p-3 mb-3">
+        {{ form_start(form) }}
+
+        <div class="mb-3">
+            <label class="form-label">Disponibilité</label>
+            {{ form_widget(form.disponibilite, { attr: { class: 'form-select ' ~ (form.disponibilite.vars.errors|length ? 'is-invalid' : '') } }) }}
+            {% for e in form.disponibilite.vars.errors %}<div class="invalid-feedback d-block">{{ e.message }}</div>{% endfor %}
+        </div>
+
+        <div class="row g-2">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Date</label>
+                {{ form_widget(form.dateCreneau, { attr: { class: 'form-control ' ~ (form.dateCreneau.vars.errors|length ? 'is-invalid' : '') } }) }}
+                {% for e in form.dateCreneau.vars.errors %}<div class="invalid-feedback d-block">{{ e.message }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Heure</label>
+                {{ form_widget(form.heure, { attr: { class: 'form-control ' ~ (form.heure.vars.errors|length ? 'is-invalid' : '') } }) }}
+                {% for e in form.heure.vars.errors %}<div class="invalid-feedback d-block">{{ e.message }}</div>{% endfor %}
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary" type="submit">Réserver</button>
+            <a class="btn btn-outline-secondary" href="{{ path('app_patient_creneaux_index') }}">Retour</a>
+        </div>
+
+        {{ form_end(form) }}
+    </div>
+
+    <div class="card p-3">
+        <h2 class="h6">Aperçu disponibilités</h2>
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead><tr><th>ID</th><th>Cabinet</th><th>Jour</th><th>Fenêtre</th><th>Durée</th></tr></thead>
+                <tbody>
+                {% for d in disponibilites %}
+                    <tr>
+                        <td>#{{ d.id }}</td>
+                        <td>{{ d.cabinet ? d.cabinet.ville ~ ' - ' ~ d.cabinet.adresse : '-' }}</td>
+                        <td>{{ d.jour }}</td>
+                        <td>{{ d.heureDebut|date('H:i') }} - {{ d.heureFin|date('H:i') }}</td>
+                        <td>{{ d.dureeConsultation }} min</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5">Aucune disponibilité.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card p-3 mt-3">
+        <h2 class="h6">Créneaux disponibles (7 prochains jours)</h2>
+        {% if available_grouped is empty %}
+            <p class="text-muted mb-0">Aucune disponibilité.</p>
+        {% else %}
+            <div class="row g-2">
+                {% for label, dates in available_grouped %}
+                    <div class="col-md-6">
+                        <div class="border rounded p-2">
+                            <strong>{{ label }}</strong>
+                            <div class="small text-muted">{{ dates|join(' • ') }}</div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
+

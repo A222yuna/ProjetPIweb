@@ -27,6 +27,12 @@
             <div class="col-md-4"><div class="card p-3"><small class="text-muted">COMPLETED</small><div class="h5 mb-0">973</div></div></div>
             <div class="col-md-4"><div class="card p-3"><small class="text-muted">CANCELLED</small><div class="h5 mb-0">41</div></div></div>
         </div>
+        <div class="card p-3 mt-3">
+            <h2 class="h6">Actions admin rendez-vous</h2>
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-sm btn-primary" href="{{ path('app_admin_appointments_index') }}">Liste appointments</a>
+            </div>
+        </div>
     {% elseif module == 'cabinets' %}
         <div class="row g-3">
             <div class="col-md-4"><div class="card p-3"><small class="text-muted">Annonces actives</small><div class="h5 mb-0">74</div></div></div>
