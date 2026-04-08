@@ -48,7 +48,7 @@ class Commentaire
 
     public function __construct()
     {
-        $this->date = new \DateTimeImmutable();
+        $this->date = new \DateTime();
         $this->replies = new ArrayCollection();
     }
 

@@ -4,6 +4,7 @@ namespace App\Form;
 
 use App\Entity\Post;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -37,19 +38,21 @@ final class PostConsultationFormType extends AbstractType
                     'placeholder' => 'Décrivez votre question ou partagez votre expérience…',
                 ],
             ])
-            ->add('categorie', TextType::class, [
+            ->add('categorie', ChoiceType::class, [
                 'label' => 'Catégorie',
+                'choices' => [
+                    'Vie Émotionnelle et Bien-être' => 'Vie Émotionnelle et Bien-être',
+                    'Relations et Liens Sociaux' => 'Relations et Liens Sociaux',
+                    'Troubles et Santé Mentale' => 'Troubles et Santé Mentale',
+                    'Monde du Travail et Études' => 'Monde du Travail et Études',
+                    'Espace Débats et Société' => 'Espace Débats et Société',
+                    'Fonctionnement de l\'Esprit' => 'Fonctionnement de l\'Esprit',
+                ],
+                'placeholder' => 'Choisir une catégorie',
                 'constraints' => [
                     new NotBlank(message: 'La catégorie est obligatoire.'),
-                    new Length(max: 100),
                 ],
-                'attr' => [
-                    'maxlength' => 100,
-                    'class' => 'input-categorie',
-                    'list' => 'consultation-categories',
-                    'placeholder' => 'Ex. Discussion Générale, Anxiété, Thérapie de couple…',
-                ],
-                'help' => 'Colonne categorie (varchar 100). Les valeurs déjà en base sont proposées dans la liste.',
+                'help' => 'Sélectionnez parmi les 6 catégories disponibles.',
             ]);
     }
 

@@ -70,7 +70,7 @@ final class ConsultationController extends AbstractController
             $post->setAuteur($user);
             $post->setAuteurRole($user->getRole());
             $post->setNbLikes(0);
-            $post->setDate(new \DateTimeImmutable());
+            $post->setDate(new \DateTime());
             $em->persist($post);
             $em->flush();
             $this->addFlash('success', 'Votre publication a été enregistrée.');
@@ -141,7 +141,7 @@ final class ConsultationController extends AbstractController
             $comment->setAuteur($user);
             $comment->setAuteurRole($user->getRole());
             $comment->setNbLikes(0);
-            $comment->setDate(new \DateTimeImmutable());
+            $comment->setDate(new \DateTime());
             $em->persist($comment);
             $em->flush();
             $this->addFlash('success', 'Votre commentaire a bien été ajouté.');
