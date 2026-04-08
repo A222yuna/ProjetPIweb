@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block body_attr %} class="layout-wide"{% endblock %}
+
+{% block title %}Contact — Cabinet de psychologie{% endblock %}
+
+{% block body %}
+    <p class="page-eyebrow">Nous écrire</p>
+    <h1>Contact du cabinet</h1>
+    <p class="page-lead muted">Coordonnées type pour la maquette. Remplacez par vos vraies informations.</p>
+
+    <div class="grid-2 layout-split">
+        <div class="card card-elevated">
+            <h2 style="margin-top:0">Coordonnées</h2>
+            <dl class="contact-dl">
+                <dt>Adresse</dt>
+                <dd>00 rue de l’Exemple<br>75000 Ville</dd>
+                <dt>Téléphone</dt>
+                <dd class="muted">À renseigner</dd>
+                <dt>E-mail</dt>
+                <dd class="muted">contact@cabinet-exemple.fr</dd>
+            </dl>
+        </div>
+        <div class="card">
+            <h2 style="margin-top:0">Message</h2>
+            <div class="placeholder-banner">Formulaire à brancher (e-mail ou ticket).</div>
+            <form class="form-static" action="#" onsubmit="return false;">
+                <div class="field">
+                    <label for="c-msg">Votre message</label>
+                    <textarea id="c-msg" rows="5" disabled></textarea>
+                </div>
+                <button type="button" class="btn btn-primary" disabled>Envoyer</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}

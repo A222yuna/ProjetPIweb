@@ -1,0 +1,125 @@
+{% extends 'back.html.twig' %}
+
+{% block title %}Gestion des cabinets{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .mc-hero { background: linear-gradient(90deg, #1f9d78, #3bb7b4); color: #fff; border-radius: 16px; padding: 18px 22px; box-shadow: 0 8px 18px rgba(33, 121, 114, .2); }
+        .mc-stat { border: 1px solid #e9ecef; border-radius: 14px; background: #fff; }
+        .mc-pill { border-radius: 999px; padding: .35rem 1rem; font-size: .85rem; }
+        .mc-table { border-radius: 16px; overflow: hidden; border: 1px solid #edf0f2; }
+        .mc-table thead th { background: #f6f8fa; color: #5f6b76; font-weight: 600; }
+        .mc-empty { min-height: 180px; display: grid; place-items: center; color: #8b959e; }
+        .mc-actions { display: inline-flex; flex-wrap: nowrap; gap: .5rem; align-items: center; white-space: nowrap; }
+        .mc-actions form { margin: 0; }
+        .mc-actions .btn { min-width: 108px; text-align: center; }
+    </style>
+{% endblock %}
+
+{% block back_body %}
+    <div class="mb-3">
+        <h2 class="mb-1">{{ is_granted('ROLE_ADMIN') ? 'Gestion des Cabinets' : 'Mes Cabinets' }}</h2>
+        <p class="text-muted mb-0">
+            {{ is_granted('ROLE_ADMIN') ? 'Validez ou refusez les cabinets ajoutes par les psychologues.' : 'Gerez vos cabinets psychologiques et suivez leur statut de validation.' }}
+        </p>
+    </div>
+
+    <div class="mc-hero mb-3">
+        <h4 class="mb-1">{{ is_granted('ROLE_ADMIN') ? 'Vue d ensemble des cabinets' : 'Bonjour ' ~ (app.user ? 'Dr. ' ~ app.user.prenom ~ ' ' ~ app.user.nom : 'sur MindConnect') ~ ' !' }}</h4>
+        <p class="mb-0">{{ is_granted('ROLE_ADMIN') ? 'Suivez l etat de validation des cabinets du reseau.' : 'Gerez vos cabinets et suivez leur statut de validation.' }}</p>
+    </div>
+
+    {% if not is_granted('ROLE_ADMIN') %}
+        <div class="d-flex justify-content-end gap-2 mb-3">
+            <a href="{{ path(cabinet_route_prefix ~ 'new') }}" class="btn btn-success mc-pill">+ Ajouter</a>
+            <a href="{{ path(disponibilite_route_prefix ~ 'new') }}" class="btn btn-info text-white mc-pill">Planifier creneaux</a>
+            <a href="{{ path(disponibilite_route_prefix ~ 'index') }}" class="btn btn-outline-secondary mc-pill">Liste creneaux</a>
+        </div>
+    {% endif %}
+
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label == 'error' ? 'danger' : 'success' }} border-0 shadow-sm">{{ message }}</div>
+        {% endfor %}
+    {% endfor %}
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="mc-stat p-3">
+                <small class="text-muted d-block">Total Cabinets</small>
+                <h3 class="mb-0">{{ stats.total }}</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="mc-stat p-3">
+                <small class="text-muted d-block">Cabinets Valides</small>
+                <h3 class="mb-0">{{ stats.valides }}</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="mc-stat p-3">
+                <small class="text-muted d-block">En Attente</small>
+                <h3 class="mb-0">{{ stats.enAttente }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mc-table">
+        <div class="card-body">
+            <h5 class="mb-3">Liste de mes cabinets</h5>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Adresse</th>
+                            <th>Ville</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for cabinet in cabinets %}
+                        <tr>
+                            <td>{{ cabinet.adresse }}</td>
+                            <td>{{ cabinet.ville }}</td>
+                            <td>
+                                {% if cabinet.archive %}
+                                    <span class="badge text-bg-secondary">Refuse</span>
+                                {% elseif cabinet.valide %}
+                                    <span class="badge text-bg-success">Valide</span>
+                                {% else %}
+                                    <span class="badge text-bg-warning">En attente</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-nowrap">
+                                <div class="mc-actions">
+                                {% if is_granted('ROLE_ADMIN') %}
+                                    <form method="post" action="{{ path(cabinet_route_prefix ~ 'validate', {id: cabinet.id}) }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('validate_cabinet_' ~ cabinet.id) }}">
+                                        <button class="btn btn-sm btn-success mc-pill" type="submit">Accepter</button>
+                                    </form>
+                                    <form method="post" action="{{ path(cabinet_route_prefix ~ 'archive', {id: cabinet.id}) }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('archive_cabinet_' ~ cabinet.id) }}">
+                                        <button class="btn btn-sm btn-warning mc-pill" type="submit">Refuser</button>
+                                    </form>
+                                {% else %}
+                                    <a class="btn btn-sm btn-outline-info mc-pill" href="{{ path(cabinet_route_prefix ~ 'show', {id: cabinet.id}) }}">Voir</a>
+                                    <a class="btn btn-sm btn-outline-primary mc-pill" href="{{ path(cabinet_route_prefix ~ 'edit', {id: cabinet.id}) }}">Modifier</a>
+                                    <form method="post" action="{{ path(cabinet_route_prefix ~ 'delete', {id: cabinet.id}) }}" onsubmit="return confirm('Supprimer ce cabinet ?');">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete_cabinet_' ~ cabinet.id) }}">
+                                        <button class="btn btn-sm btn-danger mc-pill" type="submit">Supprimer</button>
+                                    </form>
+                                {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="4" class="mc-empty">Aucun contenu dans la table</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

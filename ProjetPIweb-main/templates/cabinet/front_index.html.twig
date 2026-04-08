@@ -1,0 +1,91 @@
+{% extends 'front.html.twig' %}
+
+{% block title %}Recherche de cabinets{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .mc-hero { background: linear-gradient(90deg, #1f9d78, #3bb7b4); color: #fff; border-radius: 16px; padding: 16px 20px; }
+        .mc-card { border: 1px solid #e9ecef; border-radius: 14px; }
+        .mc-chip { border-radius: 999px; font-size: .75rem; }
+        .mc-grid { max-height: 360px; overflow: auto; padding-right: .25rem; }
+    </style>
+{% endblock %}
+
+{% block front_body %}
+    <div class="mb-3">
+        <h2 class="mb-1">Rechercher un cabinet</h2>
+        <p class="text-muted mb-0">Trouvez facilement un cabinet qui vous convient.</p>
+    </div>
+
+    <div class="mc-hero mb-3">
+        <h4 class="mb-1">Bonjour, {{ app.user ? app.user.prenom ~ app.user.nom : 'Patient' }} !</h4>
+        <p class="mb-0">Comment vous sentez-vous aujourd hui ? Explorez les cabinets disponibles.</p>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <label class="form-label mb-2">Recherche</label>
+            <form method="get" class="row g-2">
+                <div class="col-md-8">
+                    <input type="text" name="q" value="{{ search }}" class="form-control" placeholder="Ville, adresse ou description...">
+                </div>
+                <div class="col-md-4 d-flex gap-2">
+                    <button class="btn btn-success w-100" type="submit">Rechercher</button>
+                    <a href="{{ path('app_cabinet_front_index') }}" class="btn btn-outline-secondary w-100">Voir details</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-6">
+            <div class="card mc-card">
+                <div class="card-body">
+                    <small class="text-muted d-block">Cabinets disponibles</small>
+                    <h3 class="mb-0">{{ totalVisible }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mc-card">
+                <div class="card-body">
+                    <small class="text-muted d-block">Resultats de recherche</small>
+                    <h3 class="mb-0">{{ resultCount }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <h6 class="mb-3">Liste des cabinets disponibles</h6>
+            <div class="row g-3 mc-grid">
+                {% for cabinet in cabinets %}
+                    <div class="col-md-6">
+                        <div class="card mc-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <strong>{{ cabinet.ville }}</strong>
+                                    <span class="badge text-bg-success mc-chip">Valide</span>
+                                </div>
+                                <p class="mb-1"><small>Ville:</small> {{ cabinet.ville }}</p>
+                                <p class="mb-1"><small>Adresse:</small> {{ cabinet.adresse }}</p>
+                                <p class="mb-3"><small>Horaires:</small> {{ cabinet.horaires ?: '-' }}</p>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <a href="{{ path('app_cabinet_front_show', {id: cabinet.id}) }}" class="btn btn-sm btn-outline-primary">Voir details</a>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary">Voir sur carte</button>
+                                    <button type="button" class="btn btn-sm btn-success">Prendre rendez-vous</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info mb-0">Aucun cabinet valide ne correspond a votre recherche.</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

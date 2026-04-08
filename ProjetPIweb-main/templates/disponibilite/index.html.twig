@@ -1,0 +1,65 @@
+{% extends 'back.html.twig' %}
+
+{% block title %}Gestion des disponibilites{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .mc-pill { border-radius: 999px; padding: .35rem 1rem; font-size: .85rem; }
+    </style>
+{% endblock %}
+
+{% block back_body %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Planifier les creneaux</h2>
+        <div>
+            <a href="{{ path(cabinet_index_route|default('app_cabinet_index')) }}" class="btn btn-outline-secondary me-2 mc-pill">Retour cabinets</a>
+            <a href="{{ path(disponibilite_route_prefix|default('app_disponibilite_') ~ 'new') }}" class="btn btn-primary mc-pill">Ajouter</a>
+        </div>
+    </div>
+
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label == 'error' ? 'danger' : 'success' }}">{{ message }}</div>
+        {% endfor %}
+    {% endfor %}
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>Cabinet</th>
+                            <th>Jour</th>
+                            <th>Heure debut</th>
+                            <th>Heure fin</th>
+                            <th>Duree</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for d in disponibilites %}
+                        <tr>
+                            <td>#{{ d.cabinet.id }} - {{ d.cabinet.ville }}</td>
+                            <td>{{ d.jour }}</td>
+                            <td>{{ d.heureDebut|date('H:i') }}</td>
+                            <td>{{ d.heureFin|date('H:i') }}</td>
+                            <td>{{ d.dureeConsultation }} min</td>
+                            <td class="d-flex gap-2">
+                                <a href="{{ path(disponibilite_route_prefix|default('app_disponibilite_') ~ 'edit', {id: d.id}) }}" class="btn btn-sm btn-outline-primary mc-pill">Modifier</a>
+                                <form method="post" action="{{ path(disponibilite_route_prefix|default('app_disponibilite_') ~ 'delete', {id: d.id}) }}" onsubmit="return confirm('Supprimer ce creneau ?');">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_disponibilite_' ~ d.id) }}">
+                                    <button class="btn btn-sm btn-danger mc-pill" type="submit">Supprimer</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="6" class="text-center">Aucune disponibilite.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

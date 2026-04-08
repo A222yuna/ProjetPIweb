@@ -1,0 +1,47 @@
+{% extends 'back.html.twig' %}
+
+{% block title %}Details cabinet{% endblock %}
+
+{% block back_body %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">Cabinet #{{ cabinet.id }}</h3>
+        <a href="{{ path(index_route|default('app_cabinet_index')) }}" class="btn btn-outline-secondary">Retour</a>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <p><strong>Adresse:</strong> {{ cabinet.adresse }}</p>
+            <p><strong>Ville:</strong> {{ cabinet.ville }}</p>
+            <p><strong>Horaires:</strong> {{ cabinet.horaires ?: '-' }}</p>
+            <p class="mb-0"><strong>Description:</strong> {{ cabinet.description ?: '-' }}</p>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white"><h5 class="mb-0">Disponibilites</h5></div>
+        <div class="card-body">
+            <table class="table table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th>Jour</th>
+                        <th>Heure debut</th>
+                        <th>Heure fin</th>
+                        <th>Duree</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for d in disponibilites %}
+                    <tr>
+                        <td>{{ d.jour }}</td>
+                        <td>{{ d.heureDebut ? d.heureDebut|date('H:i') : '-' }}</td>
+                        <td>{{ d.heureFin ? d.heureFin|date('H:i') : '-' }}</td>
+                        <td>{{ d.dureeConsultation }} min</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="4" class="text-center">Aucune disponibilite.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends 'base.html.twig' %}
+
+{% block body_attr %} class="layout-consultation"{% endblock %}
+
+{% block title %}Consultations &amp; publications — Cabinet de psychologie{% endblock %}
+
+{% block body %}
+    {% set cover_images = [
+        'https://images.unsplash.com/photo-1573497019940-1c28c88b0f9e?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1516307365426-bea591f05011?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1499202184017-35f4930cdf80?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80',
+    ] %}
+
+    <div class="page-head-split">
+        <div>
+            <p class="page-eyebrow">Espace consultations</p>
+            <h1>Rechercher &amp; publier</h1>
+            <p class="page-lead muted" style="margin-bottom:0">
+                Publications liées à la table <code>post</code> : colonnes <code>titre</code>, <code>contenu</code>, <code>categorie</code>,
+                <code>auteur_id_user</code>, <code>auteur_role</code>, <code>nb_likes</code>, <code>date</code>.
+                La recherche porte sur le titre et le contenu ; la publication ouvre une fenêtre (popup) avec le formulaire Symfony.
+            </p>
+        </div>
+        <figure>
+            <img src="https://images.unsplash.com/photo-1573497019940-1c28c88b0f9e?auto=format&fit=crop&w=900&q=80" width="900" height="675" alt="Espace de consultation apaisant" loading="eager" fetchpriority="high">
+        </figure>
+    </div>
+
+    <div class="toolbar-consult">
+        <form class="search-form-consult" method="get" action="{{ path('app_consultation') }}" role="search">
+            <div class="field-inline">
+                <label for="q">Recherche</label>
+                <input id="q" type="search" name="q" value="{{ q }}" placeholder="Mots dans le titre ou le texte…" autocomplete="off">
+            </div>
+            <div class="field-inline">
+                <label for="filtre-cat">Catégorie</label>
+                <select id="filtre-cat" name="categorie" aria-label="Filtrer par catégorie">
+                    <option value="">Toutes</option>
+                    {% for c in category_suggestions %}
+                        <option value="{{ c }}" {% if filter_categorie == c %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Filtrer</button>
+            {% if q or filter_categorie %}
+                <a href="{{ path('app_consultation') }}" class="btn btn-outline">Réinitialiser</a>
+            {% endif %}
+        </form>
+        <button type="button" class="btn btn-primary" data-open-modal="new-post-dialog">Nouvelle publication</button>
+    </div>
+
+    <datalist id="consultation-categories">
+        {% for c in category_suggestions %}
+            <option value="{{ c }}"></option>
+        {% endfor %}
+    </datalist>
+
+    {% if posts is empty %}
+        <div class="card empty-state" style="margin-top:0">
+            <p class="muted" style="margin:0 0 1rem">Aucune publication ne correspond à votre recherche.</p>
+            <button type="button" class="btn btn-outline" data-open-modal="new-post-dialog">Publier le premier message</button>
+        </div>
+    {% else %}
+        <div class="post-grid">
+            {% for post in posts %}
+                {% set cover = cover_images[loop.index0 % cover_images|length] %}
+                <article class="post-card">
+                    <div class="post-card-visual" style="background-image: url('{{ cover }}');" role="img" aria-label=""></div>
+                    <div class="post-card-body">
+                        <h2><a href="{{ path('app_post_show', { id: post.id }) }}">{{ post.titre }}</a></h2>
+                        <p class="post-card-meta">
+                            {{ post.categorie }} · {{ post.auteurRole }}
+                            {% if post.auteur %} · {{ post.auteur.prenom }} {{ post.auteur.nom }}{% endif %}
+                        </p>
+                        <p class="post-card-snippet">{{ post.contenu|length > 220 ? post.contenu|slice(0, 220) ~ '…' : post.contenu }}</p>
+                        <div class="post-card-footer">
+                            <span>{{ post.date|date('d/m/Y H:i') }}</span>
+                            <span>{{ post.nbLikes }} j’aime</span>
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <dialog id="new-post-dialog" class="modal-dialog" {% if show_post_modal %}open{% endif %}>
+        <div class="modal-dialog-inner">
+            <div class="modal-head">
+                <h2 id="new-post-title">Nouvelle publication</h2>
+                <button type="button" class="modal-close" data-close-modal="new-post-dialog" aria-label="Fermer">×</button>
+            </div>
+            <p class="muted" style="font-size:0.9rem;margin-top:-0.5rem;margin-bottom:1rem">
+                Donnees enregistrees en base : l auteur est automatiquement l utilisateur connecte.
+            </p>
+            {% set post_action_params = {} %}
+            {% if q is not empty %}{% set post_action_params = post_action_params|merge({ q: q }) %}{% endif %}
+            {% if filter_categorie is not empty %}{% set post_action_params = post_action_params|merge({ categorie: filter_categorie }) %}{% endif %}
+            {{ form_start(form, {
+                action: path('app_consultation', post_action_params),
+                attr: { class: 'stack-form', id: 'consultation-post-form', 'aria-labelledby': 'new-post-title' }
+            }) }}
+                {{ form_errors(form) }}
+                {{ form_row(form.titre) }}
+                {{ form_row(form.categorie) }}
+                {{ form_row(form.contenu) }}
+                <div class="stack-form-actions">
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    <button type="button" class="btn btn-outline" data-close-modal="new-post-dialog">Annuler</button>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </dialog>
+
+    {% if total_pages > 1 %}
+        <div class="card" style="margin-top:1rem">
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+                {% for p in 1..total_pages %}
+                    <a class="btn {{ p == page ? 'btn-primary' : 'btn-outline' }} btn-sm"
+                       href="{{ path('app_consultation', { page: p, q: q, categorie: filter_categorie }) }}">{{ p }}</a>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

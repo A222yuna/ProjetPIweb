@@ -1,0 +1,19 @@
+<li{% if level > 0 %} style="margin-left: {{ level * 1.1 }}rem;"{% endif %}>
+    <div>
+        {% if comment.auteur %}<strong>{{ comment.auteur.prenom }} {{ comment.auteur.nom }}</strong>{% else %}Anonyme{% endif %}
+        <span class="muted">({{ comment.auteurRole }}) · {{ comment.date|date('d/m/Y H:i') }}</span>
+    </div>
+    <div class="comment-body">{{ comment.contenu }}</div>
+    {% if level < 4 %}
+        <p style="margin:0.5rem 0 0">
+            <a href="{{ path('app_post_show', { id: comment.post.id, reply_to: comment.id }) }}">Répondre</a>
+        </p>
+    {% endif %}
+    {% if comment.replies is not empty %}
+        <ul class="plain" style="margin-top:0.5rem">
+            {% for child in comment.replies %}
+                {% include 'post/_comment_item.html.twig' with { comment: child, level: level + 1 } only %}
+            {% endfor %}
+        </ul>
+    {% endif %}
+</li>
