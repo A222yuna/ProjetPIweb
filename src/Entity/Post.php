@@ -47,7 +47,7 @@ class Post
     public function __construct()
     {
         $this->commentaires = new ArrayCollection();
-        $this->date = new \DateTimeImmutable();
+        $this->date = new \DateTime();
     }
 
     public function getId(): ?int
