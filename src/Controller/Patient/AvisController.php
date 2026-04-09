@@ -47,13 +47,7 @@ final class AvisController extends AbstractController
 
         if ($jour > 0) {
             $programmes = array_values(array_filter($programmes, static function (ProgrammeBienEtre $p) use ($jour): bool {
-                foreach ($p->getActivites() as $activite) {
-                    if ($activite->getJour() === $jour) {
-                        return true;
-                    }
-                }
-
-                return false;
+                return ($p->getDuree() ?? 0) <= $jour;
             }));
         }
 
@@ -114,6 +108,10 @@ final class AvisController extends AbstractController
     #[Route('/avis/{id}/edit', name: 'app_patient_avis_edit', methods: ['GET', 'POST'])]
     public function editAvis(Avis $avis, Request $request, EntityManagerInterface $em): Response
     {
+        if ($avis->getPatient() !== $this->getUser()) {
+            throw $this->createAccessDeniedException("Vous ne pouvez pas modifier un avis qui ne vous appartient pas.");
+        }
+
         $form = $this->createForm(AvisType::class, $avis);
         $form->handleRequest($request);
 
@@ -126,6 +124,7 @@ final class AvisController extends AbstractController
         }
 
         return $this->render('patient/avis/edit.html.twig', [
+            'programme' => $avis->getProgramme(),
             'avis' => $avis,
             'form' => $form,
         ]);
@@ -134,6 +133,10 @@ final class AvisController extends AbstractController
     #[Route('/avis/{id}/delete', name: 'app_patient_avis_delete', methods: ['POST'])]
     public function deleteAvis(Avis $avis, Request $request, EntityManagerInterface $em): Response
     {
+        if ($avis->getPatient() !== $this->getUser()) {
+             throw $this->createAccessDeniedException("Vous ne pouvez pas supprimer un avis qui ne vous appartient pas.");
+        }
+
         if ($this->isCsrfTokenValid('delete'.$avis->getId(), $request->getPayload()->getString('_token'))) {
             $em->remove($avis);
             $em->flush();

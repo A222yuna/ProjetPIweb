@@ -259,8 +259,8 @@
             <input id="search-programmes" type="search" name="q" value="{{ q|default('') }}" placeholder="Nom du programme, objectif, psychologue...">
         </div>
         <div>
-            <label for="jour-programme">Filtrer par jour</label>
-            <input id="jour-programme" type="number" min="1" name="jour" value="{{ jour|default('') }}" placeholder="Ex: 3">
+            <label for="jour-programme">Duree max (jours)</label>
+            <input id="jour-programme" type="number" min="1" name="jour" value="{{ jour|default('') }}" placeholder="Ex: 30">
         </div>
         <div class="actions">
             <button type="submit" class="btn btn-primary">Filtrer</button>
@@ -286,7 +286,7 @@
                 {% endif %}
             {% endfor %}
             {% set dayValues = dayValues|sort %}
-            <div class="prog-card-modern {{ loop.first ? 'is-featured' : '' }}" data-prog-card data-search="{{ searchText|e('html_attr') }}" data-days="{{ dayValues|join(',') }}">
+            <div class="prog-card-modern {{ loop.first ? 'is-featured' : '' }}" data-prog-card data-search="{{ searchText|e('html_attr') }}" data-duree="{{ p.duree|default(0) }}">
                 {% if p.image %}
                     <div class="prog-visual" style="background-image:url('{{ asset('uploads/' ~ p.image) }}')">
                 {% else %}
@@ -373,10 +373,9 @@
 
         cards.forEach((card) => {
             const cardSearch = normalize(card.dataset.search || '');
-            const dayList = (card.dataset.days || '').split(',').filter(Boolean).map(Number);
-
             const matchesText = q === '' || cardSearch.includes(q);
-            const matchesDay = Number.isNaN(day) || day <= 0 || dayList.includes(day);
+            const cardDuree = parseInt(card.dataset.duree || '0', 10);
+            const matchesDay = Number.isNaN(day) || day <= 0 || cardDuree <= day;
             const isVisible = matchesText && matchesDay;
 
             card.style.display = isVisible ? '' : 'none';
