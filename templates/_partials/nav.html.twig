@@ -1,13 +1,13 @@
 {% set r = app.request.attributes.get('_route') %}
 <a href="{{ path('app_home') }}" class="brand brand-link">
     <span class="brand-name">Cabinet de psychologie</span>
-    <span class="brand-tagline">Consultation &amp; échanges</span>
+    <span class="brand-tagline">Forum &amp; échanges</span>
 </a>
 <nav id="site-navigation" class="site-nav" aria-label="Navigation principale">
     <div class="nav-links">
         <a href="{{ path('app_home') }}" class="{{ r == 'app_home' ? 'is-active' : '' }}">Accueil</a>
         <a href="{{ path('app_cabinet') }}" class="{{ r == 'app_cabinet' ? 'is-active' : '' }}">Le cabinet</a>
-        <a href="{{ path('app_consultation') }}" class="{{ r == 'app_consultation' or r == 'app_post_show' ? 'is-active' : '' }}">Consultations</a>
+        <a href="{{ path('app_consultation') }}" class="{{ r == 'app_consultation' or r == 'app_post_show' ? 'is-active' : '' }}">Forum</a>
         <a href="{{ path('app_tarifs') }}" class="{{ r == 'app_tarifs' ? 'is-active' : '' }}">Tarifs</a>
         <a href="{{ path('app_reservation') }}" class="nav-cta {{ r == 'app_reservation' ? 'is-active' : '' }}">Prendre RDV</a>
         <a href="{{ path('app_contact') }}" class="{{ r == 'app_contact' ? 'is-active' : '' }}">Contact</a>

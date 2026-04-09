@@ -4,11 +4,13 @@
         <span class="muted">({{ comment.auteurRole }}) · {{ comment.date|date('d/m/Y H:i') }}</span>
     </div>
     <div class="comment-body">{{ comment.contenu }}</div>
-    {% if level < 4 %}
-        <p style="margin:0.5rem 0 0">
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:.5rem">
+        <span class="muted">{{ comment.nbLikes }} j’aime</span>
+        <a href="{{ path('app_comment_like', { id: comment.id }) }}">J'aime</a>
+        {% if level < 4 %}
             <a href="{{ path('app_post_show', { id: comment.post.id, reply_to: comment.id }) }}">Répondre</a>
-        </p>
-    {% endif %}
+        {% endif %}
+    </div>
     {% if comment.replies is not empty %}
         <ul class="plain" style="margin-top:0.5rem">
             {% for child in comment.replies %}
