@@ -82,7 +82,7 @@ final class PostConsultationFormType extends AbstractType
                 'required' => false,
                 'constraints' => [
                     new File([
-                        'maxSize' => '2M',
+                        'maxSize' => '1024k',
                         'mimeTypes' => [
                             'image/jpeg',
                             'image/png',
@@ -91,7 +91,7 @@ final class PostConsultationFormType extends AbstractType
                         'mimeTypesMessage' => 'Veuillez télécharger une image valide (JPG, PNG ou WEBP).',
                     ])
                 ],
-                'help' => 'Taille max 2Mo. L\'upload est prioritaire sur le lien externe.',
+                'help' => 'Taille max 1Mo. Le format WebP est recommandé pour plus de rapidité.',
             ]);
     }
 

@@ -6,11 +6,11 @@
 
 {% block body %}
     {% set cover_images = [
-        'https://images.unsplash.com/photo-1573497019940-1c28c88b0f9e?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1516307365426-bea591f05011?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1499202184017-35f4930cdf80?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1573497019940-1c28c88b0f9e?auto=format&fit=crop&w=600&q=75',
+        'https://images.unsplash.com/photo-1516307365426-bea591f05011?auto=format&fit=crop&w=600&q=75',
+        'https://images.unsplash.com/photo-1499202184017-35f4930cdf80?auto=format&fit=crop&w=600&q=75',
+        'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=600&q=75',
+        'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=75',
     ] %}
 
     <div class="page-head-split">
@@ -18,13 +18,13 @@
             <p class="page-eyebrow">Espace forum</p>
             <h1>Rechercher &amp; publier</h1>
             <p class="page-lead muted" style="margin-bottom:0">
-                Publications liées au forum : colonnes <code>titre</code>, <code>contenu</code>, <code>categorie</code>,
-                <code>auteur_id_user</code>, <code>auteur_role</code>, <code>nb_likes</code>, <code>date</code>.
-                La recherche porte sur le titre et le contenu ; la publication ouvre une fenêtre (popup) avec le formulaire Symfony.
+                Bienvenue sur l'espace d'échange de notre cabinet. Ici, vous pouvez partager vos expériences, 
+                poser vos questions et interagir avec la communauté en toute bienveillance. 
+                Utilisez les filtres pour trouver les sujets qui vous intéressent ou créez votre propre publication.
             </p>
         </div>
         <figure>
-            <img src="https://images.unsplash.com/photo-1573497019940-1c28c88b0f9e?auto=format&fit=crop&w=900&q=80" width="900" height="675" alt="Espace de consultation apaisant" loading="eager" fetchpriority="high">
+            <img src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80" width="900" height="675" alt="Illustration Forum - Échange et bienveillance" fetchpriority="high">
         </figure>
     </div>
 
@@ -32,7 +32,7 @@
         <form class="search-form-consult" method="get" action="{{ path('app_consultation') }}" role="search">
             <div class="field-inline">
                 <label for="q">Recherche</label>
-                <input id="q" type="search" name="q" value="{{ q }}" placeholder="Mots dans le titre ou le texte…" autocomplete="off">
+                <input id="q" type="search" name="q" value="{{ q }}" placeholder="Mots clés…" autocomplete="off">
             </div>
             <div class="field-inline">
                 <label for="filtre-cat">Catégorie</label>
@@ -43,8 +43,16 @@
                     {% endfor %}
                 </select>
             </div>
+            <div class="field-inline">
+                <label for="sort">Trier par</label>
+                <select id="sort" name="sort" aria-label="Trier par">
+                    <option value="recent" {% if sort_by == 'recent' %}selected{% endif %}>Plus récents</option>
+                    <option value="likes" {% if sort_by == 'likes' %}selected{% endif %}>Plus aimés</option>
+                    <option value="comments" {% if sort_by == 'comments' %}selected{% endif %}>Plus commentés</option>
+                </select>
+            </div>
             <button type="submit" class="btn btn-primary">Filtrer</button>
-            {% if q or filter_categorie %}
+            {% if q or filter_categorie or sort_by != 'recent' %}
                 <a href="{{ path('app_consultation') }}" class="btn btn-outline">Réinitialiser</a>
             {% endif %}
         </form>
@@ -66,8 +74,12 @@
         <div class="post-grid">
             {% for post in posts %}
                 {% set cover = post.imageUrl ? (post.imageUrl starts with '/uploads/' ? asset(post.imageUrl) : post.imageUrl) : cover_images[loop.index0 % cover_images|length] %}
+                {# If it's an unsplash URL, add sizing parameters for performance #}
+                {% if 'unsplash.com' in cover and '?' not in cover %}
+                    {% set cover = cover ~ '?auto=format&fit=crop&w=600&q=75' %}
+                {% endif %}
                 <article class="post-card">
-                    <div class="post-card-visual" style="background-image: url('{{ cover }}');" role="img" aria-label=""></div>
+                    <div class="post-card-visual" style="background-image: url('{{ cover }}');" role="img" aria-label="" loading="lazy"></div>
                     <div class="post-card-body">
                         <h2><a href="{{ path('app_post_show', { id: post.id }) }}">{{ post.titre }}</a></h2>
                         <p class="post-card-meta">
@@ -99,7 +111,7 @@
             <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
                 {% for p in 1..total_pages %}
                     <a class="btn {{ p == page ? 'btn-primary' : 'btn-outline' }} btn-sm"
-                       href="{{ path('app_consultation', { page: p, q: q, categorie: filter_categorie }) }}">{{ p }}</a>
+                       href="{{ path('app_consultation', { page: p, q: q, categorie: filter_categorie, sort: sort_by }) }}">{{ p }}</a>
                 {% endfor %}
             </div>
         </div>

@@ -71,14 +71,14 @@ class PostRepository extends ServiceEntityRepository
     /**
      * @return array{items: Post[], total:int}
      */
-    public function searchConsultationsPaginated(?string $query, ?string $categorie, int $page, int $perPage = 6): array
+    public function searchConsultationsPaginated(?string $query, ?string $categorie, int $page, int $perPage = 6, ?string $sortBy = 'recent'): array
     {
         $page = max(1, $page);
         $offset = ($page - 1) * $perPage;
 
         $qb = $this->createQueryBuilder('p')
             ->leftJoin('p.auteur', 'u')->addSelect('u')
-            ->orderBy('p.date', 'DESC');
+            ->leftJoin('p.commentaires', 'c');
 
         if ($query !== null && $query !== '') {
             $qb->andWhere($qb->expr()->orX(
@@ -91,19 +91,36 @@ class PostRepository extends ServiceEntityRepository
             $qb->andWhere('p.categorie = :cat')->setParameter('cat', $categorie);
         }
 
+        // Logic for sorting
+        switch ($sortBy) {
+            case 'likes':
+                $qb->orderBy('p.nbLikes', 'DESC');
+                break;
+            case 'comments':
+                $qb->addSelect('COUNT(c) AS HIDDEN commentCount')
+                   ->groupBy('p.id')
+                   ->orderBy('commentCount', 'DESC');
+                break;
+            case 'recent':
+            default:
+                $qb->orderBy('p.date', 'DESC');
+                break;
+        }
+
         $items = (clone $qb)
             ->setFirstResult($offset)
             ->setMaxResults($perPage)
             ->getQuery()
             ->getResult();
 
-        $total = (int) (clone $qb)
-            ->select('COUNT(p.id)')
-            ->resetDQLPart('orderBy')
-            ->getQuery()
-            ->getSingleScalarResult();
+        $totalCountQb = clone $qb;
+        $totalCountQb->select('COUNT(DISTINCT p.id)');
+        $total = (int) $totalCountQb->getQuery()->getSingleScalarResult();
 
-        return ['items' => $items, 'total' => $total];
+        return [
+            'items' => $items,
+            'total' => $total,
+        ];
     }
 
     /**

@@ -114,6 +114,7 @@ final class ConsultationController extends AbstractController
         $this->requireForumRole();
         $q = $request->query->getString('q');
         $filterCategorie = $request->query->getString('categorie');
+        $sortBy = $request->query->getString('sort', 'recent');
         $page = max(1, $request->query->getInt('page', 1));
 
         $categorySuggestions = PostConsultationFormType::getCategoryChoices();
@@ -122,7 +123,8 @@ final class ConsultationController extends AbstractController
             $q !== '' ? $q : null,
             $filterCategorie !== '' ? $filterCategorie : null,
             $page,
-            6
+            6,
+            $sortBy
         );
         $totalPages = max(1, (int) ceil($result['total'] / 6));
 
@@ -130,6 +132,7 @@ final class ConsultationController extends AbstractController
             'posts' => $result['items'],
             'q' => $q,
             'filter_categorie' => $filterCategorie,
+            'sort_by' => $sortBy,
             'category_suggestions' => $categorySuggestions,
             'page' => $page,
             'total_pages' => $totalPages,

@@ -1024,16 +1024,17 @@
             }
             .emoji-picker-dropdown {
                 position: fixed;
-                background: var(--surface);
-                border: 1px solid var(--border);
-                border-radius: var(--radius-sm);
-                box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
                 padding: 10px;
                 display: none;
                 grid-template-columns: repeat(5, 1fr);
                 gap: 5px;
-                z-index: 9999;
-                width: 200px;
+                z-index: 10000;
+                width: 210px;
+                user-select: none;
             }
             .emoji-picker-dropdown span {
                 display: flex;
@@ -1043,32 +1044,34 @@
                 width: 35px;
                 font-size: 1.4rem;
                 cursor: pointer;
-                border-radius: 4px;
-                transition: background 0.2s;
+                border-radius: 6px;
+                transition: background 0.1s;
             }
             .emoji-picker-dropdown span:hover {
-                background: var(--accent-soft);
+                background: #f0f0f0;
             }
             .emoji-btn-wrapper {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 0.35rem;
+                margin-bottom: 5px;
             }
             .emoji-trigger-btn {
-                background: var(--accent-soft);
-                border: 1px solid rgba(42, 111, 91, 0.2);
-                color: var(--accent);
-                padding: 2px 8px;
-                font-size: 0.8rem;
+                background: #f8f9fa;
+                border: 1px solid #dee2e6;
+                color: #495057;
+                padding: 4px 10px;
+                font-size: 0.85rem;
                 border-radius: 6px;
                 cursor: pointer;
                 display: inline-flex;
                 align-items: center;
-                gap: 4px;
+                gap: 6px;
+                transition: all 0.2s;
             }
             .emoji-trigger-btn:hover {
-                background: var(--border);
+                background: #e9ecef;
+                border-color: #adb5bd;
             }
         </style>
         {% block stylesheets %}
@@ -1084,6 +1087,95 @@
         <script src="https://cdn.jsdelivr.net/npm/idiomorph"></script>
         <script src="https://cdn.jsdelivr.net/npm/frankenphp-hot-reload/+esm" type="module"></script>
         {% endif %}
+
+        <script>
+            /**
+             * Pure Vanilla JS Emoji Picker
+             * Works without external libraries or complex build steps
+             */
+            function setupEmojiPicker() {
+                const triggers = document.querySelectorAll('[data-emoji-picker]');
+                if (triggers.length === 0) return;
+
+                // Create picker only once
+                let picker = document.getElementById('global-emoji-picker');
+                if (!picker) {
+                    picker = document.createElement('div');
+                    picker.id = 'global-emoji-picker';
+                    picker.className = 'emoji-picker-dropdown';
+                    
+                    const emojis = ['😊', '😂', '😍', '🤔', '👍', '🙏', '❤️', '✨', '🔥', '👏', '🙌', '😢', '😎', '💡', '✅', '🌈', '⭐', '🎉', '💪', '🚀'];
+                    
+                    emojis.forEach(emoji => {
+                        const span = document.createElement('span');
+                        span.textContent = emoji;
+                        span.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            const targetId = picker.getAttribute('data-target-id');
+                            const input = document.getElementById(targetId);
+                            if (input) {
+                                const start = input.selectionStart;
+                                const end = input.selectionEnd;
+                                input.value = input.value.substring(0, start) + emoji + input.value.substring(end);
+                                input.focus();
+                                const newPos = start + emoji.length;
+                                input.setSelectionRange(newPos, newPos);
+                                input.dispatchEvent(new Event('input', { bubbles: true }));
+                            }
+                            picker.style.display = 'none';
+                        });
+                        picker.appendChild(span);
+                    });
+                    document.body.appendChild(picker);
+                }
+
+                triggers.forEach(trigger => {
+                    // Remove old listener to avoid duplicates
+                    trigger.onclick = null; 
+                    trigger.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        const targetId = trigger.getAttribute('data-emoji-target');
+                        const rect = trigger.getBoundingClientRect();
+                        
+                        // Toggle logic
+                        if (picker.style.display === 'grid' && picker.getAttribute('data-target-id') === targetId) {
+                            picker.style.display = 'none';
+                            return;
+                        }
+
+                        picker.setAttribute('data-target-id', targetId);
+                        picker.style.display = 'grid';
+                        
+                        // Smart positioning
+                        let top = rect.bottom + window.scrollY + 5;
+                        let left = rect.left + window.scrollX;
+
+                        // Check viewport overflow
+                        if (left + 210 > window.innerWidth) {
+                            left = window.innerWidth - 220;
+                        }
+                        
+                        picker.style.top = top + 'px';
+                        picker.style.left = left + 'px';
+                    });
+                });
+
+                // Global click to close
+                document.addEventListener('click', (e) => {
+                    if (picker && !picker.contains(e.target) && !e.target.hasAttribute('data-emoji-picker')) {
+                        picker.style.display = 'none';
+                    }
+                });
+            }
+
+            // Re-run on every Turbo load
+            document.addEventListener('turbo:load', setupEmojiPicker);
+            document.addEventListener('DOMContentLoaded', setupEmojiPicker);
+        </script>
     </head>
     <body{% block body_attr %}{% endblock %}>
         <header class="site-header">
