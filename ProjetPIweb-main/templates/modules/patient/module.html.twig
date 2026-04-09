@@ -1,0 +1,81 @@
+{% extends 'base_patient.html.twig' %}
+
+{% set labels = {
+    'comptes': 'Mon Compte',
+    'consultations': 'Rendez-vous & Consultations',
+    'cabinets': 'Annuaire Cabinets',
+    'bienetre': 'Suivi Bien-etre',
+    'messages': 'Messagerie Privee',
+    'forum': 'Forum Communaute'
+} %}
+
+{% block title %}Patient - {{ labels[module]|default(module) }}{% endblock %}
+
+{% block patient_body %}
+    <h1 class="h4 mb-3">{{ labels[module]|default(module) }}</h1>
+    <p class="text-muted">Template patient centre sur accompagnement, autonomie et suivi personnel.</p>
+
+    {% if module == 'comptes' %}
+        <div class="card p-3 mb-3">
+            <h2 class="h6">Mon espace compte</h2>
+            <ul class="mb-0">
+                <li>Informations personnelles</li>
+                <li>Securite du compte</li>
+                <li>Preferences de notification</li>
+            </ul>
+        </div>
+    {% elseif module == 'consultations' %}
+        <div class="row g-3 mb-3">
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">RDV a venir</small><div class="h5 mb-0">3</div></div></div>
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">RDV termines</small><div class="h5 mb-0">8</div></div></div>
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">Annules</small><div class="h5 mb-0">1</div></div></div>
+        </div>
+    {% elseif module == 'cabinets' %}
+        <div class="card p-3 mb-3">
+            <h2 class="h6">Annuaire cabinets</h2>
+            <p class="mb-0">Rechercher par ville, horaires, services et notes des patients.</p>
+        </div>
+    {% elseif module == 'bienetre' %}
+        <div class="card p-3 mb-3">
+            <h2 class="h6">Suivi bien-etre</h2>
+            <p class="mb-0">Humeur, sommeil, hydratation, progression hebdomadaire.</p>
+        </div>
+    {% elseif module == 'messages' %}
+        <div class="card p-3 mb-3">
+            <h2 class="h6">Messagerie privee</h2>
+            <p class="mb-0">Conversations directes avec votre psychologue hors consultation.</p>
+        </div>
+    {% elseif module == 'forum' %}
+        <div class="card p-3 mb-3">
+            <h2 class="h6">Activite communaute</h2>
+            <ul class="mb-0">
+                <li>2 nouvelles reponses sur vos discussions.</li>
+                <li>1 post recommande par votre psychologue.</li>
+                <li>0 signalement sur vos contenus.</li>
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card p-3 h-100">
+                <h2 class="h6">Espace module</h2>
+                <p class="mb-2">Cette maquette presente l experience cible: lecture simple, actions claires, ton rassurant.</p>
+                <div class="alert alert-light border mb-0">Prochaine etape: brancher les donnees reelles module par module.</div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card p-3 h-100">
+                <h2 class="h6">Navigation modules</h2>
+                <div class="d-grid gap-2">
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_patient_module_comptes') }}">Compte</a>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_patient_module_consultations') }}">Consultations</a>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_patient_module_cabinets') }}">Cabinets</a>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_patient_module_bienetre') }}">Bien-etre</a>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_patient_module_messages') }}">Messages</a>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_patient_module_forum') }}">Forum</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

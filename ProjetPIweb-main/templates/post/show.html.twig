@@ -1,0 +1,52 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ post.titre }} — Cabinet de psychologie{% endblock %}
+
+{% block body %}
+    <p class="muted back-link"><a href="{{ path('app_consultation') }}">← Retour aux consultations</a></p>
+
+    <article class="card">
+        <h1>{{ post.titre }}</h1>
+        <p class="muted">
+            {{ post.categorie }} · {{ post.auteurRole }}
+            {% if post.auteur %} · {{ post.auteur.prenom }} {{ post.auteur.nom }}{% endif %}
+            · {{ post.date|date('d/m/Y H:i') }}
+        </p>
+        <div class="post-body">{{ post.contenu }}</div>
+        <p class="muted likes-line">{{ post.nbLikes }} j’aime</p>
+    </article>
+
+    {% set comments = post.commentaires %}
+    {% set topLevelComments = comments|filter(c => c.parent is null) %}
+    <h2>Commentaires ({{ comments|length }})</h2>
+    {% if comments is empty %}
+        <p class="muted">Pas encore de commentaire.</p>
+    {% else %}
+        <div class="card">
+            <ul class="plain">
+                {% for c in topLevelComments %}
+                    {% include 'post/_comment_item.html.twig' with { comment: c, level: 0 } only %}
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="card">
+        <h2 style="margin-top:0">Ajouter un commentaire</h2>
+        {% if replyTarget %}
+            <p class="muted">
+                Réponse à
+                <strong>
+                    {% if replyTarget.auteur %}{{ replyTarget.auteur.prenom }} {{ replyTarget.auteur.nom }}{% else %}Anonyme{% endif %}
+                </strong>.
+                <a href="{{ path('app_post_show', { id: post.id }) }}">Annuler la réponse</a>
+            </p>
+        {% endif %}
+        {{ form_start(commentForm, { attr: { class: 'stack-form' } }) }}
+            {{ form_row(commentForm.contenu) }}
+            <div class="stack-form-actions">
+                <button type="submit" class="btn btn-primary">Publier</button>
+            </div>
+        {{ form_end(commentForm) }}
+    </div>
+{% endblock %}

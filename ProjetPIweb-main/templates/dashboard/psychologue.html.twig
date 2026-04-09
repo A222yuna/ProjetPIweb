@@ -1,0 +1,53 @@
+{% extends 'base_psychologue.html.twig' %}
+
+{% block title %}Dashboard Psychologue{% endblock %}
+
+{% block psychologue_body %}
+    <h1 class="h4 mb-3">Dashboard Psychologue</h1>
+    <p class="text-muted">Organisation des consultations, programmes bien-etre et suivi patient.</p>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-4"><div class="card p-3"><small class="text-muted">RDV de la semaine</small><div class="h4 mb-0">22</div></div></div>
+        <div class="col-md-4"><div class="card p-3"><small class="text-muted">Patients suivis</small><div class="h4 mb-0">48</div></div></div>
+        <div class="col-md-4"><div class="card p-3"><small class="text-muted">Programmes actifs</small><div class="h4 mb-0">7</div></div></div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-7">
+            <div class="card p-3 h-100">
+                <h2 class="h6">Planning & disponibilites</h2>
+                <p class="mb-2">Configurez vos jours, periode <code>DAY/NIGHT</code>, capacite et creneaux.</p>
+                <a class="btn btn-sm btn-primary" href="{{ path('app_psychologue_planning_index') }}">Ouvrir planning</a>
+                <hr>
+                <h3 class="h6">Prochains rendez-vous</h3>
+                <ul class="mb-0">
+                    <li>Lundi - 09:00 - Patient A</li>
+                    <li>Mardi - 14:30 - Patient B</li>
+                    <li>Jeudi - 11:00 - Patient C</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card p-3 h-100">
+                <h2 class="h6">Suivi therapeutique</h2>
+                <ul>
+                    <li>Programmes bien-etre: edition des activites quotidiennes.</li>
+                    <li>Forum: participation pedagogique et moderee.</li>
+                    <li>Messagerie: reponses hors consultation.</li>
+                </ul>
+                <div class="d-flex flex-wrap gap-2">
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_consultation') }}">Forum</a>
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_contact') }}">Messages (UI)</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card p-3 mt-3">
+        <h2 class="h6">Plan de journee</h2>
+        <div class="row g-2">
+            <div class="col-md-4"><div class="border rounded p-2">09:00 - Consultation patient</div></div>
+            <div class="col-md-4"><div class="border rounded p-2">12:00 - Notes cliniques</div></div>
+            <div class="col-md-4"><div class="border rounded p-2">17:30 - Mise a jour programme</div></div>
+        </div>
+    </div>
+{% endblock %}

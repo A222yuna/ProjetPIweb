@@ -1,0 +1,48 @@
+{% extends 'back.html.twig' %}
+
+{% block title %}Ajouter un cabinet{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .mc-modal-card { max-width: 760px; margin: 1rem auto; border: 2px solid #2abf9e; border-radius: 22px; box-shadow: 0 12px 28px rgba(0,0,0,.12); }
+        .mc-input { border-radius: 14px; border: 2px solid #cfe9f7; padding: .75rem .95rem; }
+        .mc-input:focus { border-color: #2abf9e; box-shadow: 0 0 0 .2rem rgba(42,191,158,.18); }
+        .mc-action { border-radius: 14px; padding: .65rem 1.7rem; }
+    </style>
+{% endblock %}
+
+{% block back_body %}
+    <div class="card mc-modal-card bg-white">
+        <div class="card-body p-4 p-md-5">
+            <h2 class="text-primary fw-bold mb-4">Ajouter un cabinet</h2>
+            {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+                <div class="text-danger small mb-3">{{ form_errors(form) }}</div>
+                <div class="mb-3">
+                    {{ form_label(form.adresse, 'Adresse *', {'label_attr': {'class': 'fw-semibold text-success'}}) }}
+                    {{ form_widget(form.adresse, {'attr': {'class': 'form-control mc-input', 'placeholder': 'Ex: Tunisia, Mednine 4100'}}) }}
+                    <div class="text-danger small">{{ form_errors(form.adresse) }}</div>
+                </div>
+                <div class="mb-3">
+                    {{ form_label(form.ville, 'Ville *', {'label_attr': {'class': 'fw-semibold text-success'}}) }}
+                    {{ form_widget(form.ville, {'attr': {'class': 'form-control mc-input', 'placeholder': 'Ex: Tunis'}}) }}
+                    <div class="text-danger small">{{ form_errors(form.ville) }}</div>
+                </div>
+                <div class="mb-3">
+                    {{ form_label(form.horaires, 'Horaires', {'label_attr': {'class': 'fw-semibold text-success'}}) }}
+                    {{ form_widget(form.horaires, {'attr': {'class': 'form-control mc-input', 'placeholder': 'Ex: 10 17 ou LUN Ven 10 17'}}) }}
+                    <div class="text-danger small">{{ form_errors(form.horaires) }}</div>
+                </div>
+                <div class="mb-4">
+                    {{ form_label(form.description, 'Description', {'label_attr': {'class': 'fw-semibold text-success'}}) }}
+                    {{ form_widget(form.description, {'attr': {'class': 'form-control mc-input', 'rows': 4, 'placeholder': 'Description du cabinet...'}}) }}
+                    <div class="text-danger small">{{ form_errors(form.description) }}</div>
+                </div>
+                <div class="d-flex justify-content-end gap-2">
+                    <button class="btn btn-primary mc-action" type="submit">Valider</button>
+                    <a href="{{ path(index_route|default('app_cabinet_index')) }}" class="btn btn-outline-secondary mc-action">Annuler</a>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}
