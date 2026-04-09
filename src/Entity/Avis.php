@@ -121,15 +121,37 @@ class Avis
     #[Assert\Callback]
     public function validateCommentaire(\Symfony\Component\Validator\Context\ExecutionContextInterface $context): void
     {
-        $badwords = ['con', 'idiot', 'merde', 'salaud', 'stupide', 'badword', 'pute', 'cochon'];
-        $comment = mb_strtolower($this->commentaire ?? '');
+        $comment = trim((string) ($this->commentaire ?? ''));
+        if ($comment == '') {
+            return;
+        }
+
+        $badwords = [
+            'con',
+            'connard',
+            'connasse',
+            'idiot',
+            'idiote',
+            'imbecile',
+            'merde',
+            'salaud',
+            'stupide',
+            'pute',
+            'cochon',
+            'batard',
+            'encule',
+            'fdp',
+            'badword',
+        ];
 
         foreach ($badwords as $word) {
-            if (str_contains($comment, $word)) {
-                $context->buildViolation('Votre commentaire contient des mots inappropriés : "' . $word . '". Veuillez rester courtois.')
+            $pattern = '/(^|[^[:alnum:]])'.preg_quote($word, '/').'([^[:alnum:]]|$)/iu';
+            if (preg_match($pattern, $comment) === 1) {
+                $context->buildViolation('Votre commentaire contient des mots inappropries. Merci de reformuler avec un langage respectueux.')
                     ->atPath('commentaire')
                     ->addViolation();
-                break;
+
+                return;
             }
         }
     }

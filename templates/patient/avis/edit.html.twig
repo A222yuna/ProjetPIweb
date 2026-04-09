@@ -13,26 +13,14 @@
         max-width: 800px;
         margin-bottom: 3rem;
     }
-    .star-rating-container {
-        display: flex;
-        gap: .5rem;
-        margin-bottom: 1rem;
+    .note-row {
+        display: grid;
+        gap: .45rem;
     }
-    .star-btn {
-        font-size: 2.5rem;
-        color: var(--border);
-        cursor: pointer;
-        transition: all .2s ease;
-        background: none; border: none; padding: 0;
+    .note-help {
+        font-size: .9rem;
+        color: var(--muted);
     }
-    .star-btn.active, .star-btn:hover, .star-btn.hover {
-        color: #e8a838;
-        transform: scale(1.1);
-    }
-    .star-label {
-        display: block; font-weight: 700; margin-bottom: .75rem; color: var(--text);
-    }
-    .hidden-select { display: none; }
 </style>
 {% endblock %}
 
@@ -46,16 +34,12 @@
 <div class="form-card">
     {{ form_start(form, {'attr': {'class': 'stack-form', 'novalidate': 'novalidate', 'id': 'avis-form'}}) }}
 
-    <div class="form-section">
-        <label class="star-label">Nouvelle note :</label>
-        <div class="star-rating-container" id="star-rating">
-            {% for i in 1..5 %}
-                <button type="button" class="star-btn" data-value="{{ i }}">★</button>
-            {% endfor %}
-        </div>
-        <div class="hidden-select">
-            {{ form_row(form.note) }}
-        </div>
+    <div class="form-section note-row">
+        {{ form_row(form.note, {
+            label: 'Nouvelle note',
+            attr: {'class': 'form-select'}
+        }) }}
+        <span class="note-help">Selectionnez la note via la liste etoilee.</span>
     </div>
 
     <div style="margin-top: 2rem;">
@@ -70,39 +54,4 @@
     {{ form_end(form) }}
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const starContainer = document.getElementById('star-rating');
-    const stars = starContainer.querySelectorAll('.star-btn');
-    const select = document.querySelector('#avis_note');
-    
-    updateStars(select.value || 1);
-
-    stars.forEach(star => {
-        star.addEventListener('click', function() {
-            const val = this.getAttribute('data-value');
-            select.value = val;
-            updateStars(val);
-        });
-        star.addEventListener('mouseenter', function() {
-            highlightStars(this.getAttribute('data-value'));
-        });
-        star.addEventListener('mouseleave', function() {
-            updateStars(select.value);
-        });
-    });
-
-    function updateStars(val) {
-        stars.forEach(s => {
-            s.classList.toggle('active', parseInt(s.getAttribute('data-value')) <= parseInt(val));
-            s.classList.remove('hover');
-        });
-    }
-    function highlightStars(val) {
-        stars.forEach(s => {
-            s.classList.toggle('hover', parseInt(s.getAttribute('data-value')) <= parseInt(val));
-        });
-    }
-});
-</script>
 {% endblock %}

@@ -16,12 +16,51 @@ use Symfony\Component\Routing\Attribute\Route;
 final class AvisController extends AbstractController
 {
     #[Route('/programmes', name: 'app_patient_programmes_index', methods: ['GET'])]
-    public function browsePrograms(ProgrammeBienEtreRepository $repo): Response
+    public function browsePrograms(Request $request, ProgrammeBienEtreRepository $repo): Response
     {
-        $programmes = $repo->findBy(['statut' => 'actif'], ['id' => 'DESC']);
+        $q = trim($request->query->getString('q'));
+        $jour = $request->query->getInt('jour', 0);
+        $programmes = $repo->createQueryBuilder('p')
+            ->leftJoin('p.psychologue', 'psy')->addSelect('psy')
+            ->leftJoin('p.activites', 'act')->addSelect('act')
+            ->leftJoin('p.avis', 'av')->addSelect('av')
+            ->andWhere('LOWER(COALESCE(p.statut, :defaultStatut)) = :actif')
+            ->setParameter('defaultStatut', 'actif')
+            ->setParameter('actif', 'actif')
+            ->orderBy('p.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        if ($q !== '') {
+            $needle = function_exists('mb_strtolower') ? mb_strtolower($q) : strtolower($q);
+            $programmes = array_values(array_filter($programmes, static function (ProgrammeBienEtre $p) use ($needle): bool {
+                $nom = $p->getNom() ?? '';
+                $objectif = $p->getObjectif() ?? '';
+                $psyNom = $p->getPsychologue()?->getNom() ?? '';
+                $psyPrenom = $p->getPsychologue()?->getPrenom() ?? '';
+                $haystack = trim($nom.' '.$objectif.' '.$psyNom.' '.$psyPrenom);
+                $haystack = function_exists('mb_strtolower') ? mb_strtolower($haystack) : strtolower($haystack);
+
+                return str_contains($haystack, $needle);
+            }));
+        }
+
+        if ($jour > 0) {
+            $programmes = array_values(array_filter($programmes, static function (ProgrammeBienEtre $p) use ($jour): bool {
+                foreach ($p->getActivites() as $activite) {
+                    if ($activite->getJour() === $jour) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }));
+        }
 
         return $this->render('patient/programmes/index.html.twig', [
             'programmes' => $programmes,
+            'q' => $q,
+            'jour' => $jour > 0 ? $jour : '',
         ]);
     }
 

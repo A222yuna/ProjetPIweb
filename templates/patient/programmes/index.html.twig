@@ -6,7 +6,18 @@
 
 {% block stylesheets %}
 <style>
-    body.layout-wide .wrap { max-width: 1500px !important; }
+    body.layout-wide .wrap {
+        max-width: none !important;
+        width: 100%;
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+    @media (max-width: 768px) {
+        body.layout-wide .wrap {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+    }
 
     .patient-hero {
         background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
@@ -35,8 +46,14 @@
 
     .prog-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 2rem;
+    }
+    @media (min-width: 1500px) {
+        .prog-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 980px) {
+        .prog-grid { grid-template-columns: 1fr; }
     }
     .patient-flow {
         background: var(--surface);
@@ -73,6 +90,45 @@
         font-size: .78rem;
         text-transform: uppercase;
         letter-spacing: .04em;
+    }
+    .prog-filter {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .prog-filter form {
+        display: grid;
+        grid-template-columns: 1.4fr .5fr auto auto;
+        gap: .75rem;
+        align-items: end;
+    }
+    .prog-filter label {
+        display: block;
+        font-size: .82rem;
+        font-weight: 700;
+        color: var(--muted);
+        margin-bottom: .3rem;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+    }
+    .prog-filter input {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: .55rem .7rem;
+        font: inherit;
+        background: #fff;
+    }
+    .prog-filter .actions {
+        display: flex;
+        gap: .5rem;
+        align-items: end;
+    }
+    @media (max-width: 980px) {
+        .prog-filter form { grid-template-columns: 1fr; }
     }
 
     .prog-card-modern {
@@ -196,6 +252,23 @@
     </ol>
 </section>
 
+<section class="prog-filter">
+    <form method="get" action="{{ path('app_patient_programmes_index') }}" id="programmes-filter-form">
+        <div>
+            <label for="search-programmes">Recherche</label>
+            <input id="search-programmes" type="search" name="q" value="{{ q|default('') }}" placeholder="Nom du programme, objectif, psychologue...">
+        </div>
+        <div>
+            <label for="jour-programme">Filtrer par jour</label>
+            <input id="jour-programme" type="number" min="1" name="jour" value="{{ jour|default('') }}" placeholder="Ex: 3">
+        </div>
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">Filtrer</button>
+            <a href="{{ path('app_patient_programmes_index') }}" class="btn btn-outline">Reinitialiser</a>
+        </div>
+    </form>
+</section>
+
 {% if programmes is empty %}
     <div class="empty-state">
         <div style="font-size:3rem;margin-bottom:1rem">🌱</div>
@@ -205,7 +278,15 @@
 {% else %}
     <div class="prog-grid">
         {% for p in programmes %}
-            <div class="prog-card-modern {{ loop.first ? 'is-featured' : '' }}">
+            {% set searchText = (p.nom|default('') ~ ' ' ~ p.objectif|default('') ~ ' ' ~ p.psychologue.prenom|default('') ~ ' ' ~ p.psychologue.nom|default(''))|lower %}
+            {% set dayValues = [] %}
+            {% for ac in p.activites %}
+                {% if ac.jour not in dayValues %}
+                    {% set dayValues = dayValues|merge([ac.jour]) %}
+                {% endif %}
+            {% endfor %}
+            {% set dayValues = dayValues|sort %}
+            <div class="prog-card-modern {{ loop.first ? 'is-featured' : '' }}" data-prog-card data-search="{{ searchText|e('html_attr') }}" data-days="{{ dayValues|join(',') }}">
                 {% if p.image %}
                     <div class="prog-visual" style="background-image:url('{{ asset('uploads/' ~ p.image) }}')">
                 {% else %}
@@ -261,5 +342,54 @@
             </div>
         {% endfor %}
     </div>
+    <div id="no-programme-result" class="empty-state" style="display:none; margin-top:1rem;">
+        <div style="font-size:2.2rem;margin-bottom:.7rem;">🔎</div>
+        <h3 style="margin:.2rem 0 .4rem;">Aucun programme ne correspond</h3>
+        <p class="muted" style="margin:0;">Essayez un autre mot-cle ou un autre jour.</p>
+    </div>
 {% endif %}
+
+<script>
+(() => {
+    const searchInput = document.getElementById('search-programmes');
+    const dayInput = document.getElementById('jour-programme');
+    if (!searchInput || !dayInput) return;
+
+    const cards = Array.from(document.querySelectorAll('[data-prog-card]'));
+    const emptyState = document.getElementById('no-programme-result');
+    if (!cards.length || !emptyState) return;
+
+    const normalize = (value) => (value || '')
+        .toString()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+
+    const applyFilter = () => {
+        const q = normalize(searchInput.value);
+        const day = parseInt(dayInput.value, 10);
+        let visibleCount = 0;
+
+        cards.forEach((card) => {
+            const cardSearch = normalize(card.dataset.search || '');
+            const dayList = (card.dataset.days || '').split(',').filter(Boolean).map(Number);
+
+            const matchesText = q === '' || cardSearch.includes(q);
+            const matchesDay = Number.isNaN(day) || day <= 0 || dayList.includes(day);
+            const isVisible = matchesText && matchesDay;
+
+            card.style.display = isVisible ? '' : 'none';
+            if (isVisible) visibleCount += 1;
+        });
+
+        emptyState.style.display = visibleCount === 0 ? '' : 'none';
+    };
+
+    searchInput.addEventListener('input', applyFilter);
+    dayInput.addEventListener('input', applyFilter);
+    dayInput.addEventListener('change', applyFilter);
+    applyFilter();
+})();
+</script>
 {% endblock %}
