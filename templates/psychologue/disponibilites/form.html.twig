@@ -1,0 +1,50 @@
+{% extends 'base_psychologue.html.twig' %}
+
+{% block title %}{{ is_edit ? 'Edit disponibilité' : 'New disponibilité' }}{% endblock %}
+
+{% block psychologue_body %}
+    <h1 class="h4 mb-3">{{ is_edit ? 'Modifier une disponibilité' : 'Nouvelle disponibilité' }}</h1>
+
+    <div class="card p-3">
+        {{ form_start(form) }}
+
+        <div class="mb-3">
+            <label class="form-label">Cabinet</label>
+            {{ form_widget(form.cabinet, { attr: { class: 'form-select ' ~ (form.cabinet.vars.errors|length ? 'is-invalid' : '') } }) }}
+            {% for e in form.cabinet.vars.errors %}<div class="invalid-feedback d-block">{{ e.message }}</div>{% endfor %}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Jour</label>
+            {{ form_widget(form.jour, { attr: { class: 'form-select ' ~ (form.jour.vars.errors|length ? 'is-invalid' : '') } }) }}
+            {% for e in form.jour.vars.errors %}<div class="invalid-feedback d-block">{{ e.message }}</div>{% endfor %}
+        </div>
+
+        <div class="row g-2">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Heure début</label>
+                {{ form_widget(form.heureDebut, { attr: { class: 'form-control ' ~ (form.heureDebut.vars.errors|length ? 'is-invalid' : '') } }) }}
+                {% for e in form.heureDebut.vars.errors %}<div class="invalid-feedback d-block">{{ e.message }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Heure fin</label>
+                {{ form_widget(form.heureFin, { attr: { class: 'form-control ' ~ (form.heureFin.vars.errors|length ? 'is-invalid' : '') } }) }}
+                {% for e in form.heureFin.vars.errors %}<div class="invalid-feedback d-block">{{ e.message }}</div>{% endfor %}
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Durée consultation (minutes)</label>
+            {{ form_widget(form.dureeConsultation, { attr: { class: 'form-control ' ~ (form.dureeConsultation.vars.errors|length ? 'is-invalid' : '') } }) }}
+            {% for e in form.dureeConsultation.vars.errors %}<div class="invalid-feedback d-block">{{ e.message }}</div>{% endfor %}
+        </div>
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary" type="submit">{{ is_edit ? 'Mettre à jour' : 'Créer' }}</button>
+            <a class="btn btn-outline-secondary" href="{{ path('app_psychologue_disponibilites_index') }}">Retour</a>
+        </div>
+
+        {{ form_end(form) }}
+    </div>
+{% endblock %}
+

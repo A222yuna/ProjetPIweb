@@ -1,0 +1,54 @@
+{% extends 'base_patient.html.twig' %}
+
+{% block title %}Mes rendez-vous{% endblock %}
+
+{% block patient_body %}
+    <h1 class="h4 mb-3">Reserver un rendez-vous</h1>
+    <div class="row g-3 mb-3">
+        <div class="col-md-4"><div class="card p-3"><small class="text-muted">Elements visibles</small><div class="h5 mb-0">{{ appointments|length }}</div></div></div>
+        <div class="col-md-4"><div class="card p-3"><small class="text-muted">Page</small><div class="h6 mb-0">{{ page }}/{{ total_pages }}</div></div></div>
+        <div class="col-md-4"><div class="card p-3"><small class="text-muted">Conseil</small><div class="h6 mb-0">Verifiez le statut</div></div></div>
+    </div>
+    <div class="card mb-3">
+        {{ form_start(form, { attr: { class: 'stack-form' } }) }}
+            <div class="mb-3">
+                <label class="form-label">Planning</label>
+                {{ form_widget(form.plan, { attr: { class: 'form-select ' ~ (form.plan.vars.errors|length ? 'is-invalid' : '') } }) }}
+                {% for e in form.plan.vars.errors %}<div class="invalid-feedback d-block">{{ e.message }}</div>{% endfor %}
+            </div>
+            <div class="stack-form-actions">
+                <button class="btn btn-primary">Reserver</button>
+            </div>
+        {{ form_end(form) }}
+    </div>
+
+    <div class="card p-3">
+        <h2 class="h6">Historique</h2>
+        <ul class="mb-0">
+            {% for a in appointments %}
+                <li class="mb-2">
+                    <strong>#{{ a.id }}</strong> - plan {{ a.plan ? a.plan.dayOfWeek ~ ' ' ~ a.plan.period : 'N/A' }}
+                    {% if a.status == 'SCHEDULED' %}<span class="badge text-bg-primary">SCHEDULED</span>{% endif %}
+                    {% if a.status == 'COMPLETED' %}<span class="badge text-bg-success">COMPLETED</span>{% endif %}
+                    {% if a.status == 'CANCELLED' %}<span class="badge text-bg-danger">CANCELLED</span>{% endif %}
+                    {% if a.status == 'SCHEDULED' %}
+                        <form method="post" action="{{ path('app_patient_rendezvous_cancel', { id: a.id }) }}" style="display:inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token('cancel_appointment_' ~ a.id) }}">
+                            <button class="btn btn-sm btn-outline-danger" type="submit">Annuler</button>
+                        </form>
+                    {% endif %}
+                </li>
+            {% else %}
+                <li>Aucun rendez-vous.</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% if total_pages > 1 %}
+        <div class="mt-3 d-flex gap-2 flex-wrap">
+            {% for p in 1..total_pages %}
+                <a class="btn btn-sm {{ p == page ? 'btn-primary' : 'btn-outline-primary' }}"
+                   href="{{ path('app_patient_rendezvous_index', { page: p }) }}">{{ p }}</a>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

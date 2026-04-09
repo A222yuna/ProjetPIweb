@@ -1,0 +1,94 @@
+{% extends 'base.html.twig' %}
+
+{% block body_attr %} class="layout-wide"{% endblock %}
+
+{% block title %}Prendre rendez-vous — Cabinet de psychologie{% endblock %}
+
+{% block body %}
+    <div class="page-head-split">
+        <div>
+            <p class="page-eyebrow">Agenda</p>
+            <h1>Demande de rendez-vous</h1>
+            <p class="page-lead muted" style="margin-bottom:0">
+                Visualisez les disponibilités existantes et les créneaux déjà réservés pour préparer la prise de rendez-vous.
+            </p>
+        </div>
+        <figure>
+            <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=900&q=80" width="900" height="675" alt="" loading="lazy">
+        </figure>
+    </div>
+
+    <div class="placeholder-banner" role="status">
+        <strong>Progression</strong> — Disponibilités et indicateurs de notes chargés depuis la base; formulaire final de réservation à brancher selon votre workflow.
+    </div>
+
+    <div class="grid-2 layout-split">
+        <div class="card card-elevated">
+            <h2 style="margin-top:0">Créneaux (aperçu)</h2>
+            <p class="muted">Créneaux issus de la table <code>disponibilite</code> + réservations de <code>creneau</code>.</p>
+            <div class="slot-grid" aria-hidden="true">
+                {% set day_names = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'] %}
+                {% if disponibilites is empty %}
+                    <p class="muted">Aucune disponibilité définie.</p>
+                {% endif %}
+                {% for d in disponibilites %}
+                    <div class="slot-day">
+                        <div class="slot-day-label">
+                            {{ day_names[d.jour] ?? ('Jour ' ~ d.jour) }}
+                            {% if d.cabinet %} - {{ d.cabinet.ville }}{% endif %}
+                        </div>
+                        <div class="slot-chips">
+                            <span class="slot-chip slot-chip--free">
+                                {{ d.heureDebut|date('H:i') }} - {{ d.heureFin|date('H:i') }}
+                            </span>
+                            {% if d.creneaux is empty %}
+                                <span class="slot-chip slot-chip--free">Disponible</span>
+                            {% else %}
+                                {% for cr in d.creneaux %}
+                                    <span class="slot-chip slot-chip--busy">
+                                        {{ cr.heure|date('H:i') }} ({{ cr.statut|lower }})
+                                    </span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 style="margin-top:0">Vos coordonnées</h2>
+            <form class="form-static" action="#" method="post" onsubmit="return false;">
+                <div class="field">
+                    <label for="r-nom">Nom</label>
+                    <input id="r-nom" type="text" disabled placeholder="Dupont">
+                </div>
+                <div class="field">
+                    <label for="r-email">E-mail</label>
+                    <input id="r-email" type="email" disabled placeholder="vous@exemple.fr">
+                </div>
+                <div class="field">
+                    <label for="r-motif">Motif</label>
+                    <textarea id="r-motif" rows="3" disabled placeholder="Votre demande…"></textarea>
+                </div>
+                <button type="button" class="btn btn-primary" disabled>Confirmer le rendez-vous</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card card-soft">
+        <h2 style="margin-top:0">Satisfaction des cabinets</h2>
+        {% if cabinetRatings is empty %}
+            <p class="muted">Aucun avis pour le moment.</p>
+        {% else %}
+            <ul class="plain">
+                {% for r in cabinetRatings %}
+                    <li>
+                        <strong>{{ r.ville }}</strong>
+                        <span class="muted"> — {{ r.avgNote|number_format(1, ',', ' ') }}/5 ({{ r.ratingCount }} avis)</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+{% endblock %}

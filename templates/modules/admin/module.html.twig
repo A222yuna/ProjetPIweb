@@ -1,0 +1,91 @@
+{% extends 'base_admin.html.twig' %}
+
+{% set labels = {
+    'comptes': 'Gestion des Comptes',
+    'consultations': 'Consultations & Planning',
+    'cabinets': 'Psychologues / Cabinets',
+    'bienetre': 'Bien-etre',
+    'messages': 'Messagerie',
+    'forum': 'Forum'
+} %}
+
+{% block title %}Admin - {{ labels[module]|default(module) }}{% endblock %}
+
+{% block admin_body %}
+    <h1 class="h4 mb-3">{{ labels[module]|default(module) }} - Admin</h1>
+    <p class="text-muted">Template de pilotage global (validation, moderation et controle qualite).</p>
+    {% if module == 'comptes' %}
+        <div class="row g-3">
+            <div class="col-md-3"><div class="card p-3"><small class="text-muted">Comptes actifs</small><div class="h5 mb-0">1 084</div></div></div>
+            <div class="col-md-3"><div class="card p-3"><small class="text-muted">En attente</small><div class="h5 mb-0">26</div></div></div>
+            <div class="col-md-3"><div class="card p-3"><small class="text-muted">Psychologues</small><div class="h5 mb-0">219</div></div></div>
+            <div class="col-md-3"><div class="card p-3"><small class="text-muted">Patients</small><div class="h5 mb-0">839</div></div></div>
+        </div>
+    {% elseif module == 'consultations' %}
+        <div class="row g-3">
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">SCHEDULED</small><div class="h5 mb-0">128</div></div></div>
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">COMPLETED</small><div class="h5 mb-0">973</div></div></div>
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">CANCELLED</small><div class="h5 mb-0">41</div></div></div>
+        </div>
+        <div class="card p-3 mt-3">
+            <h2 class="h6">Actions admin rendez-vous</h2>
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-sm btn-primary" href="{{ path('app_admin_appointments_index') }}">Liste appointments</a>
+            </div>
+        </div>
+    {% elseif module == 'cabinets' %}
+        <div class="row g-3">
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">Annonces actives</small><div class="h5 mb-0">74</div></div></div>
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">A valider</small><div class="h5 mb-0">12</div></div></div>
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">Archives</small><div class="h5 mb-0">19</div></div></div>
+        </div>
+    {% elseif module == 'bienetre' %}
+        <div class="row g-3">
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">Programmes publies</small><div class="h5 mb-0">28</div></div></div>
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">Avis negatifs</small><div class="h5 mb-0">7</div></div></div>
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">Activites/jour</small><div class="h5 mb-0">163</div></div></div>
+        </div>
+    {% elseif module == 'messages' %}
+        <div class="row g-3">
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">Conversations</small><div class="h5 mb-0">402</div></div></div>
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">Non lus</small><div class="h5 mb-0">54</div></div></div>
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">Signales</small><div class="h5 mb-0">9</div></div></div>
+        </div>
+    {% elseif module == 'forum' %}
+        <div class="row g-3">
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">Posts/jour</small><div class="h5 mb-0">37</div></div></div>
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">Commentaires</small><div class="h5 mb-0">211</div></div></div>
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">Signalements</small><div class="h5 mb-0">4</div></div></div>
+        </div>
+    {% endif %}
+
+    <div class="row g-3 mt-1">
+        <div class="col-lg-8">
+            <div class="card p-3 h-100">
+                <h2 class="h6">Vue operationnelle</h2>
+                <table class="table table-sm">
+                    <thead><tr><th>Element</th><th>Etat</th><th>Action</th></tr></thead>
+                    <tbody>
+                    <tr><td>Demandes en attente</td><td><span class="badge text-bg-warning">A traiter</span></td><td><button class="btn btn-sm btn-outline-secondary" disabled>Voir</button></td></tr>
+                    <tr><td>Anomalies detectees</td><td><span class="badge text-bg-danger">Attention</span></td><td><button class="btn btn-sm btn-outline-secondary" disabled>Auditer</button></td></tr>
+                    <tr><td>Flux quotidien</td><td><span class="badge text-bg-success">Stable</span></td><td><button class="btn btn-sm btn-outline-secondary" disabled>Details</button></td></tr>
+                    </tbody>
+                </table>
+                <div class="alert alert-light border mb-0">Template UX complete: brancher les donnees reelles quand vous activez ce module.</div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card p-3 h-100">
+                <h2 class="h6">Navigation modules</h2>
+                <div class="d-grid gap-2">
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_admin_module_comptes') }}">Comptes</a>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_admin_module_consultations') }}">Consultations</a>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_admin_module_cabinets') }}">Cabinets</a>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_admin_module_bienetre') }}">Bien-etre</a>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_admin_module_messages') }}">Messages</a>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_admin_module_forum') }}">Forum</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
