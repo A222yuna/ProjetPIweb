@@ -23,22 +23,17 @@ class Disponibilite
     private ?Cabinet $cabinet = null;
 
     #[ORM\Column(type: Types::SMALLINT)]
-    #[Assert\NotBlank(message: 'Le jour est obligatoire')]
-    #[Assert\Range(min: 1, max: 7, notInRangeMessage: 'Jour invalide')]
+    #[Assert\Range(min: 0, max: 6)]
     private int $jour = 0;
 
     #[ORM\Column(name: 'heure_debut', type: Types::TIME_MUTABLE)]
-    #[Assert\NotBlank(message: "L'heure de début est obligatoire")]
     private ?\DateTimeInterface $heureDebut = null;
 
     #[ORM\Column(name: 'heure_fin', type: Types::TIME_MUTABLE)]
-    #[Assert\NotBlank(message: "L'heure de fin est obligatoire")]
     private ?\DateTimeInterface $heureFin = null;
 
     #[ORM\Column(name: 'duree_consultation')]
-    #[Assert\NotBlank(message: 'La durée est obligatoire')]
-    #[Assert\Positive(message: 'La durée doit être positive')]
-    #[Assert\Range(min: 15, max: 120, notInRangeMessage: 'La durée doit être entre 15 et 120 minutes')]
+    #[Assert\Positive]
     private int $dureeConsultation = 0;
 
     /** @var Collection<int, Creneau> */

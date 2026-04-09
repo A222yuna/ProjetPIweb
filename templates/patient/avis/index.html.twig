@@ -1,0 +1,76 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes avis{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .my-avis-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem 1.35rem;
+        margin-bottom: 1rem;
+        box-shadow: var(--shadow);
+        transition: border-color .15s ease;
+    }
+    .my-avis-card:hover { border-color: var(--accent) }
+    .my-avis-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: .75rem;
+        flex-wrap: wrap;
+        margin-bottom: .5rem;
+    }
+    .my-avis-prog {
+        font-family: var(--font-serif);
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text);
+    }
+    .my-avis-prog a { color: var(--text) }
+    .my-avis-prog a:hover { color: var(--accent) }
+    .stars { color: #e8a838; letter-spacing: 2px }
+    .my-avis-actions { display: flex; gap: .35rem }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="page-eyebrow">Espace Patient</div>
+<h1>Mes avis</h1>
+<p class="page-lead">Retrouvez tous les avis que vous avez laissés sur les programmes.</p>
+
+{% if avis_list is empty %}
+    <div class="empty-state">
+        <div style="font-size:2.5rem;margin-bottom:.5rem">💬</div>
+        <p class="muted">Vous n'avez pas encore donné d'avis.</p>
+        <a href="{{ path('app_patient_programmes_index') }}" class="btn btn-primary">Découvrir les programmes</a>
+    </div>
+{% else %}
+    {% for a in avis_list %}
+        <div class="my-avis-card">
+            <div class="my-avis-head">
+                <div>
+                    <div class="my-avis-prog">
+                        <a href="{{ path('app_patient_programme_show', {id: a.programme.id}) }}">{{ a.programme.nom }}</a>
+                    </div>
+                    <span class="stars">
+                        {% for i in 1..5 %}{{ i <= a.note ? '★' : '☆' }}{% endfor %}
+                    </span>
+                    <span class="muted" style="margin-left:.5rem;font-size:.85rem">{{ a.dateAvis ? a.dateAvis|date('d/m/Y') : '' }}</span>
+                </div>
+                <div class="my-avis-actions">
+                    <a href="{{ path('app_patient_avis_edit', {id: a.id}) }}" class="btn btn-outline btn-sm">✏️ Modifier</a>
+                    <form method="post" action="{{ path('app_patient_avis_delete', {id: a.id}) }}" onsubmit="return confirm('Supprimer cet avis ?')">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ a.id) }}">
+                        <button class="btn btn-outline btn-sm" style="color:#a42020;border-color:#e2b0b0">🗑</button>
+                    </form>
+                </div>
+            </div>
+            {% if a.commentaire %}
+                <p style="margin:0;line-height:1.6">{{ a.commentaire }}</p>
+            {% endif %}
+        </div>
+    {% endfor %}
+{% endif %}
+{% endblock %}

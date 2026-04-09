@@ -1,0 +1,82 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle activité — {{ programme.nom }}{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .form-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 2.5rem 3rem;
+        box-shadow: 0 8px 32px rgba(28, 40, 36, 0.08);
+        max-width: 920px;
+        margin-bottom: 3rem;
+    }
+    .form-card-header {
+        margin-bottom: 1.75rem;
+        padding-bottom: 1.25rem;
+        border-bottom: 1px solid var(--border);
+    }
+    .form-card-header h2 {
+        font-family: var(--font-serif);
+        font-size: 1.3rem;
+        margin: 0 0 .35rem;
+        color: var(--text);
+    }
+    .form-card-header p {
+        margin: 0;
+        color: var(--muted);
+        font-size: .9rem;
+    }
+    .form-section-title {
+        font-size: .78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: var(--accent);
+        margin: 1.5rem 0 .75rem;
+        padding-bottom: .4rem;
+        border-bottom: 2px solid var(--accent-soft);
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<a href="{{ path('app_psychologue_programme_show', {id: programme.id}) }}" class="back-link">← Retour à « {{ programme.nom }} »</a>
+
+<div class="page-eyebrow">Espace Psychologue</div>
+<h1>Ajouter une activité</h1>
+<p class="page-lead">Ajoutez une activité au programme <strong>{{ programme.nom }}</strong>.</p>
+
+<div class="form-card">
+    {{ form_start(form, {'attr': {'class': 'stack-form', 'novalidate': 'novalidate'}}) }}
+
+    <div class="form-card-header">
+        <h2>📝 Détails de l'activité</h2>
+        <p>Décrivez l'activité, sa durée et son planning.</p>
+    </div>
+
+    {{ form_row(form.titre) }}
+    {{ form_row(form.description) }}
+
+    <div class="form-section-title">Planification</div>
+
+    <div class="grid-2">
+        <div>{{ form_row(form.jour) }}</div>
+        <div>{{ form_row(form.heureDebut) }}</div>
+    </div>
+
+    <div class="grid-2">
+        <div>{{ form_row(form.dureeMinutes) }}</div>
+        <div>{{ form_row(form.typeActivite) }}</div>
+    </div>
+
+    <div class="stack-form-actions">
+        <button type="submit" class="btn btn-primary">✨ Ajouter l'activité</button>
+        <a href="{{ path('app_psychologue_programme_show', {id: programme.id}) }}" class="btn btn-outline">Annuler</a>
+    </div>
+
+    {{ form_end(form) }}
+</div>
+{% endblock %}

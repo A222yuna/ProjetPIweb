@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ProgrammeBienEtreRepository::class)]
 #[ORM\Table(name: 'programme_bien_etre')]
@@ -22,12 +23,16 @@ class ProgrammeBienEtre
     private ?User $psychologue = null;
 
     #[ORM\Column(length: 150)]
+    #[Assert\NotBlank(message: 'Le nom du programme est obligatoire')]
+    #[Assert\Length(min: 3, max: 150, minMessage: 'Le nom doit faire au moins 3 caractères')]
     private ?string $nom = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $objectif = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank(message: 'La durée est obligatoire')]
+    #[Assert\Positive(message: 'La durée doit être un nombre positif')]
     private int $duree = 0;
 
     #[ORM\Column(length: 50, nullable: true)]
@@ -94,14 +99,14 @@ class ProgrammeBienEtre
         return $this;
     }
 
-    public function getDuree(): int
+    public function getDuree(): ?int
     {
         return $this->duree;
     }
 
-    public function setDuree(int $duree): static
+    public function setDuree(?int $duree): static
     {
-        $this->duree = $duree;
+        $this->duree = $duree ?? 0;
 
         return $this;
     }

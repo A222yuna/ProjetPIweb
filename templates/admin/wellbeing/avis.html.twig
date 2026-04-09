@@ -1,0 +1,78 @@
+{% extends 'base_admin.html.twig' %}
+
+{% block title %}Admin - Avis{% endblock %}
+
+{% block admin_body %}
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+        <div>
+            <h1 class="h4 mb-1">Avis patients</h1>
+            <p class="text-muted mb-0">Moderation et supervision de tous les avis de programmes.</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Avis total</small><div class="h4 mb-0">{{ stats.avis_total }}</div></div></div>
+        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Note moyenne</small><div class="h4 mb-0">{{ stats.note_moyenne|number_format(1, '.', '') }}/5</div></div></div>
+        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Avis positifs (>=4)</small><div class="h4 mb-0">{{ stats.avis_positifs }}</div></div></div>
+        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Avis negatifs (<=2)</small><div class="h4 mb-0">{{ stats.avis_negatifs }}</div></div></div>
+    </div>
+
+    <form class="card p-3 mb-3 js-admin-filter" method="get" action="{{ path('app_admin_wellbeing_avis') }}" data-target="#js-avis-results">
+        <div class="row g-2">
+            <div class="col-lg-6">
+                <label class="form-label mb-1">Recherche</label>
+                <input class="form-control" type="search" name="q" value="{{ q }}" placeholder="Commentaire, patient, programme...">
+            </div>
+            <div class="col-lg-2">
+                <label class="form-label mb-1">Note</label>
+                <select class="form-select" name="note">
+                    <option value="">Toutes</option>
+                    {% for n in 1..5 %}
+                        <option value="{{ n }}" {{ note == (n ~ '') ? 'selected' : '' }}>{{ n }}/5</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-lg-3">
+                <label class="form-label mb-1">Programme</label>
+                <select class="form-select" name="programme_id">
+                    <option value="">Tous</option>
+                    {% for p in programmes %}
+                        <option value="{{ p.id }}" {{ programme_id == p.id ? 'selected' : '' }}>{{ p.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </form>
+
+    <div id="js-avis-results">
+        {% include 'admin/wellbeing/_avis_table.html.twig' with { avis: avis } %}
+    </div>
+
+    <script>
+        (() => {
+            const form = document.querySelector('.js-admin-filter');
+            if (!form) return;
+            const target = document.querySelector(form.dataset.target);
+            if (!target) return;
+            let timer = null;
+            const run = () => {
+                const url = new URL(form.action, window.location.origin);
+                const data = new FormData(form);
+                for (const [key, value] of data.entries()) {
+                    if (value !== '') url.searchParams.set(key, value);
+                }
+                fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then((r) => r.text())
+                    .then((html) => { target.innerHTML = html; })
+                    .catch(() => {});
+            };
+            const debouncedRun = () => {
+                clearTimeout(timer);
+                timer = setTimeout(run, 300);
+            };
+            form.addEventListener('input', debouncedRun);
+            form.addEventListener('change', debouncedRun);
+            form.addEventListener('submit', (e) => { e.preventDefault(); run(); });
+        })();
+    </script>
+{% endblock %}

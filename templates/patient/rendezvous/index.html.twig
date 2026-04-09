@@ -11,11 +11,7 @@
     </div>
     <div class="card mb-3">
         {{ form_start(form, { attr: { class: 'stack-form' } }) }}
-            <div class="mb-3">
-                <label class="form-label">Planning</label>
-                {{ form_widget(form.plan, { attr: { class: 'form-select ' ~ (form.plan.vars.errors|length ? 'is-invalid' : '') } }) }}
-                {% for e in form.plan.vars.errors %}<div class="invalid-feedback d-block">{{ e.message }}</div>{% endfor %}
-            </div>
+            {{ form_row(form.plan) }}
             <div class="stack-form-actions">
                 <button class="btn btn-primary">Reserver</button>
             </div>

@@ -1,0 +1,339 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ programme.nom }} — Détails du programme{% endblock %}
+
+{% block body_attr %}class="layout-wide"{% endblock %}
+
+{% block stylesheets %}
+<style>
+    body.layout-wide .wrap { max-width: 1550px !important; }
+
+    .patient-prog-header {
+        position: relative;
+        border-radius: 24px;
+        overflow: hidden;
+        margin-bottom: 3rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+    }
+    @media(max-width: 992px) { .patient-prog-header { grid-template-columns: 1fr; } }
+
+    .header-content { padding: 4rem 3.5rem; }
+    .header-visual {
+        background-size: cover;
+        background-position: center;
+        min-height: 400px;
+    }
+    .header-placeholder {
+        height: 100%; display: flex; align-items: center; justify-content: center;
+        font-size: 6rem; background: linear-gradient(135deg, var(--accent-soft) 0%, #edf2f0 100%);
+    }
+
+    .header-author {
+        display: flex; align-items: center; gap: .75rem;
+        margin-bottom: 1.5rem; font-weight: 600; color: var(--accent);
+    }
+    .header-author-avatar {
+        width: 32px; height: 32px; border-radius: 50%;
+        background: var(--accent); color: #fff;
+        display: flex; align-items: center; justify-content: center; font-size: .85rem;
+    }
+
+    .header-meta { display: flex; gap: 1.5rem; margin: 2rem 0; }
+    .header-meta-box {
+        text-align: center; padding: 1rem 1.5rem; background: var(--bg);
+        border-radius: 16px; min-width: 120px;
+    }
+    .header-meta-val { display: block; font-size: 1.5rem; font-weight: 700; color: var(--text); }
+    .header-meta-label { display: block; font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-top: .25rem; }
+
+    /* Calendar Timeline */
+    .timeline-container {
+        display: flex; gap: 1.5rem;
+        overflow-x: auto; padding: 1rem 0 2rem;
+        scrollbar-width: thin;
+        scrollbar-color: var(--accent) transparent;
+    }
+    .timeline-container::-webkit-scrollbar { height: 8px; }
+    .timeline-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+    .timeline-day {
+        min-width: 380px; flex-shrink: 0;
+    }
+    .day-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 1.5rem;
+        height: 100%;
+        display: flex; flex-direction: column; gap: 1.25rem;
+        box-shadow: var(--shadow);
+    }
+    .day-header {
+        display: flex; justify-content: space-between; align-items: center;
+        padding-bottom: .75rem; border-bottom: 2px solid var(--accent-soft);
+    }
+    .day-title { font-size: 1.3rem; font-family: var(--font-serif); font-weight: 700; color: var(--text); }
+    .day-activity-count { font-size: .75rem; font-weight: 700; color: var(--accent); background: var(--accent-soft); padding: .2rem .5rem; border-radius: 6px; }
+
+    .activity-item {
+        display: flex; gap: 1rem; padding: 1rem;
+        background: var(--bg); border-radius: 14px;
+        border: 1px solid transparent; transition: all .2s ease;
+    }
+    .activity-item:hover { border-color: var(--accent); transform: scale(1.02); }
+    .activity-time {
+        width: 50px; font-weight: 700; font-size: .85rem; color: var(--accent);
+        text-align: right;
+    }
+    .activity-body { flex: 1; }
+    .activity-body h5 { margin: 0 0 .25rem; font-size: 1rem; font-weight: 600; }
+    .activity-body p { margin: 0; font-size: .85rem; color: var(--muted); line-height: 1.5; }
+    .activity-item-type {
+        font-size: .65rem; font-weight: 700; text-transform: uppercase;
+        color: var(--muted); margin-top: .5rem; display: block;
+    }
+    .programme-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .6rem;
+        margin-bottom: 1.25rem;
+    }
+    .programme-nav a {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        border-radius: 999px;
+        padding: .38rem .8rem;
+        font-size: .85rem;
+        font-weight: 600;
+    }
+    .programme-nav a:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: var(--accent-soft);
+    }
+    .activities-list {
+        margin-top: 2rem;
+    }
+    .activities-list-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: .85rem;
+    }
+    .activity-line {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: .9rem;
+    }
+    .activity-line-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: .5rem;
+        margin-bottom: .35rem;
+    }
+    .activity-line-day {
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .03em;
+        text-transform: uppercase;
+        color: var(--accent);
+    }
+    .activity-line-time {
+        font-size: .8rem;
+        color: var(--muted);
+        font-weight: 600;
+    }
+    .activity-line h4 {
+        margin: 0 0 .2rem;
+        font-size: .98rem;
+    }
+    .activity-line p {
+        margin: 0;
+        color: var(--muted);
+        font-size: .85rem;
+        line-height: 1.5;
+    }
+
+    /* Avis Section */
+    .patient-reviews { margin-top: 4rem; }
+    .reviews-masonry {
+        column-count: 3; column-gap: 1.5rem; margin-top: 2rem;
+    }
+    @media(max-width: 1200px) { .reviews-masonry { column-count: 2; } }
+    @media(max-width: 768px) { .reviews-masonry { column-count: 1; } }
+
+    .review-item {
+        break-inside: avoid; background: var(--surface);
+        border: 1px solid var(--border); border-radius: 20px;
+        padding: 1.75rem; margin-bottom: 1.5rem;
+        box-shadow: var(--shadow);
+    }
+    .review-item h6 { margin: 0 0 1rem; font-size: .95rem; display: flex; justify-content: space-between; align-items: center; }
+    .review-stars { color: #e8a838; font-size: .9rem; }
+    .review-text { font-size: .95rem; line-height: 1.6; color: var(--text); margin-bottom: 1rem; }
+    .review-meta { font-size: .8rem; color: var(--muted); font-weight: 600; }
+
+</style>
+{% endblock %}
+
+{% block body %}
+<a href="{{ path('app_patient_programmes_index') }}" class="back-link">← Retour aux programmes</a>
+
+<nav class="programme-nav" aria-label="Navigation du programme">
+    <a href="#planning">Planning</a>
+    <a href="#all-activities">Toutes les activites</a>
+    <a href="#reviews">Avis</a>
+</nav>
+
+<div class="patient-prog-header">
+    <div class="header-content">
+        <div class="header-author">
+            <div class="header-author-avatar">{{ programme.psychologue.prenom|slice(0,1)|upper }}</div>
+            <span>Dr. {{ programme.psychologue.prenom }} {{ programme.psychologue.nom }}</span>
+        </div>
+
+        <h1 style="font-size: 3.5rem; font-family: var(--font-serif); margin-bottom: 1.5rem;">{{ programme.nom }}</h1>
+        
+        <p class="page-lead" style="max-width: none; color: var(--text); opacity: 0.8;">{{ programme.objectif }}</p>
+
+        <div class="header-meta">
+            <div class="header-meta-box">
+                <span class="header-meta-val">{{ programme.duree }}</span>
+                <span class="header-meta-label">Jours</span>
+            </div>
+            <div class="header-meta-box">
+                <span class="header-meta-val">{{ programme.activites|length }}</span>
+                <span class="header-meta-label">Activités</span>
+            </div>
+            <div class="header-meta-box">
+                <span class="header-meta-val">{{ programme.niveauDifficulte|default('Standard')|capitalize }}</span>
+                <span class="header-meta-label">Niveau</span>
+            </div>
+        </div>
+
+        <div style="margin-top: 2.5rem; display: flex; gap: 1rem;">
+            <a href="#planning" class="btn btn-primary">📅 Voir le planning</a>
+            <a href="{{ path('app_patient_avis_new', {id: programme.id}) }}" class="btn btn-outline">⭐ Donner mon avis</a>
+        </div>
+    </div>
+    {% if programme.image %}
+        <div class="header-visual" style="background-image: url('{{ asset('uploads/' ~ programme.image) }}')"></div>
+    {% else %}
+        <div class="header-visual">
+            <div class="header-placeholder">🧘</div>
+        </div>
+    {% endif %}
+</div>
+
+<h2 id="planning" style="font-family: var(--font-serif); font-size: 2rem; margin-bottom: 1.5rem;">Votre planning personnalisé</h2>
+
+{# Group activities by day for the scroller #}
+{% set days_data = {} %}
+{% for a in programme.activites %}
+    {% set d_key = 'day_' ~ a.jour %}
+    {% if days_data[d_key] is not defined %}{% set days_data = days_data|merge({(d_key): []}) %}{% endif %}
+    {% set days_data = days_data|merge({(d_key): days_data[d_key]|merge([a])}) %}
+{% endfor %}
+
+<div class="timeline-container">
+    {% for day_num in 1..(programme.duree) %}
+        {% set current_day_key = 'day_' ~ day_num %}
+        <div class="timeline-day">
+            <div class="day-card">
+                <div class="day-header">
+                    <span class="day-title">Jour {{ day_num }}</span>
+                    {% if days_data[current_day_key] is defined %}
+                        <span class="day-activity-count">{{ days_data[current_day_key]|length }}</span>
+                    {% endif %}
+                </div>
+
+                {% if days_data[current_day_key] is defined %}
+                    {% for a in days_data[current_day_key]|sort((a,b) => a.heureDebut|date('H:i') <=> b.heureDebut|date('H:i')) %}
+                        <div class="activity-item">
+                            <div class="activity-time">{{ a.heureDebut ? a.heureDebut|date('H:i') : '--:--' }}</div>
+                            <div class="activity-body">
+                                <h5>{{ a.titre }}</h5>
+                                {% if a.description %}
+                                    <p>{{ a.description }}</p>
+                                {% endif %}
+                                <span class="activity-item-type">
+                                    {{ a.typeActivite|default('Activité')|capitalize }} 
+                                    {% if a.dureeMinutes %} · {{ a.dureeMinutes }} min{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: var(--muted); font-style: italic; font-size: .9rem;">
+                        Journée de repos ou libre
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<section id="all-activities" class="activities-list">
+    <div class="section-head">
+        <h2 style="font-family: var(--font-serif); font-size: 2rem;">Toutes les activites du programme</h2>
+    </div>
+    {% if programme.activites is empty %}
+        <div class="empty-state">
+            <p class="muted">Aucune activite n'est encore disponible pour ce programme.</p>
+        </div>
+    {% else %}
+        <div class="activities-list-grid">
+            {% for a in programme.activites|sort((a,b) => (a.jour <=> b.jour) ?: (a.heureDebut|date('H:i') <=> b.heureDebut|date('H:i'))) %}
+                <article class="activity-line">
+                    <div class="activity-line-head">
+                        <span class="activity-line-day">Jour {{ a.jour }}</span>
+                        <span class="activity-line-time">{{ a.heureDebut ? a.heureDebut|date('H:i') : '--:--' }}</span>
+                    </div>
+                    <h4>{{ a.titre }}</h4>
+                    <p>
+                        {{ a.typeActivite|default('Activite')|capitalize }}
+                        {% if a.dureeMinutes %} · {{ a.dureeMinutes }} min{% endif %}
+                    </p>
+                </article>
+            {% endfor %}
+        </div>
+    {% endif %}
+</section>
+
+<div id="reviews" class="patient-reviews">
+    <div class="section-head">
+        <h2 style="font-family: var(--font-serif); font-size: 2rem;">Avis de la communauté ({{ programme.avis|length }})</h2>
+        <a href="{{ path('app_patient_avis_new', {id: programme.id}) }}" class="btn btn-outline btn-sm">Partager mon avis</a>
+    </div>
+
+    {% if programme.avis is empty %}
+        <div class="empty-state" style="margin-top: 2rem;">
+            <p class="muted">Il n'y a pas encore d'avis pour ce programme. Soyez le premier !</p>
+        </div>
+    {% else %}
+        <div class="reviews-masonry">
+            {% for a in programme.avis %}
+                <div class="review-item">
+                    <h6>
+                        <span>{{ a.patient ? a.patient.prenom ~ ' ' ~ a.patient.nom : 'Anonyme' }}</span>
+                        <div class="review-stars">
+                            {% for i in 1..5 %}{{ i <= a.note ? '★' : '☆' }}{% endfor %}
+                        </div>
+                    </h6>
+                    <p class="review-text">{{ a.commentaire }}</p>
+                    <div class="review-meta">
+                        {{ a.dateAvis ? a.dateAvis|date('d/m/Y') : '' }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

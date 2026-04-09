@@ -11,9 +11,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'creneau')]
 class Creneau
 {
-    public const STATUT_RESERVE = 'RESERVE';
-    public const STATUT_ANNULE = 'ANNULE';
-
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -28,19 +25,15 @@ class Creneau
     private ?User $patient = null;
 
     #[ORM\Column(name: 'date_creneau', type: Types::DATE_MUTABLE)]
-    #[Assert\NotBlank(message: 'La date est obligatoire')]
-    #[Assert\GreaterThanOrEqual(value: 'today', message: 'La date ne peut pas être dans le passé')]
     private ?\DateTimeInterface $dateCreneau = null;
 
     #[ORM\Column(type: Types::TIME_MUTABLE)]
-    #[Assert\NotBlank(message: "L'heure est obligatoire")]
     private ?\DateTimeInterface $heure = null;
 
     #[ORM\Column(length: 20, options: ['default' => 'RESERVE'])]
     #[Assert\NotBlank]
     #[Assert\Length(max: 20)]
-    #[Assert\Choice(choices: [self::STATUT_RESERVE, self::STATUT_ANNULE], message: 'Statut invalide')]
-    private string $statut = self::STATUT_RESERVE;
+    private string $statut = 'RESERVE';
 
     public function getId(): ?int
     {

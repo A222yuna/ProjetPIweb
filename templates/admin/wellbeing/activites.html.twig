@@ -1,0 +1,82 @@
+{% extends 'base_admin.html.twig' %}
+
+{% block title %}Admin - Activites{% endblock %}
+
+{% block admin_body %}
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+        <div>
+            <h1 class="h4 mb-1">Activites des programmes</h1>
+            <p class="text-muted mb-0">Controle global des activites planifiees par les psychologues.</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Activites total</small><div class="h4 mb-0">{{ stats.activites_total }}</div></div></div>
+        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Types distincts</small><div class="h4 mb-0">{{ stats.types_total }}</div></div></div>
+        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Duree moyenne</small><div class="h4 mb-0">{{ stats.duree_moyenne }} min</div></div></div>
+        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Jour max planifie</small><div class="h4 mb-0">J{{ stats.jours_max }}</div></div></div>
+    </div>
+
+    <form class="card p-3 mb-3 js-admin-filter" method="get" action="{{ path('app_admin_wellbeing_activites') }}" data-target="#js-activites-results">
+        <div class="row g-2">
+            <div class="col-lg-4">
+                <label class="form-label mb-1">Recherche</label>
+                <input class="form-control" type="search" name="q" value="{{ q }}" placeholder="Titre, description, programme...">
+            </div>
+            <div class="col-lg-3">
+                <label class="form-label mb-1">Type</label>
+                <select class="form-select" name="type">
+                    <option value="">Tous</option>
+                    {% for t in types %}
+                        <option value="{{ t }}" {{ type == t ? 'selected' : '' }}>{{ t|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-lg-3">
+                <label class="form-label mb-1">Programme</label>
+                <select class="form-select" name="programme_id">
+                    <option value="">Tous</option>
+                    {% for p in programmes %}
+                        <option value="{{ p.id }}" {{ programme_id == p.id ? 'selected' : '' }}>{{ p.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-lg-1">
+                <label class="form-label mb-1">Jour</label>
+                <input class="form-control" type="number" min="1" name="jour" value="{{ jour }}">
+            </div>
+        </div>
+    </form>
+
+    <div id="js-activites-results">
+        {% include 'admin/wellbeing/_activites_table.html.twig' with { activites: activites } %}
+    </div>
+
+    <script>
+        (() => {
+            const form = document.querySelector('.js-admin-filter');
+            if (!form) return;
+            const target = document.querySelector(form.dataset.target);
+            if (!target) return;
+            let timer = null;
+            const run = () => {
+                const url = new URL(form.action, window.location.origin);
+                const data = new FormData(form);
+                for (const [key, value] of data.entries()) {
+                    if (value !== '') url.searchParams.set(key, value);
+                }
+                fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then((r) => r.text())
+                    .then((html) => { target.innerHTML = html; })
+                    .catch(() => {});
+            };
+            const debouncedRun = () => {
+                clearTimeout(timer);
+                timer = setTimeout(run, 300);
+            };
+            form.addEventListener('input', debouncedRun);
+            form.addEventListener('change', debouncedRun);
+            form.addEventListener('submit', (e) => { e.preventDefault(); run(); });
+        })();
+    </script>
+{% endblock %}

@@ -57,9 +57,10 @@
                 top: 0;
                 z-index: 50;
             }
-            .wrap { max-width: 920px; margin: 0 auto; padding: 0 1.5rem; }
+            .wrap { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
             body.layout-consultation .wrap,
-            body.layout-wide .wrap { max-width: 1180px; }
+            body.layout-wide .wrap { max-width: 1280px; }
+            .header-wrap { max-width: 1280px; margin: 0 auto; padding: 0 1.5rem; }
             .admin-shell {
                 display: grid;
                 grid-template-columns: minmax(200px, 260px) 1fr;
@@ -113,17 +114,21 @@
             .header-inner {
                 display: flex;
                 align-items: center;
-                gap: 0.75rem 1rem;
+                gap: 0.5rem 0.75rem;
                 padding: 0.65rem 0;
-                flex-wrap: wrap;
+                flex-wrap: nowrap;
             }
-            .header-inner > .brand { margin-right: auto; }
+            .header-inner > .brand { margin-right: auto; flex-shrink: 0; }
             @media (min-width: 881px) {
                 .header-inner .site-nav {
                     flex: 1;
                     justify-content: flex-end;
+                    overflow-x: auto;
                 }
-                .header-inner .site-nav .nav-links { justify-content: flex-end; }
+                .header-inner .site-nav .nav-links {
+                    justify-content: flex-end;
+                    flex-wrap: nowrap;
+                }
             }
             .nav-toggle {
                 display: none;
@@ -198,17 +203,19 @@
             }
             .nav-links {
                 display: flex;
-                flex-wrap: wrap;
-                gap: 0.35rem 0.25rem;
+                flex-wrap: nowrap;
+                gap: 0.25rem 0.15rem;
                 align-items: center;
             }
             .nav-links a {
-                padding: 0.45rem 0.9rem;
+                padding: 0.3rem 0.55rem;
                 border-radius: 999px;
-                font-size: 0.9375rem;
+                font-size: 0.85rem;
                 font-weight: 500;
                 color: var(--text);
                 background: transparent;
+                white-space: nowrap;
+                transition: background .15s ease, color .15s ease;
             }
             .nav-links a:hover {
                 background: var(--accent-soft);
@@ -858,8 +865,14 @@
             .field-inline select { min-width: 160px; }
             .post-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
-                gap: 1.15rem;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1.25rem;
+            }
+            @media (max-width: 960px) {
+                .post-grid { grid-template-columns: repeat(2, 1fr); }
+            }
+            @media (max-width: 600px) {
+                .post-grid { grid-template-columns: 1fr; }
             }
             .post-card {
                 background: var(--surface);
@@ -955,40 +968,115 @@
                 flex-shrink: 0;
             }
             .modal-close:hover { background: var(--border); }
-            .stack-form > div { margin-bottom: 1rem; }
+            .stack-form > div { margin-bottom: 1.5rem; }
             .stack-form label,
             .stack-form .col-form-label {
                 display: block;
                 font-weight: 600;
-                font-size: 0.875rem;
-                margin-bottom: 0.35rem;
+                font-size: 0.95rem;
+                margin-bottom: 0.6rem;
+                color: var(--text);
+                letter-spacing: 0.01em;
             }
             .stack-form input[type="text"],
             .stack-form input[type="email"],
+            .stack-form input[type="number"],
+            .stack-form input[type="url"],
+            .stack-form input[type="date"],
+            .stack-form input[type="time"],
             .stack-form select,
             .stack-form textarea {
                 width: 100%;
-                padding: 0.55rem 0.75rem;
-                border: 1px solid var(--border);
+                padding: 0.8rem 1.15rem;
+                border: 1.5px solid var(--border);
                 border-radius: var(--radius-sm);
                 font: inherit;
+                font-size: 1.05rem;
+                background: var(--surface);
+                color: var(--text);
+                transition: border-color .2s ease, box-shadow .2s ease;
+                outline: none;
             }
-            .stack-form textarea { resize: vertical; min-height: 120px; }
+            .stack-form input[type="text"]:focus,
+            .stack-form input[type="email"]:focus,
+            .stack-form input[type="number"]:focus,
+            .stack-form input[type="url"]:focus,
+            .stack-form input[type="date"]:focus,
+            .stack-form input[type="time"]:focus,
+            .stack-form select:focus,
+            .stack-form textarea:focus {
+                border-color: var(--accent);
+                box-shadow: 0 0 0 4px rgba(42, 111, 91, 0.15);
+            }
+            .stack-form input::placeholder,
+            .stack-form textarea::placeholder {
+                color: var(--muted);
+                opacity: 0.6;
+            }
+            .stack-form textarea { resize: vertical; min-height: 155px; }
+            .stack-form input[type="file"] {
+                width: 100%;
+                padding: 1rem 1.25rem;
+                border: 2px dashed var(--border);
+                border-radius: var(--radius-sm);
+                background: #faf9f7;
+                cursor: pointer;
+                font: inherit;
+                font-size: 1rem;
+                color: var(--muted);
+                transition: border-color .2s ease, background .2s ease;
+            }
+            .stack-form input[type="file"]:hover {
+                border-color: var(--accent);
+                background: var(--accent-soft);
+            }
+            .stack-form input[type="file"]:focus {
+                border-color: var(--accent);
+                outline: none;
+                box-shadow: 0 0 0 4px rgba(42, 111, 91, 0.15);
+            }
             .stack-form .form-help,
             .stack-form .help-text {
-                font-size: 0.8125rem;
+                font-size: 0.875rem;
                 color: var(--muted);
-                margin-top: 0.35rem;
+                margin-top: 0.45rem;
+            }
+            .stack-form ul {
+                list-style: none;
+                padding: 0;
+                margin: 0 0 0.5rem;
             }
             .stack-form ul li {
                 color: #a42020;
-                font-size: 0.875rem;
+                font-size: 0.8125rem;
+                font-weight: 500;
+                padding: 0.25rem 0.5rem;
+                background: #fdf2f2;
+                border-radius: 4px;
+                margin-bottom: 0.25rem;
+            }
+            .stack-form .form-error input,
+            .stack-form .form-error select,
+            .stack-form .form-error textarea {
+                border-color: #e2b0b0;
+                background-color: #fffcfc;
+            }
+            .stack-form ul + input,
+            .stack-form ul + select,
+            .stack-form ul + textarea,
+            .stack-form label + ul + input,
+            .stack-form label + ul + select,
+            .stack-form label + ul + textarea {
+                border-color: #e2b0b0 !important;
+                background-color: #fffcfc !important;
             }
             .stack-form-actions {
                 display: flex;
                 flex-wrap: wrap;
-                gap: 0.5rem;
-                margin-top: 1.25rem;
+                gap: 0.65rem;
+                margin-top: 1.5rem;
+                padding-top: 1.25rem;
+                border-top: 1px solid var(--border);
             }
             .nav-links a.nav-external {
                 border: 1px dashed var(--accent);
@@ -1039,7 +1127,7 @@
     </head>
     <body{% block body_attr %}{% endblock %}>
         <header class="site-header">
-            <div class="wrap header-inner">
+            <div class="header-wrap header-inner">
                 {% include '_partials/nav.html.twig' %}
                 <button type="button" class="nav-toggle" data-nav-toggle aria-expanded="false" aria-controls="site-navigation">
                     <span class="nav-toggle-bar" aria-hidden="true"></span>

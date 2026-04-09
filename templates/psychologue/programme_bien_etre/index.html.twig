@@ -1,0 +1,892 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes programmes — Psychologue{% endblock %}
+
+{% block stylesheets %}
+<style>
+/* ── Calendar Modal ── */
+.cal-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(28, 40, 36, 0.55);
+    backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity .3s ease;
+}
+.cal-overlay.is-open {
+    opacity: 1; pointer-events: auto;
+}
+.cal-modal {
+    background: var(--surface);
+    border-radius: 16px;
+    width: min(96vw, 1100px);
+    max-height: 92vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 32px 80px rgba(28, 40, 36, 0.22), 0 0 0 1px rgba(28, 40, 36, 0.08);
+    transform: translateY(24px) scale(0.97);
+    transition: transform .35s cubic-bezier(.22,1,.36,1);
+    overflow: hidden;
+}
+.cal-overlay.is-open .cal-modal {
+    transform: translateY(0) scale(1);
+}
+
+/* Header */
+.cal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, var(--accent-soft) 0%, var(--surface) 100%);
+    flex-shrink: 0;
+}
+.cal-header-left { display: flex; align-items: center; gap: .75rem; }
+.cal-header-icon {
+    width: 42px; height: 42px;
+    background: var(--accent);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 1.25rem;
+    box-shadow: 0 4px 12px rgba(42, 111, 91, 0.3);
+}
+.cal-header-title {
+    font-family: var(--font-serif);
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.2;
+}
+.cal-header-subtitle {
+    font-size: .82rem;
+    color: var(--muted);
+    margin-top: 2px;
+}
+.cal-close {
+    width: 36px; height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.15rem;
+    color: var(--muted);
+    transition: all .15s ease;
+}
+.cal-close:hover {
+    background: #fce8e8; color: #a42020; border-color: #e2b0b0;
+}
+
+/* Toolbar – day navigation */
+.cal-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .65rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+    gap: .75rem;
+}
+.cal-nav-group { display: flex; align-items: center; gap: .35rem; }
+.cal-nav-btn {
+    width: 32px; height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .95rem;
+    color: var(--text);
+    transition: all .15s ease;
+}
+.cal-nav-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft) }
+.cal-nav-label {
+    font-weight: 600; font-size: .95rem;
+    min-width: 140px; text-align: center;
+}
+.cal-view-toggle { display: flex; gap: .25rem; }
+.cal-view-btn {
+    padding: .3rem .7rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    cursor: pointer;
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--muted);
+    transition: all .15s ease;
+}
+.cal-view-btn.active,
+.cal-view-btn:hover {
+    background: var(--accent); color: #fff; border-color: var(--accent);
+}
+
+/* Calendar body */
+.cal-body {
+    flex: 1; overflow: auto;
+    position: relative;
+}
+
+/* Day columns header */
+.cal-day-header {
+    display: grid;
+    position: sticky; top: 0;
+    z-index: 5;
+    background: var(--surface);
+    border-bottom: 2px solid var(--border);
+}
+.cal-day-header-cell {
+    padding: .55rem .5rem;
+    text-align: center;
+    border-right: 1px solid var(--border);
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+.cal-day-header-cell:last-child { border-right: none; }
+.cal-day-header-cell .day-num {
+    display: block;
+    font-family: var(--font-serif);
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+}
+.cal-day-header-cell.is-today {
+    background: var(--accent-soft);
+}
+.cal-day-header-cell.is-today .day-num {
+    color: var(--accent);
+}
+
+/* Time grid */
+.cal-grid-wrap {
+    display: grid;
+    min-height: 720px;
+    position: relative;
+}
+.cal-time-gutter {
+    position: sticky; left: 0;
+    z-index: 3;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    width: 56px;
+}
+.cal-time-label {
+    height: 60px;
+    display: flex; align-items: flex-start; justify-content: flex-end;
+    padding: 0 .5rem;
+    font-size: .72rem;
+    font-weight: 600;
+    color: var(--muted);
+    transform: translateY(-8px);
+}
+.cal-columns-wrap {
+    display: grid;
+    position: relative;
+    flex: 1;
+}
+.cal-column {
+    position: relative;
+    border-right: 1px solid var(--border);
+    min-height: 100%;
+}
+.cal-column:last-child { border-right: none; }
+.cal-hour-line {
+    position: absolute; left: 0; right: 0;
+    border-top: 1px solid rgba(220, 216, 208, 0.6);
+    height: 60px;
+}
+.cal-hour-line:nth-child(odd) {
+    background: rgba(244, 242, 238, 0.3);
+}
+.cal-hour-line-half {
+    position: absolute; left: 0; right: 0;
+    border-top: 1px dashed rgba(220, 216, 208, 0.35);
+    height: 0;
+}
+
+/* Event blocks */
+.cal-event {
+    position: absolute;
+    left: 3px; right: 3px;
+    border-radius: 6px;
+    padding: .35rem .5rem;
+    font-size: .78rem;
+    line-height: 1.3;
+    cursor: pointer;
+    overflow: hidden;
+    transition: box-shadow .2s ease, transform .15s ease;
+    z-index: 2;
+    border-left: 3px solid;
+}
+.cal-event:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,.15);
+    transform: scale(1.02);
+    z-index: 10;
+}
+.cal-event-title {
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.cal-event-time {
+    font-size: .7rem;
+    opacity: .8;
+    margin-top: 1px;
+}
+.cal-event-desc {
+    font-size: .72rem;
+    opacity: .75;
+    margin-top: 3px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Event color palette */
+.cal-event-0 { background: rgba(42, 111, 91, .15); border-color: #2a6f5b; color: #1a4a3a; }
+.cal-event-1 { background: rgba(59, 130, 246, .15); border-color: #3b82f6; color: #1e40af; }
+.cal-event-2 { background: rgba(245, 158, 11, .15); border-color: #f59e0b; color: #92400e; }
+.cal-event-3 { background: rgba(168, 85, 247, .15); border-color: #a855f7; color: #6b21a8; }
+.cal-event-4 { background: rgba(236, 72, 153, .15); border-color: #ec4899; color: #9d174d; }
+.cal-event-5 { background: rgba(20, 184, 166, .15); border-color: #14b8a6; color: #0f766e; }
+.cal-event-6 { background: rgba(249, 115, 22, .15); border-color: #f97316; color: #9a3412; }
+
+/* Loading */
+.cal-loading {
+    display: flex; align-items: center; justify-content: center;
+    padding: 3rem; gap: .75rem; color: var(--muted);
+}
+.cal-spinner {
+    width: 28px; height: 28px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: calSpin .7s linear infinite;
+}
+@keyframes calSpin { to { transform: rotate(360deg) } }
+
+/* Empty state */
+.cal-empty {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 3rem 1rem; text-align: center;
+}
+.cal-empty-icon { font-size: 3rem; margin-bottom: .75rem; opacity: .6; }
+.cal-empty-text { color: var(--muted); font-size: .95rem; }
+
+/* Event detail popover */
+.cal-popover {
+    position: fixed;
+    z-index: 10001;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.15rem;
+    box-shadow: 0 16px 48px rgba(0,0,0,.18);
+    min-width: 260px;
+    max-width: 340px;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity .2s ease, transform .2s ease;
+    pointer-events: none;
+}
+.cal-popover.is-visible {
+    opacity: 1; transform: translateY(0); pointer-events: auto;
+}
+.cal-popover-title {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: .5rem;
+}
+.cal-popover-row {
+    display: flex; align-items: center; gap: .5rem;
+    font-size: .88rem;
+    color: var(--muted);
+    margin-bottom: .35rem;
+}
+.cal-popover-row-icon { font-size: 1rem; width: 20px; text-align: center; }
+.cal-popover-desc {
+    font-size: .88rem;
+    line-height: 1.55;
+    color: var(--text);
+    margin-top: .5rem;
+    padding-top: .5rem;
+    border-top: 1px solid var(--border);
+}
+
+/* Legend */
+.cal-legend {
+    display: flex; flex-wrap: wrap; gap: .5rem .85rem;
+    padding: .5rem 1.5rem .75rem;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+}
+.cal-legend-item {
+    display: flex; align-items: center; gap: .35rem;
+    font-size: .78rem; color: var(--muted);
+}
+.cal-legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 3px;
+}
+
+/* Programme card calendar button */
+.btn-calendar, .btn-add-activity {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .35rem .75rem;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s ease;
+    text-decoration: none;
+}
+.btn-calendar {
+    border: 1px solid rgba(42, 111, 91, .3);
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+.btn-calendar:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 4px 14px rgba(42, 111, 91, .3);
+    transform: translateY(-1px);
+}
+.btn-add-activity {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+}
+.btn-add-activity:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: var(--accent);
+}
+.btn-calendar svg, .btn-add-activity svg {
+    width: 14px; height: 14px;
+}
+
+/* LIST VIEW */
+.cal-list-view {
+    padding: 1rem 1.5rem;
+}
+.cal-list-day {
+    margin-bottom: 1.25rem;
+}
+.cal-list-day-label {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    padding-bottom: .5rem;
+    border-bottom: 2px solid var(--accent-soft);
+    margin-bottom: .65rem;
+}
+.cal-list-event {
+    display: flex; gap: .75rem; align-items: flex-start;
+    padding: .65rem .85rem;
+    border-radius: 8px;
+    margin-bottom: .4rem;
+    transition: background .15s ease;
+    cursor: pointer;
+}
+.cal-list-event:hover { background: var(--accent-soft); }
+.cal-list-event-color {
+    width: 4px;
+    border-radius: 2px;
+    align-self: stretch;
+    flex-shrink: 0;
+}
+.cal-list-event-time {
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--muted);
+    min-width: 80px;
+    padding-top: 2px;
+}
+.cal-list-event-body { flex: 1; }
+.cal-list-event-title {
+    font-weight: 600;
+    font-size: .95rem;
+    color: var(--text);
+}
+.cal-list-event-meta {
+    font-size: .82rem;
+    color: var(--muted);
+    margin-top: 2px;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="page-eyebrow">Espace Psychologue</div>
+<h1>Mes programmes bien-être</h1>
+<p class="page-lead">Gérez vos programmes de bien-être et les activités associées.</p>
+
+<div class="dash-header">
+    <div></div>
+    <div class="dash-header-actions">
+        <a href="{{ path('app_psychologue_programme_new') }}" class="btn btn-primary">＋ Nouveau programme</a>
+    </div>
+</div>
+
+{% if programmes is empty %}
+    <div class="empty-state">
+        <div style="font-size:2.5rem;margin-bottom:.5rem">📋</div>
+        <p class="muted">Vous n'avez encore créé aucun programme.</p>
+        <a href="{{ path('app_psychologue_programme_new') }}" class="btn btn-primary">Créer mon premier programme</a>
+    </div>
+{% else %}
+    <div class="post-grid">
+        {% for p in programmes %}
+            <div class="post-card">
+                {% if p.image %}
+                    <div class="post-card-visual" style="background-image:url('{{ asset('uploads/' ~ p.image) }}')"></div>
+                {% else %}
+                    <div class="post-card-visual" style="background:linear-gradient(135deg,var(--accent-soft),rgba(42,111,91,.15));display:flex;align-items:center;justify-content:center">
+                        <span style="font-size:2.5rem">🧘</span>
+                    </div>
+                {% endif %}
+                <div class="post-card-body">
+                    <h2><a href="{{ path('app_psychologue_programme_show', {id: p.id}) }}">{{ p.nom }}</a></h2>
+                    <div class="post-card-meta">
+                        {{ p.duree }} jours
+                        {% if p.niveauDifficulte %} · {{ p.niveauDifficulte|capitalize }}{% endif %}
+                    </div>
+                    <p class="post-card-snippet">{{ p.objectif|default('Aucun objectif défini')|slice(0,120) }}{% if p.objectif|default('')|length > 120 %}…{% endif %}</p>
+                    <div class="post-card-footer">
+                        <span>
+                            {% if p.statut == 'actif' %}
+                                <span class="badge">Actif</span>
+                            {% elseif p.statut == 'brouillon' %}
+                                <span class="badge badge-muted">Brouillon</span>
+                            {% else %}
+                                <span class="badge badge-muted">Inactif</span>
+                            {% endif %}
+                        </span>
+                        <div style="display:flex; gap:0.4rem;">
+                            <a href="{{ path('app_psychologue_activite_new', {programmeId: p.id}) }}" class="btn-add-activity" title="Ajouter une activité">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                Activité
+                            </a>
+                            <button class="btn-calendar" onclick="openCalendar({{ p.id }}, '{{ p.nom|e('js') }}', {{ p.duree }})" title="Voir le planning">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                                </svg>
+                                Planning
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{# ── Calendar Modal ── #}
+<div class="cal-overlay" id="calOverlay" onclick="if(event.target===this)closeCalendar()">
+    <div class="cal-modal">
+        <div class="cal-header">
+            <div class="cal-header-left">
+                <div class="cal-header-icon">📅</div>
+                <div>
+                    <div class="cal-header-title" id="calTitle">Planning</div>
+                    <div class="cal-header-subtitle" id="calSubtitle"></div>
+                </div>
+            </div>
+            <button class="cal-close" onclick="closeCalendar()" title="Fermer">✕</button>
+        </div>
+
+        <div class="cal-toolbar">
+            <div class="cal-nav-group">
+                <button class="cal-nav-btn" onclick="calNavigate(-1)" title="Précédent">‹</button>
+                <div class="cal-nav-label" id="calNavLabel">Jours 1 – 7</div>
+                <button class="cal-nav-btn" onclick="calNavigate(1)" title="Suivant">›</button>
+            </div>
+            <div class="cal-view-toggle">
+                <button class="cal-view-btn active" data-view="week" onclick="setCalView('week')">Semaine</button>
+                <button class="cal-view-btn" data-view="list" onclick="setCalView('list')">Liste</button>
+            </div>
+        </div>
+
+        <div class="cal-body" id="calBody">
+            <div class="cal-loading" id="calLoading">
+                <div class="cal-spinner"></div>
+                <span>Chargement du planning…</span>
+            </div>
+        </div>
+
+        <div class="cal-legend" id="calLegend"></div>
+    </div>
+</div>
+
+{# ── Event Detail Popover ── #}
+<div class="cal-popover" id="calPopover"></div>
+
+<script>
+(function(){
+    const overlay   = document.getElementById('calOverlay');
+    const calBody   = document.getElementById('calBody');
+    const calTitle  = document.getElementById('calTitle');
+    const calSub    = document.getElementById('calSubtitle');
+    const calNav    = document.getElementById('calNavLabel');
+    const calLegend = document.getElementById('calLegend');
+    const calLoad   = document.getElementById('calLoading');
+    const popover   = document.getElementById('calPopover');
+
+    let currentProgrammeId = null;
+    let currentData  = null;
+    let pageStart    = 1;
+    let pageDays     = 7;
+    let currentView  = 'week';
+
+    const HOUR_H    = 60;
+    const START_H   = 6;
+    const END_H     = 22;
+    const COLORS    = 7;
+
+    const typeColorMap = {};
+    let nextColor = 0;
+    function getColorIndex(type) {
+        const key = (type || 'default').toLowerCase();
+        if (!(key in typeColorMap)) {
+            typeColorMap[key] = nextColor % COLORS;
+            nextColor++;
+        }
+        return typeColorMap[key];
+    }
+
+    window.openCalendar = function(id, nom, duree) {
+        currentProgrammeId = id;
+        pageStart = 1;
+        Object.keys(typeColorMap).forEach(k => delete typeColorMap[k]);
+        nextColor = 0;
+
+        calTitle.textContent = nom;
+        calSub.textContent   = duree + ' jours de programme';
+        calLoad.style.display = 'flex';
+        calBody.querySelectorAll('.cal-grid-container, .cal-empty, .cal-list-view').forEach(el => el.remove());
+        calLegend.innerHTML = '';
+        overlay.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+
+        fetch('/psychologue/programme/' + id + '/calendar-data')
+            .then(r => r.json())
+            .then(data => {
+                currentData = data;
+                pageDays = Math.min(7, data.programme.duree);
+                calLoad.style.display = 'none';
+                renderCalendar();
+            })
+            .catch(() => {
+                calLoad.style.display = 'none';
+                calBody.insertAdjacentHTML('beforeend',
+                    '<div class="cal-empty"><div class="cal-empty-icon">⚠️</div><div class="cal-empty-text">Erreur lors du chargement du planning.</div></div>');
+            });
+    };
+
+    window.closeCalendar = function() {
+        overlay.classList.remove('is-open');
+        document.body.style.overflow = '';
+        hidePopover();
+    };
+
+    window.calNavigate = function(dir) {
+        const maxDay = currentData.programme.duree;
+        pageStart += dir * pageDays;
+        if (pageStart < 1) pageStart = 1;
+        if (pageStart > maxDay) pageStart = Math.max(1, maxDay - pageDays + 1);
+        renderCalendar();
+    };
+
+    window.setCalView = function(view) {
+        currentView = view;
+        document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+        renderCalendar();
+    };
+
+    function renderCalendar() {
+        if (!currentData) return;
+        hidePopover();
+
+        const data   = currentData;
+        const duree  = data.programme.duree;
+        const acts   = data.activites;
+        const endDay = Math.min(pageStart + pageDays - 1, duree);
+
+        calNav.textContent = 'Jours ' + pageStart + ' – ' + endDay + ' / ' + duree;
+
+        // remove old
+        calBody.querySelectorAll('.cal-grid-container, .cal-empty, .cal-list-view').forEach(el => el.remove());
+
+        if (!acts.length) {
+            calBody.insertAdjacentHTML('beforeend',
+                '<div class="cal-empty"><div class="cal-empty-icon">📭</div><div class="cal-empty-text">Aucune activité dans ce programme.<br><span style="font-size:.85rem;color:var(--muted)">Ajoutez des activités depuis la page du programme.</span></div></div>');
+            calLegend.innerHTML = '';
+            return;
+        }
+
+        if (currentView === 'list') {
+            renderListView(acts, pageStart, endDay);
+        } else {
+            renderWeekView(acts, pageStart, endDay);
+        }
+
+        renderLegend(acts);
+    }
+
+    function renderWeekView(acts, dayStart, dayEnd) {
+        const numDays = dayEnd - dayStart + 1;
+        const colW    = 'minmax(100px, 1fr)';
+
+        const container = document.createElement('div');
+        container.className = 'cal-grid-container';
+
+        // Day header
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'cal-day-header';
+        dayHeader.style.gridTemplateColumns = '56px repeat(' + numDays + ', ' + colW + ')';
+
+        // Time gutter spacer
+        const gutterHead = document.createElement('div');
+        gutterHead.className = 'cal-day-header-cell';
+        gutterHead.style.borderRight = '1px solid var(--border)';
+        dayHeader.appendChild(gutterHead);
+
+        for (let d = dayStart; d <= dayEnd; d++) {
+            const cell = document.createElement('div');
+            cell.className = 'cal-day-header-cell';
+            const dayActs = acts.filter(a => a.jour === d);
+            cell.innerHTML = '<span class="day-num">' + d + '</span>Jour ' + d
+                + (dayActs.length ? '<br><span style="font-size:.7rem;color:var(--accent)">' + dayActs.length + ' act.</span>' : '');
+            dayHeader.appendChild(cell);
+        }
+        container.appendChild(dayHeader);
+
+        // Grid area
+        const gridWrap = document.createElement('div');
+        gridWrap.style.display = 'grid';
+        gridWrap.style.gridTemplateColumns = '56px repeat(' + numDays + ', ' + colW + ')';
+        gridWrap.style.position = 'relative';
+
+        const totalHours = END_H - START_H;
+        const gridHeight = totalHours * HOUR_H;
+
+        // Time gutter
+        const gutter = document.createElement('div');
+        gutter.className = 'cal-time-gutter';
+        gutter.style.height = gridHeight + 'px';
+        gutter.style.position = 'relative';
+        for (let h = START_H; h < END_H; h++) {
+            const label = document.createElement('div');
+            label.className = 'cal-time-label';
+            label.style.position = 'absolute';
+            label.style.top = ((h - START_H) * HOUR_H) + 'px';
+            label.style.right = '8px';
+            label.textContent = String(h).padStart(2,'0') + ':00';
+            gutter.appendChild(label);
+        }
+        gridWrap.appendChild(gutter);
+
+        // Day columns
+        for (let d = dayStart; d <= dayEnd; d++) {
+            const col = document.createElement('div');
+            col.className = 'cal-column';
+            col.style.height = gridHeight + 'px';
+            col.style.position = 'relative';
+
+            // Hour lines
+            for (let h = START_H; h < END_H; h++) {
+                const line = document.createElement('div');
+                line.className = 'cal-hour-line';
+                line.style.top = ((h - START_H) * HOUR_H) + 'px';
+                col.appendChild(line);
+
+                const half = document.createElement('div');
+                half.className = 'cal-hour-line-half';
+                half.style.top = ((h - START_H) * HOUR_H + 30) + 'px';
+                col.appendChild(half);
+            }
+
+            // Events for this day
+            const dayActs = acts.filter(a => a.jour === d);
+            dayActs.forEach(a => {
+                if (!a.heureDebut) return;
+                const [hh, mm] = a.heureDebut.split(':').map(Number);
+                const startMin = (hh - START_H) * 60 + mm;
+                const dur      = a.dureeMinutes || 30;
+                const top      = Math.max(0, startMin);
+                const height   = Math.max(20, dur);
+                const ci       = getColorIndex(a.typeActivite);
+
+                const ev = document.createElement('div');
+                ev.className = 'cal-event cal-event-' + ci;
+                ev.style.top    = top + 'px';
+                ev.style.height = height + 'px';
+
+                let endHH = hh + Math.floor((mm + dur) / 60);
+                let endMM = (mm + dur) % 60;
+
+                ev.innerHTML = '<div class="cal-event-title">' + escHtml(a.titre || 'Activité') + '</div>'
+                    + '<div class="cal-event-time">' + a.heureDebut + ' – ' + String(endHH).padStart(2,'0') + ':' + String(endMM).padStart(2,'0') + '</div>'
+                    + (height > 50 && a.description ? '<div class="cal-event-desc">' + escHtml(a.description) + '</div>' : '');
+
+                ev.addEventListener('click', function(e) { showPopover(e, a); });
+
+                col.appendChild(ev);
+            });
+
+            gridWrap.appendChild(col);
+        }
+
+        container.appendChild(gridWrap);
+        calBody.appendChild(container);
+    }
+
+    function renderListView(acts, dayStart, dayEnd) {
+        const listWrap = document.createElement('div');
+        listWrap.className = 'cal-list-view';
+
+        let hasAny = false;
+        for (let d = dayStart; d <= dayEnd; d++) {
+            const dayActs = acts.filter(a => a.jour === d);
+            if (!dayActs.length) continue;
+            hasAny = true;
+
+            dayActs.sort((a, b) => (a.heureDebut || '').localeCompare(b.heureDebut || ''));
+
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'cal-list-day';
+
+            const label = document.createElement('div');
+            label.className = 'cal-list-day-label';
+            label.textContent = 'Jour ' + d + ' — ' + dayActs.length + ' activité' + (dayActs.length > 1 ? 's' : '');
+            dayDiv.appendChild(label);
+
+            dayActs.forEach(a => {
+                const ci = getColorIndex(a.typeActivite);
+                const colors = ['#2a6f5b','#3b82f6','#f59e0b','#a855f7','#ec4899','#14b8a6','#f97316'];
+                const row = document.createElement('div');
+                row.className = 'cal-list-event';
+                row.onclick = function(e) { showPopover(e, a); };
+
+                const bar = document.createElement('div');
+                bar.className = 'cal-list-event-color';
+                bar.style.background = colors[ci];
+                row.appendChild(bar);
+
+                const time = document.createElement('div');
+                time.className = 'cal-list-event-time';
+                if (a.heureDebut) {
+                    const [hh,mm] = a.heureDebut.split(':').map(Number);
+                    const dur = a.dureeMinutes || 30;
+                    let endHH = hh + Math.floor((mm + dur) / 60);
+                    let endMM = (mm + dur) % 60;
+                    time.textContent = a.heureDebut + ' – ' + String(endHH).padStart(2,'0') + ':' + String(endMM).padStart(2,'0');
+                } else {
+                    time.textContent = 'Heure N/A';
+                }
+                row.appendChild(time);
+
+                const body = document.createElement('div');
+                body.className = 'cal-list-event-body';
+                body.innerHTML = '<div class="cal-list-event-title">' + escHtml(a.titre || 'Activité') + '</div>'
+                    + '<div class="cal-list-event-meta">'
+                    + (a.dureeMinutes ? a.dureeMinutes + ' min' : '') 
+                    + (a.typeActivite ? ' · ' + escHtml(a.typeActivite) : '')
+                    + '</div>';
+                row.appendChild(body);
+
+                dayDiv.appendChild(row);
+            });
+
+            listWrap.appendChild(dayDiv);
+        }
+
+        if (!hasAny) {
+            listWrap.innerHTML = '<div class="cal-empty" style="border:none"><div class="cal-empty-icon">📭</div><div class="cal-empty-text">Aucune activité pour ces jours.</div></div>';
+        }
+
+        calBody.appendChild(listWrap);
+    }
+
+    function renderLegend(acts) {
+        const types = [...new Set(acts.map(a => a.typeActivite || 'Autres'))];
+        const colors = ['#2a6f5b','#3b82f6','#f59e0b','#a855f7','#ec4899','#14b8a6','#f97316'];
+        calLegend.innerHTML = types.map(t => {
+            const ci = getColorIndex(t === 'Autres' ? null : t);
+            return '<div class="cal-legend-item"><div class="cal-legend-dot" style="background:' + colors[ci] + '"></div>' + escHtml(t) + '</div>';
+        }).join('');
+    }
+
+    function showPopover(e, a) {
+        e.stopPropagation();
+        const rect = e.currentTarget.getBoundingClientRect();
+        const colors = ['#2a6f5b','#3b82f6','#f59e0b','#a855f7','#ec4899','#14b8a6','#f97316'];
+        const ci = getColorIndex(a.typeActivite);
+
+        let timeStr = '—';
+        if (a.heureDebut) {
+            const [hh,mm] = a.heureDebut.split(':').map(Number);
+            const dur = a.dureeMinutes || 30;
+            let endHH = hh + Math.floor((mm + dur) / 60);
+            let endMM = (mm + dur) % 60;
+            timeStr = a.heureDebut + ' – ' + String(endHH).padStart(2,'0') + ':' + String(endMM).padStart(2,'0');
+        }
+
+        popover.innerHTML =
+            '<div class="cal-popover-title" style="border-left:4px solid ' + colors[ci] + ';padding-left:.65rem">' + escHtml(a.titre || 'Activité') + '</div>'
+            + '<div class="cal-popover-row"><span class="cal-popover-row-icon">📆</span> Jour ' + a.jour + '</div>'
+            + '<div class="cal-popover-row"><span class="cal-popover-row-icon">🕐</span> ' + timeStr + '</div>'
+            + (a.dureeMinutes ? '<div class="cal-popover-row"><span class="cal-popover-row-icon">⏱️</span> ' + a.dureeMinutes + ' minutes</div>' : '')
+            + (a.typeActivite ? '<div class="cal-popover-row"><span class="cal-popover-row-icon">🏷️</span> ' + escHtml(a.typeActivite) + '</div>' : '')
+            + (a.description ? '<div class="cal-popover-desc">' + escHtml(a.description) + '</div>' : '');
+
+        // Position
+        let top  = rect.bottom + 8;
+        let left = rect.left + rect.width / 2 - 150;
+        if (top + 250 > window.innerHeight) top = rect.top - 250;
+        if (left < 10) left = 10;
+        if (left + 300 > window.innerWidth) left = window.innerWidth - 320;
+
+        popover.style.top  = top + 'px';
+        popover.style.left = left + 'px';
+        popover.classList.add('is-visible');
+    }
+
+    function hidePopover() {
+        popover.classList.remove('is-visible');
+    }
+
+    document.addEventListener('click', function(e) {
+        if (!popover.contains(e.target) && !e.target.closest('.cal-event, .cal-list-event')) {
+            hidePopover();
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            if (popover.classList.contains('is-visible')) {
+                hidePopover();
+            } else {
+                closeCalendar();
+            }
+        }
+    });
+
+    function escHtml(str) {
+        const d = document.createElement('div');
+        d.textContent = str || '';
+        return d.innerHTML;
+    }
+})();
+</script>
+{% endblock %}

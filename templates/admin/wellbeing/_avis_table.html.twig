@@ -1,0 +1,40 @@
+<div class="card p-0 overflow-auto">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th>#</th>
+                <th>Programme</th>
+                <th>Patient</th>
+                <th>Psychologue</th>
+                <th>Note</th>
+                <th>Commentaire</th>
+                <th>Date</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in avis %}
+                <tr>
+                    <td>{{ a.id }}</td>
+                    <td>{{ a.programme ? a.programme.nom : 'N/A' }}</td>
+                    <td>{{ a.patient ? a.patient.prenom ~ ' ' ~ a.patient.nom : 'Anonyme' }}</td>
+                    <td>{{ a.psychologue ? a.psychologue.prenom ~ ' ' ~ a.psychologue.nom : 'N/A' }}</td>
+                    <td>
+                        <span class="badge text-bg-warning">{{ a.note }}/5</span>
+                    </td>
+                    {% set commentaire = a.commentaire|default('Sans commentaire') %}
+                    <td>{{ commentaire|length > 120 ? commentaire|slice(0, 120) ~ '...' : commentaire }}</td>
+                    <td>{{ a.dateAvis ? a.dateAvis|date('d/m/Y') : '-' }}</td>
+                    <td class="text-end">
+                        <form method="post" action="{{ path('app_admin_wellbeing_avis_delete', {id: a.id}) }}" onsubmit="return confirm('Supprimer cet avis ?');" class="d-inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token('admin_delete_avis_' ~ a.id) }}">
+                            <button class="btn btn-sm btn-outline-danger" type="submit">Supprimer</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="8" class="text-center text-muted py-4">Aucun avis trouve.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

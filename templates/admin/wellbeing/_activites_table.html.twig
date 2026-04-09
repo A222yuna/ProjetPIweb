@@ -1,0 +1,39 @@
+<div class="card p-0 overflow-auto">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th>#</th>
+                <th>Programme</th>
+                <th>Activite</th>
+                <th>Jour / Heure</th>
+                <th>Type</th>
+                <th>Duree</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in activites %}
+                <tr>
+                    <td>{{ a.id }}</td>
+                    <td>{{ a.programme ? a.programme.nom : 'N/A' }}</td>
+                    <td>
+                        <strong>{{ a.titre|default('Sans titre') }}</strong>
+                        {% set description = a.description|default('Sans description') %}
+                        <div class="small text-muted">{{ description|length > 90 ? description|slice(0, 90) ~ '...' : description }}</div>
+                    </td>
+                    <td>J{{ a.jour }} - {{ a.heureDebut ? a.heureDebut|date('H:i') : '--:--' }}</td>
+                    <td>{{ a.typeActivite|default('N/A') }}</td>
+                    <td>{{ a.dureeMinutes|default(0) }} min</td>
+                    <td class="text-end">
+                        <form method="post" action="{{ path('app_admin_wellbeing_activite_delete', {id: a.id}) }}" onsubmit="return confirm('Supprimer cette activite ?');" class="d-inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token('admin_delete_activite_' ~ a.id) }}">
+                            <button class="btn btn-sm btn-outline-danger" type="submit">Supprimer</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="7" class="text-center text-muted py-4">Aucune activite trouvee.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

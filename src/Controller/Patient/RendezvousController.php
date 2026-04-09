@@ -36,24 +36,8 @@ final class RendezvousController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $plan = $appointment->getPlan();
-            if (!$plan) {
-                $this->addFlash('error', 'Veuillez sélectionner un planning valide.');
-                return $this->redirectToRoute('app_patient_rendezvous_index');
-            }
-
-            if ($appointments->hasActiveAppointmentForPatientAndPlan($user, $plan)) {
-                $this->addFlash('error', 'Vous avez déjà un rendez-vous SCHEDULED pour ce planning.');
-                return $this->redirectToRoute('app_patient_rendezvous_index');
-            }
-
-            if ($appointments->countScheduledForPlan($plan) >= $plan->getMaxAppointments()) {
-                $this->addFlash('error', 'Ce psychologue a atteint son nombre maximum de rendez-vous');
-                return $this->redirectToRoute('app_patient_rendezvous_index');
-            }
-
             $appointment->setPatient($user);
-            $appointment->setStatus(Appointment::STATUS_SCHEDULED);
+            $appointment->setStatus('SCHEDULED');
             $em->persist($appointment);
             $em->flush();
             $this->addFlash('success', 'Rendez-vous reserve avec succes.');
@@ -91,12 +75,12 @@ final class RendezvousController extends AbstractController
             $this->addFlash('error', 'Jeton CSRF invalide.');
             return $this->redirectToRoute('app_patient_rendezvous_index');
         }
-        if ($appointment->getStatus() !== Appointment::STATUS_SCHEDULED) {
+        if ($appointment->getStatus() !== 'SCHEDULED') {
             $this->addFlash('warning', 'Ce rendez-vous ne peut plus etre annule.');
             return $this->redirectToRoute('app_patient_rendezvous_index');
         }
 
-        $appointment->setStatus(Appointment::STATUS_CANCELLED);
+        $appointment->setStatus('CANCELLED');
         $em->flush();
         $this->addFlash('success', 'Rendez-vous annule.');
 

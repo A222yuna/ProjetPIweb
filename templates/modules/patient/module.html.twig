@@ -30,14 +30,6 @@
             <div class="col-md-4"><div class="card p-3"><small class="text-muted">RDV termines</small><div class="h5 mb-0">8</div></div></div>
             <div class="col-md-4"><div class="card p-3"><small class="text-muted">Annules</small><div class="h5 mb-0">1</div></div></div>
         </div>
-        <div class="card p-3 mb-3">
-            <h2 class="h6">Actions consultation</h2>
-            <div class="d-flex flex-wrap gap-2">
-                <a class="btn btn-sm btn-primary" href="{{ path('app_patient_creneaux_book') }}">Reserver un creneau</a>
-                <a class="btn btn-sm btn-outline-primary" href="{{ path('app_patient_creneaux_index') }}">Mes creneaux</a>
-                <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_patient_rendezvous_index') }}">Mes rendez-vous</a>
-            </div>
-        </div>
     {% elseif module == 'cabinets' %}
         <div class="card p-3 mb-3">
             <h2 class="h6">Annuaire cabinets</h2>

@@ -1,0 +1,126 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Laisser un avis — {{ programme.nom }}{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .form-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 3rem;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.06);
+        max-width: 800px;
+        margin-bottom: 3rem;
+    }
+    .star-rating-container {
+        display: flex;
+        gap: .5rem;
+        margin-bottom: 1rem;
+    }
+    .star-btn {
+        font-size: 2.5rem;
+        color: var(--border);
+        cursor: pointer;
+        transition: all .2s ease;
+        background: none; border: none; padding: 0;
+    }
+    .star-btn.active, .star-btn:hover, .star-btn.hover {
+        color: #e8a838;
+        transform: scale(1.1);
+    }
+    .star-label {
+        display: block; font-weight: 700; margin-bottom: .75rem; color: var(--text);
+    }
+
+    /* Hide the original select */
+    .hidden-select { display: none; }
+</style>
+{% endblock %}
+
+{% block body %}
+<a href="{{ path('app_patient_programme_show', {id: programme.id}) }}" class="back-link">← Retour au programme</a>
+
+<div class="page-eyebrow">Partager mon avis</div>
+<h1 style="margin-bottom: .5rem">Comment s'est passé votre programme ?</h1>
+<p class="page-lead">Votre retour est précieux pour le <strong>Dr. {{ programme.psychologue.prenom }} {{ programme.psychologue.nom }}</strong> et pour les autres patients.</p>
+
+<div class="form-card">
+    {{ form_start(form, {'attr': {'class': 'stack-form', 'novalidate': 'novalidate', 'id': 'avis-form'}}) }}
+
+    <div class="form-section">
+        <label class="star-label">Quelle note donneriez-vous à ce programme ?</label>
+        <div class="star-rating-container" id="star-rating">
+            {% for i in 1..5 %}
+                <button type="button" class="star-btn" data-value="{{ i }}">★</button>
+            {% endfor %}
+        </div>
+        {# The real select is hidden #}
+        <div class="hidden-select">
+            {{ form_row(form.note) }}
+        </div>
+    </div>
+
+    <div style="margin-top: 2rem;">
+        {{ form_row(form.commentaire) }}
+        <p class="help-text">✨ Soyez constructif et respectueux dans vos commentaires.</p>
+    </div>
+
+    <div class="stack-form-actions" style="margin-top: 2.5rem;">
+        <button type="submit" class="btn btn-primary btn-lg">🚀 Envoyer mon évaluation</button>
+        <a href="{{ path('app_patient_programme_show', {id: programme.id}) }}" class="btn btn-outline btn-lg">Annuler</a>
+    </div>
+
+    {{ form_end(form) }}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const starContainer = document.getElementById('star-rating');
+    const stars = starContainer.querySelectorAll('.star-btn');
+    const select = document.querySelector('#avis_note'); // Assuming standard symfony ID
+    
+    // Set initial value
+    const initialVal = select.value || 1;
+    updateStars(initialVal);
+
+    stars.forEach(star => {
+        star.addEventListener('click', function() {
+            const val = this.getAttribute('data-value');
+            select.value = val;
+            updateStars(val);
+        });
+
+        star.addEventListener('mouseenter', function() {
+            const val = this.getAttribute('data-value');
+            highlightStars(val);
+        });
+
+        star.addEventListener('mouseleave', function() {
+            updateStars(select.value);
+        });
+    });
+
+    function updateStars(val) {
+        stars.forEach(s => {
+            if (parseInt(s.getAttribute('data-value')) <= parseInt(val)) {
+                s.classList.add('active');
+            } else {
+                s.classList.remove('active');
+            }
+            s.classList.remove('hover');
+        });
+    }
+
+    function highlightStars(val) {
+        stars.forEach(s => {
+            if (parseInt(s.getAttribute('data-value')) <= parseInt(val)) {
+                s.classList.add('hover');
+            } else {
+                s.classList.remove('hover');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

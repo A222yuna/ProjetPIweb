@@ -1,32 +1,162 @@
-{% extends 'base.html.twig' %}
-
-{% block stylesheets %}
-    {{ parent() }}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Back Office Admin{% endblock %}</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%237C6BA0'/%3E%3Ctext x='16' y='22' text-anchor='middle' fill='%23fff' font-family='Arial,sans-serif' font-size='16' font-weight='bold'%3EA%3C/text%3E%3C/svg%3E">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
-{% endblock %}
+    <style>
+        :root {
+            --admin-bg: #f6f4fb;
+            --admin-sidebar: #7c6ba0;
+            --admin-sidebar-hover: #8c7ab3;
+            --admin-surface: #ffffff;
+            --admin-border: #e3def0;
+            --admin-text: #2b2640;
+            --admin-muted: #6f6890;
+        }
 
-{% block body %}
-    <div class="container-fluid">
-        <div class="row">
-            <aside class="col-md-3 col-lg-2 min-vh-100 p-3" style="background:#7C6BA0;color:#F8F6FF">
-                <h5 class="mb-4">Back Office Admin</h5>
-                <ul class="nav flex-column gap-2">
-                    <li><a class="nav-link text-white" href="{{ path('app_admin_module_comptes') }}"><i class="fa-solid fa-users me-2"></i>Comptes</a></li>
-                    <li><a class="nav-link text-white" href="{{ path('app_admin_module_consultations') }}"><i class="fa-solid fa-calendar-check me-2"></i>Consultations</a></li>
-                    <li><a class="nav-link text-white" href="{{ path('app_admin_module_cabinets') }}"><i class="fa-solid fa-hospital me-2"></i>Cabinets</a></li>
-                    <li><a class="nav-link text-white" href="{{ path('app_admin_module_bienetre') }}"><i class="fa-solid fa-heart me-2"></i>Bien-etre</a></li>
-                    <li><a class="nav-link text-white" href="{{ path('app_admin_module_messages') }}"><i class="fa-solid fa-envelope me-2"></i>Messages</a></li>
-                    <li><a class="nav-link text-white" href="{{ path('app_admin_module_forum') }}"><i class="fa-solid fa-comments me-2"></i>Forum</a></li>
-                </ul>
-            </aside>
-            <section class="col-md-9 col-lg-10 p-0" style="background:#F8F6FF">
-                <div class="d-flex justify-content-between align-items-center px-4 py-3 border-bottom bg-white">
-                    <div><strong>{{ app.user ? app.user.prenom ~ ' ' ~ app.user.nom : 'Invite' }}</strong> - {{ app.user ? app.user.role : 'Anonyme' }}</div>
-                    <a href="{{ path('app_logout') }}" class="btn btn-sm btn-outline-secondary">Logout</a>
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            margin: 0;
+            font-family: "Source Sans 3", system-ui, -apple-system, Segoe UI, sans-serif;
+            background: var(--admin-bg);
+            color: var(--admin-text);
+        }
+
+        .admin-layout {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 260px 1fr;
+        }
+        @media (max-width: 992px) {
+            .admin-layout { grid-template-columns: 1fr; }
+        }
+
+        .admin-sidebar {
+            background: var(--admin-sidebar);
+            color: #f8f6ff;
+            padding: 1.2rem 1rem;
+        }
+        .admin-brand {
+            font-weight: 700;
+            line-height: 1.15;
+            margin: 0 0 1.2rem;
+        }
+        .admin-subtitle {
+            display: block;
+            font-size: .75rem;
+            font-weight: 600;
+            opacity: .85;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            margin-top: .25rem;
+        }
+        .admin-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .admin-menu li { margin-bottom: .3rem; }
+        .admin-menu-link {
+            display: flex;
+            align-items: center;
+            gap: .55rem;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 10px;
+            padding: .55rem .65rem;
+            font-size: .95rem;
+        }
+        .admin-menu-link:hover,
+        .admin-menu-link.is-active {
+            background: var(--admin-sidebar-hover);
+            color: #fff;
+        }
+        .admin-menu-link i { width: 1rem; text-align: center; }
+
+        .admin-main {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        .admin-topbar {
+            background: var(--admin-surface);
+            border-bottom: 1px solid var(--admin-border);
+            padding: .9rem 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .75rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .admin-user {
+            font-size: .92rem;
+            color: var(--admin-muted);
+        }
+        .admin-user strong { color: var(--admin-text); }
+
+        .admin-content {
+            padding: 1.2rem;
+        }
+    </style>
+    {% block stylesheets %}{% endblock %}
+    {% block javascripts %}
+        {% block importmap %}{{ importmap('app') }}{% endblock %}
+    {% endblock %}
+</head>
+<body>
+    {% set r = app.request.attributes.get('_route') %}
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <h1 class="admin-brand">
+                Back Office Admin
+                <span class="admin-subtitle">Espace interne</span>
+            </h1>
+            <ul class="admin-menu">
+                <li><a class="admin-menu-link {{ r == 'app_admin_dashboard' ? 'is-active' : '' }}" href="{{ path('app_admin_dashboard') }}"><i class="fa-solid fa-chart-line"></i>Dashboard</a></li>
+                <li><a class="admin-menu-link {{ r == 'app_admin_wellbeing_programmes' ? 'is-active' : '' }}" href="{{ path('app_admin_wellbeing_programmes') }}"><i class="fa-solid fa-list-check"></i>Programmes</a></li>
+                <li><a class="admin-menu-link {{ r == 'app_admin_wellbeing_activites' ? 'is-active' : '' }}" href="{{ path('app_admin_wellbeing_activites') }}"><i class="fa-solid fa-bolt"></i>Activites</a></li>
+                <li><a class="admin-menu-link {{ r == 'app_admin_wellbeing_avis' ? 'is-active' : '' }}" href="{{ path('app_admin_wellbeing_avis') }}"><i class="fa-solid fa-star"></i>Avis</a></li>
+                <li><a class="admin-menu-link {{ r == 'app_admin_module_comptes' ? 'is-active' : '' }}" href="{{ path('app_admin_module_comptes') }}"><i class="fa-solid fa-users"></i>Comptes</a></li>
+                <li><a class="admin-menu-link {{ r == 'app_admin_module_consultations' ? 'is-active' : '' }}" href="{{ path('app_admin_module_consultations') }}"><i class="fa-solid fa-calendar-check"></i>Consultations</a></li>
+                <li><a class="admin-menu-link {{ r == 'app_admin_module_cabinets' ? 'is-active' : '' }}" href="{{ path('app_admin_module_cabinets') }}"><i class="fa-solid fa-hospital"></i>Cabinets</a></li>
+                <li><a class="admin-menu-link {{ r == 'app_admin_module_bienetre' ? 'is-active' : '' }}" href="{{ path('app_admin_module_bienetre') }}"><i class="fa-solid fa-heart"></i>Bien-etre</a></li>
+                <li><a class="admin-menu-link {{ r == 'app_admin_module_messages' ? 'is-active' : '' }}" href="{{ path('app_admin_module_messages') }}"><i class="fa-solid fa-envelope"></i>Messages</a></li>
+                <li><a class="admin-menu-link {{ r == 'app_admin_module_forum' ? 'is-active' : '' }}" href="{{ path('app_admin_module_forum') }}"><i class="fa-solid fa-comments"></i>Forum</a></li>
+            </ul>
+        </aside>
+
+        <main class="admin-main">
+            <header class="admin-topbar">
+                <div class="admin-user">
+                    <strong>{{ app.user ? app.user.prenom ~ ' ' ~ app.user.nom : 'Invite' }}</strong>
+                    - {{ app.user ? app.user.role : 'Anonyme' }}
                 </div>
-                <div class="p-4">{% block admin_body %}{% endblock %}</div>
-            </section>
-        </div>
+                <a href="{{ path('app_logout') }}" class="btn btn-sm btn-outline-secondary">Logout</a>
+            </header>
+
+            <div class="admin-content">
+                {% block flashes %}
+                    {% for msg in app.flashes('success') %}
+                        <div class="alert alert-success">{{ msg }}</div>
+                    {% endfor %}
+                    {% for msg in app.flashes('error') %}
+                        <div class="alert alert-danger">{{ msg }}</div>
+                    {% endfor %}
+                    {% for msg in app.flashes('warning') %}
+                        <div class="alert alert-warning">{{ msg }}</div>
+                    {% endfor %}
+                {% endblock %}
+
+                {% block admin_body %}{% endblock %}
+            </div>
+        </main>
     </div>
-{% endblock %}
+</body>
+</html>

@@ -22,8 +22,7 @@ final class PatientAppointmentType extends AbstractType
                 $p->getPeriod(),
                 $p->getMaxAppointments()
             ),
-            'placeholder' => 'Choisir...',
-            'constraints' => [new NotBlank(message: 'Veuillez choisir un planning')],
+            'constraints' => [new NotBlank()],
         ]);
     }
 
