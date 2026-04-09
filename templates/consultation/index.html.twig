@@ -65,7 +65,7 @@
     {% else %}
         <div class="post-grid">
             {% for post in posts %}
-                {% set cover = cover_images[loop.index0 % cover_images|length] %}
+                {% set cover = post.imageUrl ? (post.imageUrl starts with '/uploads/' ? asset(post.imageUrl) : post.imageUrl) : cover_images[loop.index0 % cover_images|length] %}
                 <article class="post-card">
                     <div class="post-card-visual" style="background-image: url('{{ cover }}');" role="img" aria-label=""></div>
                     <div class="post-card-body">

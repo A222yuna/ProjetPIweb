@@ -10,12 +10,15 @@ use App\Repository\CommentaireRepository;
 use App\Repository\PostRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use App\Entity\User;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 final class ConsultationController extends AbstractController
 {
@@ -30,6 +33,28 @@ final class ConsultationController extends AbstractController
         }
 
         return $user;
+    }
+
+    private function handleFileUpload(Post $post, $form, SluggerInterface $slugger): void
+    {
+        /** @var UploadedFile $imageFile */
+        $imageFile = $form->get('imageFile')->getData();
+
+        if ($imageFile) {
+            $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = $slugger->slug($originalFilename);
+            $newFilename = $safeFilename . '-' . uniqid() . '.' . $imageFile->guessExtension();
+
+            try {
+                $imageFile->move(
+                    $this->getParameter('kernel.project_dir') . '/public/uploads/posts',
+                    $newFilename
+                );
+                $post->setImageUrl('/uploads/posts/' . $newFilename);
+            } catch (FileException $e) {
+                $this->addFlash('error', 'Erreur lors de l\'envoi de l\'image.');
+            }
+        }
     }
 
     #[Route('/posts', name: 'app_post_index')]
@@ -48,6 +73,7 @@ final class ConsultationController extends AbstractController
     public function new(
         Request $request,
         EntityManagerInterface $em,
+        SluggerInterface $slugger,
     ): Response {
         $user = $this->requireForumRole();
         $categorySuggestions = PostConsultationFormType::getCategoryChoices();
@@ -62,6 +88,8 @@ final class ConsultationController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $this->handleFileUpload($post, $form, $slugger);
+            
             $post->setAuteur($user);
             $post->setAuteurRole($user->getRole());
             $post->setNbLikes(0);
@@ -192,7 +220,8 @@ final class ConsultationController extends AbstractController
         int $id,
         Request $request,
         PostRepository $posts,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        SluggerInterface $slugger,
     ): Response {
         $user = $this->requireForumRole();
         $post = $posts->find($id);
@@ -212,6 +241,7 @@ final class ConsultationController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $this->handleFileUpload($post, $form, $slugger);
             $em->flush();
             $this->addFlash('success', 'Votre publication a été modifiée.');
 
@@ -257,8 +287,18 @@ final class ConsultationController extends AbstractController
         $this->requireForumRole();
         $comment = $commentaires->find($id);
         if ($comment) {
-            $comment->setNbLikes($comment->getNbLikes() + 1);
-            $em->flush();
+            $session = $request->getSession();
+            $likedComments = $session->get('liked_comments', []);
+
+            if (!in_array($id, $likedComments)) {
+                $comment->setNbLikes($comment->getNbLikes() + 1);
+                $likedComments[] = $id;
+                $session->set('liked_comments', $likedComments);
+                $em->flush();
+                $this->addFlash('success', 'Vous aimez ce commentaire !');
+            } else {
+                $this->addFlash('warning', 'Vous avez déjà aimé ce commentaire.');
+            }
         }
 
         $referer = $request->headers->get('referer');

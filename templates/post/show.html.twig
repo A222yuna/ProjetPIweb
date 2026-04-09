@@ -13,6 +13,19 @@
             · {{ post.date|date('d/m/Y H:i') }}
         </p>
         <div class="post-body">{{ post.contenu }}</div>
+        
+        {% if post.imageUrl %}
+            <div class="post-image-container" style="margin: 1.5rem 0; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border);">
+                {# If it's a local upload, use asset() to generate the correct URL #}
+                {% if post.imageUrl starts with '/uploads/' %}
+                    <img src="{{ asset(post.imageUrl) }}" alt="{{ post.titre }}" style="width: 100%; height: auto; display: block; max-height: 500px; object-fit: cover;">
+                {% else %}
+                    {# For external URLs, we just use the string as is #}
+                    <img src="{{ post.imageUrl }}" alt="{{ post.titre }}" style="width: 100%; height: auto; display: block; max-height: 500px; object-fit: cover;" onerror="this.style.display='none'">
+                {% endif %}
+            </div>
+        {% endif %}
+
         <div class="post-actions" style="display:flex;gap:0.75rem;flex-wrap:wrap;margin:1rem 0; align-items: center;">
             <a href="{{ path('app_post_like', { id: post.id }) }}" 
                class="btn btn-outline btn-sm" 
@@ -61,7 +74,14 @@
             </p>
         {% endif %}
         {{ form_start(commentForm, { attr: { class: 'stack-form', id: 'comment-form' } }) }}
-            {{ form_row(commentForm.contenu) }}
+            <div class="emoji-btn-wrapper">
+                {{ form_label(commentForm.contenu) }}
+                <button type="button" class="emoji-trigger-btn" data-emoji-picker data-emoji-target="{{ commentForm.contenu.vars.id }}">
+                    😊 <span>Emojis</span>
+                </button>
+            </div>
+            {{ form_widget(commentForm.contenu) }}
+            {{ form_errors(commentForm.contenu) }}
             <div class="stack-form-actions">
                 <button type="submit" class="btn btn-primary">Publier</button>
             </div>

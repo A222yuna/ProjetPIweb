@@ -39,6 +39,9 @@ class Post
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $date = null;
 
+    #[ORM\Column(name: "image_url", length: 255, nullable: true)]
+    private ?string $imageUrl = null;
+
     /** @var Collection<int, Commentaire> */
     #[ORM\OneToMany(targetEntity: Commentaire::class, mappedBy: 'post', orphanRemoval: true)]
     #[ORM\OrderBy(['date' => 'ASC'])]
@@ -123,6 +126,18 @@ class Post
     public function setNbLikes(int $nbLikes): static
     {
         $this->nbLikes = $nbLikes;
+
+        return $this;
+    }
+
+    public function getImageUrl(): ?string
+    {
+        return $this->imageUrl;
+    }
+
+    public function setImageUrl(?string $imageUrl): static
+    {
+        $this->imageUrl = $imageUrl;
 
         return $this;
     }

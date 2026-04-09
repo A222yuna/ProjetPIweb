@@ -13,10 +13,20 @@
             Partagez vos questions ou vos expériences avec la communauté.
         </p>
         
-        {{ form_start(form, { attr: { class: 'stack-form' } }) }}
+        {{ form_start(form, { attr: { class: 'stack-form', enctype: 'multipart/form-data' } }) }}
             {{ form_row(form.titre) }}
             {{ form_row(form.categorie) }}
-            {{ form_row(form.contenu) }}
+            {{ form_row(form.imageFile) }}
+            {{ form_row(form.imageUrl) }}
+            
+            <div class="emoji-btn-wrapper">
+                {{ form_label(form.contenu) }}
+                <button type="button" class="emoji-trigger-btn" data-emoji-picker data-emoji-target="{{ form.contenu.vars.id }}">
+                    😊 <span>Emojis</span>
+                </button>
+            </div>
+            {{ form_widget(form.contenu) }}
+            {{ form_errors(form.contenu) }}
             
             <div class="stack-form-actions">
                 <button type="submit" class="btn btn-primary">Publier sur le forum</button>
