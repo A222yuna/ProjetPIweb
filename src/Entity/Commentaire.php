@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CommentaireRepository::class)]
 #[ORM\Table(name: 'commentaire')]
@@ -29,6 +30,11 @@ class Commentaire
     private ?string $auteurRole = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: "Le commentaire ne peut pas être vide.")]
+    #[Assert\Length(
+        min: 1,
+        minMessage: "Le commentaire doit faire au moins {{ limit }} caractère."
+    )]
     private ?string $contenu = null;
 
     #[ORM\Column(name: 'nb_likes', options: ['default' => 0])]

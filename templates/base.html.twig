@@ -1033,22 +1033,42 @@
                 grid-template-columns: repeat(5, 1fr);
                 gap: 5px;
                 z-index: 10000;
-                width: 210px;
+                width: 260px;
+                max-height: 320px;
+                overflow-y: auto;
                 user-select: none;
+            }
+            .emoji-picker-dropdown::-webkit-scrollbar {
+                width: 6px;
+            }
+            .emoji-picker-dropdown::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 3px;
+            }
+            .emoji-picker-dropdown::-webkit-scrollbar-thumb {
+                background: #888;
+                border-radius: 3px;
+            }
+            .emoji-picker-dropdown::-webkit-scrollbar-thumb:hover {
+                background: #555;
             }
             .emoji-picker-dropdown span {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                height: 35px;
-                width: 35px;
-                font-size: 1.4rem;
+                height: 40px;
+                width: 40px;
+                font-size: 1.5rem;
                 cursor: pointer;
                 border-radius: 6px;
-                transition: background 0.1s;
+                transition: background 0.15s, transform 0.1s;
             }
             .emoji-picker-dropdown span:hover {
                 background: #f0f0f0;
+                transform: scale(1.1);
+            }
+            .emoji-picker-dropdown span:active {
+                transform: scale(0.95);
             }
             .emoji-btn-wrapper {
                 display: flex;
@@ -1060,7 +1080,7 @@
                 background: #f8f9fa;
                 border: 1px solid #dee2e6;
                 color: #495057;
-                padding: 4px 10px;
+                padding: 6px 12px;
                 font-size: 0.85rem;
                 border-radius: 6px;
                 cursor: pointer;
@@ -1068,10 +1088,15 @@
                 align-items: center;
                 gap: 6px;
                 transition: all 0.2s;
+                white-space: nowrap;
             }
             .emoji-trigger-btn:hover {
                 background: #e9ecef;
                 border-color: #adb5bd;
+                transform: translateY(-1px);
+            }
+            .emoji-trigger-btn:active {
+                transform: translateY(0);
             }
         </style>
         {% block stylesheets %}
@@ -1092,6 +1117,7 @@
             /**
              * Pure Vanilla JS Emoji Picker
              * Works without external libraries or complex build steps
+             * No external APIs needed - all emojis are hardcoded
              */
             function setupEmojiPicker() {
                 const triggers = document.querySelectorAll('[data-emoji-picker]');
@@ -1104,11 +1130,33 @@
                     picker.id = 'global-emoji-picker';
                     picker.className = 'emoji-picker-dropdown';
                     
-                    const emojis = ['😊', '😂', '😍', '🤔', '👍', '🙏', '❤️', '✨', '🔥', '👏', '🙌', '😢', '😎', '💡', '✅', '🌈', '⭐', '🎉', '💪', '🚀'];
+                    // Comprehensive emoji list organized by category
+                    const emojis = [
+                        // Smileys & People (😊😂😍🤔😢😎)
+                        '😊', '😂', '😍', '🤔', '😢', '😎', '😍', '😏', '😄', '😁',
+                        '🥰', '😘', '😂', '😅', '😆', '😉', '🤩', '😲', '😮', '😲',
+                        // Hand gestures & hearts
+                        '👍', '👌', '🙏', '👏', '💪', '🤝', '✌️', '👋', '🖐️', '✋',
+                        // Hearts & love (❤️💜💙)
+                        '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '💔', '💕',
+                        // Symbols & elements (✨🔥⭐)
+                        '✨', '🔥', '⭐', '⚡', '💥', '✅', '❌', '❓', '❗', '💡',
+                        // Activities & celebrations (🎉🌈🎊)
+                        '🎉', '🎊', '🎈', '🎁', '🌈', '🎭', '🎪', '🎯', '🏆', '🥇',
+                        // Nature & animals
+                        '🌟', '🌸', '🌻', '🌹', '🌺', '🐶', '😸', '🐰', '🦋', '🐝',
+                        // Food & drinks
+                        '👌', '😋', '🍕', '🍔', '🍟', '🍗', '🍰', '🍩', '☕', '🍷',
+                        // Travel & places
+                        '🚀', '✈️', '🚁', '🏠', '🏖️', '⛱️', '🏔️', '🗻', '🌊', '🌴',
+                        // Weather & time
+                        '☀️', '☁️', '⛅', '🌤️', '⛈️', '🌙', '⭐', '🌟', '💫', '✨'
+                    ];
                     
                     emojis.forEach(emoji => {
                         const span = document.createElement('span');
                         span.textContent = emoji;
+                        span.title = emoji;
                         span.addEventListener('click', (e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -1116,9 +1164,10 @@
                             const targetId = picker.getAttribute('data-target-id');
                             const input = document.getElementById(targetId);
                             if (input) {
-                                const start = input.selectionStart;
-                                const end = input.selectionEnd;
-                                input.value = input.value.substring(0, start) + emoji + input.value.substring(end);
+                                const start = input.selectionStart || 0;
+                                const end = input.selectionEnd || 0;
+                                const currentValue = input.value || '';
+                                input.value = currentValue.substring(0, start) + emoji + currentValue.substring(end);
                                 input.focus();
                                 const newPos = start + emoji.length;
                                 input.setSelectionRange(newPos, newPos);
@@ -1131,50 +1180,131 @@
                     document.body.appendChild(picker);
                 }
 
+                // Attach listeners using a unique data attribute to prevent duplicates
                 triggers.forEach(trigger => {
-                    // Remove old listener to avoid duplicates
-                    trigger.onclick = null; 
-                    trigger.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                    // Only attach if not already attached
+                    if (!trigger.dataset.emojiPickerAttached) {
+                        trigger.dataset.emojiPickerAttached = 'true';
                         
-                        const targetId = trigger.getAttribute('data-emoji-target');
-                        const rect = trigger.getBoundingClientRect();
-                        
-                        // Toggle logic
-                        if (picker.style.display === 'grid' && picker.getAttribute('data-target-id') === targetId) {
-                            picker.style.display = 'none';
-                            return;
-                        }
+                        trigger.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            const targetId = this.getAttribute('data-emoji-target');
+                            if (!targetId) {
+                                console.warn('Emoji trigger missing data-emoji-target');
+                                return;
+                            }
+                            
+                            const rect = this.getBoundingClientRect();
+                            
+                            // Toggle logic
+                            if (picker.style.display === 'grid' && picker.getAttribute('data-target-id') === targetId) {
+                                picker.style.display = 'none';
+                                return;
+                            }
 
-                        picker.setAttribute('data-target-id', targetId);
-                        picker.style.display = 'grid';
-                        
-                        // Smart positioning
-                        let top = rect.bottom + window.scrollY + 5;
-                        let left = rect.left + window.scrollX;
+                            picker.setAttribute('data-target-id', targetId);
+                            picker.style.display = 'grid';
+                            
+                            // Smart positioning (fixed positioning, so don't add scroll offset)
+                            let top = rect.bottom + 5;
+                            let left = rect.left;
 
-                        // Check viewport overflow
-                        if (left + 210 > window.innerWidth) {
-                            left = window.innerWidth - 220;
-                        }
-                        
-                        picker.style.top = top + 'px';
-                        picker.style.left = left + 'px';
-                    });
+                            // Check viewport overflow
+                            if (left + 260 > window.innerWidth) {
+                                left = rect.right - 260;
+                            }
+                            
+                            if (top + 300 > window.innerHeight) {
+                                top = rect.top - 310;
+                            }
+                            
+                            picker.style.top = top + 'px';
+                            picker.style.left = left + 'px';
+                        });
+                    }
                 });
 
-                // Global click to close
-                document.addEventListener('click', (e) => {
-                    if (picker && !picker.contains(e.target) && !e.target.hasAttribute('data-emoji-picker')) {
-                        picker.style.display = 'none';
+                // Global click to close (attach only once)
+                if (!window.emojiPickerCloseHandlerAttached) {
+                    window.emojiPickerCloseHandlerAttached = true;
+                    document.addEventListener('click', (e) => {
+                        if (picker && !picker.contains(e.target) && !e.target.hasAttribute('data-emoji-picker')) {
+                            picker.style.display = 'none';
+                        }
+                    });
+                }
+            }
+
+            /**
+             * AJAX Like Button Handler
+             * Handles post and comment like functionality without page reload
+             */
+            function setupLikeButtons() {
+                const likeButtons = document.querySelectorAll('.like-btn');
+                
+                likeButtons.forEach(btn => {
+                    // Only attach if not already attached
+                    if (!btn.dataset.likeAttached) {
+                        btn.dataset.likeAttached = 'true';
+                        
+                        btn.addEventListener('click', async function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            const url = this.getAttribute('data-like-url');
+                            const counterElementId = this.getAttribute('data-likes-counter');
+                            const counterElement = document.getElementById(counterElementId);
+                            
+                            if (!url || !counterElement) {
+                                console.warn('Like button missing data attributes');
+                                return;
+                            }
+                            
+                            try {
+                                const response = await fetch(url, {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                    }
+                                });
+                                
+                                if (!response.ok) {
+                                    console.error('Like request failed:', response.status);
+                                    return;
+                                }
+                                
+                                const data = await response.json();
+                                
+                                // Update the like count
+                                counterElement.textContent = data.nbLikes;
+                                
+                                // Change button appearance based on liked status
+                                if (data.liked) {
+                                    this.style.opacity = '1';
+                                    this.style.fontWeight = 'bold';
+                                } else {
+                                    this.style.opacity = '0.6';
+                                    this.style.fontWeight = 'normal';
+                                }
+                            } catch (error) {
+                                console.error('Error handling like:', error);
+                            }
+                        });
                     }
                 });
             }
 
-            // Re-run on every Turbo load
-            document.addEventListener('turbo:load', setupEmojiPicker);
-            document.addEventListener('DOMContentLoaded', setupEmojiPicker);
+            // Initialize all interactive elements
+            function initializeInteractiveElements() {
+                setupEmojiPicker();
+                setupLikeButtons();
+            }
+
+            // Re-run on every Turbo load and page changes
+            document.addEventListener('turbo:load', initializeInteractiveElements);
+            document.addEventListener('DOMContentLoaded', initializeInteractiveElements);
         </script>
     </head>
     <body{% block body_attr %}{% endblock %}>

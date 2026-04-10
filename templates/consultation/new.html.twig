@@ -13,7 +13,7 @@
             Partagez vos questions ou vos expériences avec la communauté.
         </p>
         
-        {{ form_start(form, { attr: { class: 'stack-form', enctype: 'multipart/form-data' } }) }}
+        {{ form_start(form, { attr: { class: 'stack-form', enctype: 'multipart/form-data', novalidate: 'novalidate' } }) }}
             {{ form_row(form.titre) }}
             {{ form_row(form.categorie) }}
             {{ form_row(form.imageFile) }}

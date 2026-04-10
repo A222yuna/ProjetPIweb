@@ -89,16 +89,30 @@
                         <p class="post-card-snippet">{{ post.contenu|length > 220 ? post.contenu|slice(0, 220) ~ '…' : post.contenu }}</p>
                         <div class="post-card-footer">
                             <span>{{ post.date|date('d/m/Y H:i') }}</span>
-                            <span>{{ post.nbLikes }} j’aime</span>
+                            <span><span id="post-card-{{ post.id }}" class="likes-count">{{ post.nbLikes }}</span> j'aime</span>
                         </div>
-                        <div class="post-card-actions">
+                        <div class="post-card-actions" style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
                             <a href="{{ path('app_post_show', { id: post.id }) }}" class="btn btn-outline btn-sm">👁️ Voir</a>
                             <a href="{{ path('app_post_show', { id: post.id }) }}#comment-form" class="btn btn-outline btn-sm">💬 Commenter</a>
-                            <a href="{{ path('app_post_like', { id: post.id }) }}" 
-                               class="btn btn-outline btn-sm" 
-                               data-turbo="false">
+                            <button type="button" 
+                               class="btn btn-outline btn-sm like-btn" 
+                               data-like-url="{{ path('app_post_like', { id: post.id }) }}"
+                               data-likes-counter="post-card-{{ post.id }}">
                                 ❤️ J'aime
-                            </a>
+                            </button>
+                            
+                            {% if app.user and post.auteur and app.user.id == post.auteur.id %}
+                                <a href="{{ path('app_post_edit', { id: post.id }) }}" class="btn btn-link btn-sm" style="margin-left: auto; text-decoration: none;">✏️ Modifier</a>
+                                <form method="post" action="{{ path('app_post_delete', {id: post.id}) }}" onsubmit="return confirm('Supprimer définitivement cette publication ?');" style="display: inline-block;">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ post.id) }}">
+                                    <button type="submit" class="btn btn-link btn-sm" style="color: #d32f2f; padding: 0; text-decoration: none;">🗑️ Supprimer</button>
+                                </form>
+                            {% elseif is_granted('ROLE_ADMIN') %}
+                                <form method="post" action="{{ path('app_admin_forum_post_delete', {id: post.id}) }}" onsubmit="return confirm('Supprimer définitivement cette publication ?');" style="display: inline-block; margin-left: auto;">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_post_' ~ post.id) }}">
+                                    <button type="submit" class="btn btn-link btn-sm" style="color: #d32f2f; padding: 0; text-decoration: none;">🗑️ Supprimer</button>
+                                </form>
+                            {% endif %}
                         </div>
                     </div>
                 </article>

@@ -97,8 +97,8 @@ class PostRepository extends ServiceEntityRepository
                 $qb->orderBy('p.nbLikes', 'DESC');
                 break;
             case 'comments':
-                $qb->addSelect('COUNT(c) AS HIDDEN commentCount')
-                   ->groupBy('p.id')
+                $qb->addSelect('COUNT(c.id_comment) AS HIDDEN commentCount')
+                   ->groupBy('p.id_post')
                    ->orderBy('commentCount', 'DESC');
                 break;
             case 'recent':

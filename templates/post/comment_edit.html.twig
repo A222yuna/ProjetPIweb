@@ -1,21 +1,16 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Modifier la publication — Forum{% endblock %}
+{% block title %}Modifier le commentaire — Forum{% endblock %}
 
 {% block body %}
     <p class="muted back-link">
-        <a href="{{ path('app_post_show', { id: post.id }) }}">← Retour à la publication</a>
+        <a href="{{ path('app_post_show', { id: comment.post.id }) }}">← Retour à la publication</a>
     </p>
 
     <div class="card" style="max-width: 800px; margin: 0 auto;">
-        <h1>Modifier votre publication</h1>
+        <h1>Modifier votre commentaire</h1>
         
-        {{ form_start(form, { attr: { class: 'stack-form', enctype: 'multipart/form-data', novalidate: 'novalidate' } }) }}
-            {{ form_row(form.titre) }}
-            {{ form_row(form.categorie) }}
-            {{ form_row(form.imageFile) }}
-            {{ form_row(form.imageUrl) }}
-            
+        {{ form_start(form, { attr: { class: 'stack-form', novalidate: 'novalidate' } }) }}
             <div class="emoji-btn-wrapper">
                 {{ form_label(form.contenu) }}
                 <button type="button" class="emoji-trigger-btn" data-emoji-picker data-emoji-target="{{ form.contenu.vars.id }}">
@@ -27,7 +22,7 @@
             
             <div class="stack-form-actions">
                 <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
-                <a href="{{ path('app_post_show', { id: post.id }) }}" class="btn btn-outline">Annuler</a>
+                <a href="{{ path('app_post_show', { id: comment.post.id }) }}" class="btn btn-outline">Annuler</a>
             </div>
         {{ form_end(form) }}
     </div>

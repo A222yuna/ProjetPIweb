@@ -25,8 +25,8 @@ security:
         - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/psychologue, roles: ROLE_PSYCHOLOGUE }
         - { path: ^/patient, roles: ROLE_PATIENT }
-        - { path: ^/consultation, roles: [ROLE_PATIENT, ROLE_PSYCHOLOGUE] }
-        - { path: ^/posts, roles: [ROLE_PATIENT, ROLE_PSYCHOLOGUE] }
+        - { path: ^/consultation, roles: [ROLE_PATIENT, ROLE_PSYCHOLOGUE, ROLE_ADMIN] }
+        - { path: ^/posts, roles: [ROLE_PATIENT, ROLE_PSYCHOLOGUE, ROLE_ADMIN] }
         - { path: ^/logout, roles: ROLE_USER }
 
 when@test:

@@ -28,8 +28,8 @@ final class ConsultationController extends AbstractController
         if (!$user instanceof User) {
             throw new AccessDeniedException('Connexion requise.');
         }
-        if (!\in_array($user->getRole(), ['Patient', 'Psychologue'], true)) {
-            throw new AccessDeniedException('Acces reserve aux patients et psychologues.');
+        if (!\in_array($user->getRole(), ['Patient', 'Psychologue', 'Admin'], true)) {
+            throw new AccessDeniedException('Acces reserve aux patients, psychologues et administrateurs.');
         }
 
         return $user;
@@ -190,26 +190,42 @@ final class ConsultationController extends AbstractController
         ]);
     }
 
-    #[Route('/consultation/{id}/like', name: 'app_post_like', methods: ['GET'])]
-    public function likePost(int $id, Request $request, PostRepository $posts, EntityManagerInterface $em): RedirectResponse
+    #[Route('/consultation/{id}/like', name: 'app_post_like', methods: ['GET', 'POST'])]
+    public function likePost(int $id, Request $request, PostRepository $posts, EntityManagerInterface $em): Response
     {
         $this->requireForumRole();
         $post = $posts->find($id);
+        $liked = false;
+
         if ($post) {
             $session = $request->getSession();
             $likedPosts = $session->get('liked_posts', []);
 
             if (!in_array($id, $likedPosts)) {
+                // Add like
                 $post->setNbLikes($post->getNbLikes() + 1);
                 $likedPosts[] = $id;
-                $session->set('liked_posts', $likedPosts);
-                $em->flush();
-                $this->addFlash('success', 'Vous aimez cette publication !');
+                $liked = true;
             } else {
-                $this->addFlash('warning', 'Vous avez déjà aimé cette publication.');
+                // Remove like (toggle off)
+                $post->setNbLikes(max(0, $post->getNbLikes() - 1));
+                $likedPosts = array_filter($likedPosts, fn($postId) => $postId !== $id);
+                $liked = false;
             }
+
+            $session->set('liked_posts', $likedPosts);
+            $em->flush();
         }
 
+        // Return JSON for AJAX requests
+        if ($request->isXmlHttpRequest()) {
+            return new Response(json_encode([
+                'liked' => $liked,
+                'nbLikes' => $post?->getNbLikes() ?? 0,
+            ]), 200, ['Content-Type' => 'application/json']);
+        }
+
+        // Fallback to redirect for non-AJAX
         $referer = $request->headers->get('referer');
         if ($referer !== null) {
             return $this->redirect($referer);
@@ -284,32 +300,111 @@ final class ConsultationController extends AbstractController
         return $this->redirectToRoute('app_consultation');
     }
 
-    #[Route('/consultation/commentaire/{id}/like', name: 'app_comment_like', methods: ['GET'])]
-    public function likeComment(int $id, Request $request, CommentaireRepository $commentaires, EntityManagerInterface $em): RedirectResponse
+    #[Route('/consultation/commentaire/{id}/like', name: 'app_comment_like', methods: ['GET', 'POST'])]
+    public function likeComment(int $id, Request $request, CommentaireRepository $commentaires, EntityManagerInterface $em): Response
     {
         $this->requireForumRole();
         $comment = $commentaires->find($id);
+        $liked = false;
+
         if ($comment) {
             $session = $request->getSession();
             $likedComments = $session->get('liked_comments', []);
 
             if (!in_array($id, $likedComments)) {
+                // Add like
                 $comment->setNbLikes($comment->getNbLikes() + 1);
                 $likedComments[] = $id;
-                $session->set('liked_comments', $likedComments);
-                $em->flush();
-                $this->addFlash('success', 'Vous aimez ce commentaire !');
+                $liked = true;
             } else {
-                $this->addFlash('warning', 'Vous avez déjà aimé ce commentaire.');
+                // Remove like (toggle off)
+                $comment->setNbLikes(max(0, $comment->getNbLikes() - 1));
+                $likedComments = array_filter($likedComments, fn($commentId) => $commentId !== $id);
+                $liked = false;
             }
+
+            $session->set('liked_comments', $likedComments);
+            $em->flush();
         }
 
+        // Return JSON for AJAX requests
+        if ($request->isXmlHttpRequest()) {
+            return new Response(json_encode([
+                'liked' => $liked,
+                'nbLikes' => $comment?->getNbLikes() ?? 0,
+            ]), 200, ['Content-Type' => 'application/json']);
+        }
+
+        // Fallback to redirect for non-AJAX
         $referer = $request->headers->get('referer');
         if ($referer !== null) {
             return $this->redirect($referer);
         }
 
         return $this->redirectToRoute('app_post_show', ['id' => $comment?->getPost()?->getId() ?? 0]);
+    }
+
+    #[Route('/consultation/commentaire/{id}/edit', name: 'app_comment_edit', methods: ['GET', 'POST'])]
+    public function editComment(
+        int $id,
+        Request $request,
+        CommentaireRepository $commentaires,
+        EntityManagerInterface $em
+    ): Response {
+        $user = $this->requireForumRole();
+        $comment = $commentaires->find($id);
+
+        if (!$comment) {
+            throw $this->createNotFoundException('Commentaire introuvable.');
+        }
+
+        if ($comment->getAuteur()?->getId() !== $user->getId()) {
+            throw new AccessDeniedException('Vous n\'êtes pas l\'auteur de ce commentaire.');
+        }
+
+        $form = $this->createForm(CommentaireType::class, $comment);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $em->flush();
+            $this->addFlash('success', 'Votre commentaire a été modifié.');
+
+            return $this->redirectToRoute('app_post_show', ['id' => $comment->getPost()?->getId()]);
+        }
+
+        return $this->render('post/comment_edit.html.twig', [
+            'comment' => $comment,
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/consultation/commentaire/{id}/delete', name: 'app_comment_delete', methods: ['POST'])]
+    public function deleteComment(
+        int $id,
+        Request $request,
+        CommentaireRepository $commentaires,
+        EntityManagerInterface $em
+    ): RedirectResponse {
+        $user = $this->requireForumRole();
+        $comment = $commentaires->find($id);
+
+        if (!$comment) {
+            throw $this->createNotFoundException('Commentaire introuvable.');
+        }
+
+        if ($comment->getAuteur()?->getId() !== $user->getId()) {
+            throw new AccessDeniedException('Vous n\'êtes pas l\'auteur de ce commentaire.');
+        }
+
+        $postId = $comment->getPost()?->getId();
+
+        if ($this->isCsrfTokenValid('delete' . $comment->getId(), $request->request->get('_token'))) {
+            $em->remove($comment);
+            $em->flush();
+            $this->addFlash('success', 'Votre commentaire a été supprimé.');
+        }
+
+        return $this->redirectToRoute('app_post_show', ['id' => $postId]);
     }
 
     #[Route('/mentions-legales', name: 'app_mentions_legales')]
