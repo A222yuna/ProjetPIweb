@@ -50,7 +50,7 @@ class CommentaireRepository extends ServiceEntityRepository
             ->getResult();
 
         $totalCountQb = clone $qb;
-        $totalCountQb->select('COUNT(DISTINCT c.id_comment)');
+        $totalCountQb->select('COUNT(DISTINCT c.id)');
         $total = (int) $totalCountQb->getQuery()->getSingleScalarResult();
 
         return [

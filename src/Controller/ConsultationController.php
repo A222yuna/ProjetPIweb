@@ -19,9 +19,31 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use App\Entity\User;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class ConsultationController extends AbstractController
 {
+    public function __construct(
+        private readonly HttpClientInterface $httpClient,
+    ) {
+    }
+
+    private function filterBadWords(?string $text): string
+    {
+        if (!$text) return '';
+
+        try {
+            $response = $this->httpClient->request('GET', 'https://www.purgomalum.com/service/json', [
+                'query' => ['text' => $text]
+            ]);
+            $data = $response->toArray();
+            return $data['result'] ?? $text;
+        } catch (\Exception $e) {
+            // Fallback to original text if API fails
+            return $text;
+        }
+    }
+
     private function requireForumRole(): User
     {
         $user = $this->getUser();
@@ -89,6 +111,9 @@ final class ConsultationController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $this->handleFileUpload($post, $form, $slugger);
+            
+            $post->setTitre($this->filterBadWords($post->getTitre()));
+            $post->setContenu($this->filterBadWords($post->getContenu()));
             
             $post->setAuteur($user);
             $post->setAuteurRole($user->getRole());
@@ -171,6 +196,7 @@ final class ConsultationController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $comment->setContenu($this->filterBadWords($comment->getContenu()));
             $comment->setAuteur($user);
             $comment->setAuteurRole($user->getRole());
             $comment->setNbLikes(0);
@@ -261,6 +287,10 @@ final class ConsultationController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $this->handleFileUpload($post, $form, $slugger);
+            
+            $post->setTitre($this->filterBadWords($post->getTitre()));
+            $post->setContenu($this->filterBadWords($post->getContenu()));
+            
             $em->flush();
             $this->addFlash('success', 'Votre publication a été modifiée.');
 
@@ -366,6 +396,7 @@ final class ConsultationController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $comment->setContenu($this->filterBadWords($comment->getContenu()));
             $em->flush();
             $this->addFlash('success', 'Votre commentaire a été modifié.');
 

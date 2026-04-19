@@ -13,11 +13,20 @@
             · {{ post.date|date('d/m/Y H:i') }}
         </p>
         <div class="post-body">{{ post.contenu }}</div>
+        
+        <div id="qr-code-section" style="display:none; margin: 1rem 0; padding: 1rem; background: var(--accent-soft); border-radius: var(--radius-sm); text-align: center;">
+            <p style="margin-top: 0; font-weight: 600;">Scannez pour partager cette publication</p>
+            <img id="qr-code-img" src="" alt="QR Code" style="border: 4px solid white; border-radius: 4px; box-shadow: var(--shadow);">
+            <p class="muted" style="margin-bottom: 0; font-size: 0.85rem;">Lien : <span id="post-url-text"></span></p>
+        </div>
+
         <div class="post-actions" style="display:flex;gap:0.75rem;flex-wrap:wrap;margin:1rem 0;align-items:center">
             <button type="button" class="btn btn-primary btn-sm like-btn" data-like-url="{{ path('app_post_like', { id: post.id }) }}" data-likes-counter="post-{{ post.id }}">
                 👍 J'aime
             </button>
             <a href="#comment-form" class="btn btn-outline btn-sm">Commenter</a>
+            
+            <button type="button" class="btn btn-outline btn-sm" onclick="toggleQRCode()">📱 Partager via QR Code</button>
             
             {% if app.user and post.auteur and app.user.id == post.auteur.id %}
                 <a href="{{ path('app_post_edit', { id: post.id }) }}" class="btn btn-outline btn-sm" style="margin-left: auto;">✏️ Modifier</a>
@@ -75,4 +84,23 @@
             </div>
         {{ form_end(commentForm) }}
     </div>
+
+    <script>
+        function toggleQRCode() {
+            const section = document.getElementById('qr-code-section');
+            const img = document.getElementById('qr-code-img');
+            const urlText = document.getElementById('post-url-text');
+            const currentUrl = window.location.href;
+            
+            if (section.style.display === 'none') {
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentUrl)}`;
+                img.src = qrUrl;
+                urlText.textContent = currentUrl;
+                section.style.display = 'block';
+                section.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                section.style.display = 'none';
+            }
+        }
+    </script>
 {% endblock %}

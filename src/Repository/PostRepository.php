@@ -76,46 +76,48 @@ class PostRepository extends ServiceEntityRepository
         $page = max(1, $page);
         $offset = ($page - 1) * $perPage;
 
-        $qb = $this->createQueryBuilder('p')
-            ->leftJoin('p.auteur', 'u')->addSelect('u')
-            ->leftJoin('p.commentaires', 'c');
+        // Base query without sorting
+        $baseQb = $this->createQueryBuilder('p')
+            ->leftJoin('p.auteur', 'u')->addSelect('u');
 
         if ($query !== null && $query !== '') {
-            $qb->andWhere($qb->expr()->orX(
+            $baseQb->andWhere($baseQb->expr()->orX(
                 'LOWER(p.titre) LIKE :q',
                 'LOWER(p.contenu) LIKE :q'
             ))->setParameter('q', '%'.mb_strtolower($query).'%');
         }
 
         if ($categorie !== null && $categorie !== '') {
-            $qb->andWhere('p.categorie = :cat')->setParameter('cat', $categorie);
+            $baseQb->andWhere('p.categorie = :cat')->setParameter('cat', $categorie);
         }
 
-        // Logic for sorting
+        // Get total count first
+        $totalCountQb = clone $baseQb;
+        $totalCountQb->select('COUNT(DISTINCT p.id)');
+        $total = (int) $totalCountQb->getQuery()->getSingleScalarResult();
+
+        // Apply sorting
         switch ($sortBy) {
             case 'likes':
-                $qb->orderBy('p.nbLikes', 'DESC');
+                $baseQb->orderBy('p.nbLikes', 'DESC');
                 break;
             case 'comments':
-                $qb->addSelect('COUNT(c.id_comment) AS HIDDEN commentCount')
-                   ->groupBy('p.id_post')
+                // Use a subquery to get posts with comment counts, then order by it
+                $baseQb->addSelect('(SELECT COUNT(c2.id) FROM App\Entity\Commentaire c2 WHERE c2.post = p) AS HIDDEN commentCount')
                    ->orderBy('commentCount', 'DESC');
                 break;
             case 'recent':
             default:
-                $qb->orderBy('p.date', 'DESC');
+                $baseQb->orderBy('p.date', 'DESC');
                 break;
         }
 
-        $items = (clone $qb)
+        // Apply pagination and get results
+        $items = $baseQb
             ->setFirstResult($offset)
             ->setMaxResults($perPage)
             ->getQuery()
             ->getResult();
-
-        $totalCountQb = clone $qb;
-        $totalCountQb->select('COUNT(DISTINCT p.id)');
-        $total = (int) $totalCountQb->getQuery()->getSingleScalarResult();
 
         return [
             'items' => $items,
