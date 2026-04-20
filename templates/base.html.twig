@@ -1317,6 +1317,33 @@
                 </button>
             </div>
         </header>
+        {% set r = app.request.attributes.get('_route') %}
+        {% if r in ['app_consultation', 'app_post_show'] and app.user %}
+            {% set notif = forum_notifications(app.user, 6) %}
+            {% if notif.total > 0 %}
+                <div class="flash-stack" style="margin-top: .75rem;">
+                    <div class="flash" style="background: var(--surface); border: 1px solid var(--border); color: var(--text); box-shadow: var(--shadow);">
+                        <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;justify-content:space-between">
+                            <strong>Notifications</strong>
+                            <span class="muted" style="font-size:.9rem">{{ notif.total }} nouveau(x) commentaire(s) sur vos publications</span>
+                        </div>
+                        <ul class="plain" style="margin-top:.75rem">
+                            {% for c in notif.items %}
+                                <li style="padding:.55rem 0;border-bottom:1px solid var(--border)">
+                                    <a href="{{ path('app_post_show', { id: c.post.id }) }}" style="font-weight:600">
+                                        {{ c.auteur ? (c.auteur.prenom ~ ' ' ~ c.auteur.nom) : 'Quelqu’un' }}
+                                        a commenté votre post “{{ c.post.titre|length > 42 ? c.post.titre|slice(0, 42) ~ '…' : c.post.titre }}”
+                                    </a>
+                                    <div class="muted" style="font-size:.9rem;margin-top:.15rem">
+                                        {{ c.date|date('d/m/Y H:i') }} · {{ c.contenu|length > 120 ? c.contenu|slice(0, 120) ~ '…' : c.contenu }}
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            {% endif %}
+        {% endif %}
         {% block flashes %}
             {% set flash_success = app.flashes('success') %}
             {% set flash_error = app.flashes('error') %}

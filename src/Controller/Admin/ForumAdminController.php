@@ -4,6 +4,8 @@ namespace App\Controller\Admin;
 
 use App\Repository\PostRepository;
 use App\Repository\CommentaireRepository;
+use App\Repository\ForumReportRepository;
+use App\Entity\ForumReport;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,7 +25,7 @@ final class ForumAdminController extends AbstractController
         $sort = $request->query->getString('sort', 'recent');
         $page = max(1, $request->query->getInt('page', 1));
 
-        $result = $posts->searchConsultationsPaginated($q, $cat, $page, 15, $sort);
+        $result = $posts->searchConsultationsPaginated($q, $cat, $page, 15, $sort, true);
 
         return $this->render('admin/forum/posts.html.twig', [
             'posts' => $result['items'],
@@ -92,5 +94,86 @@ final class ForumAdminController extends AbstractController
         }
 
         return $this->redirectToRoute('app_admin_forum_comments');
+    }
+
+    #[Route('/reports', name: 'app_admin_forum_reports', methods: ['GET'])]
+    public function listReports(Request $request, ForumReportRepository $reports): Response
+    {
+        $q = $request->query->getString('q');
+        $status = $request->query->getString('status', ForumReport::STATUS_OPEN);
+        $type = $request->query->getString('type');
+        $page = max(1, $request->query->getInt('page', 1));
+
+        $result = $reports->findAdminPaginated($q, $status !== '' ? $status : null, $type !== '' ? $type : null, $page, 20);
+
+        return $this->render('admin/forum/reports.html.twig', [
+            'reports' => $result['items'],
+            'q' => $q,
+            'status' => $status,
+            'type' => $type,
+            'page' => $page,
+            'total_pages' => (int) ceil($result['total'] / 20),
+        ]);
+    }
+
+    #[Route('/reports/{id}/resolve', name: 'app_admin_forum_report_resolve', methods: ['POST'])]
+    public function resolveReport(int $id, Request $request, ForumReportRepository $reports, EntityManagerInterface $em): Response
+    {
+        $report = $reports->find($id);
+        if (!$report instanceof ForumReport) {
+            throw $this->createNotFoundException();
+        }
+
+        if (!$this->isCsrfTokenValid('resolve_report_' . $report->getId(), (string) $request->request->get('_token'))) {
+            return $this->redirectToRoute('app_admin_forum_reports');
+        }
+
+        $action = $request->request->getString('action', ForumReport::ACTION_DISMISSED);
+        $now = new \DateTimeImmutable();
+        $admin = $this->getUser();
+        if (!$admin instanceof \App\Entity\User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $targetPost = $report->getTargetPost();
+        $targetComment = $report->getTargetComment();
+
+        if ($action === ForumReport::ACTION_HIDDEN) {
+            if ($targetPost) {
+                $targetPost->setIsHidden(true)->setHiddenAt($now)->setHiddenBy($admin);
+            }
+            if ($targetComment) {
+                $targetComment->setIsHidden(true)->setHiddenAt($now)->setHiddenBy($admin);
+            }
+        } elseif ($action === ForumReport::ACTION_UNHIDDEN) {
+            if ($targetPost) {
+                $targetPost->setIsHidden(false)->setHiddenAt(null)->setHiddenBy(null);
+            }
+            if ($targetComment) {
+                $targetComment->setIsHidden(false)->setHiddenAt(null)->setHiddenBy(null);
+            }
+        } elseif ($action === ForumReport::ACTION_DELETED) {
+            if ($targetComment) {
+                $em->remove($targetComment);
+            }
+            if ($targetPost) {
+                $em->remove($targetPost);
+            }
+        } else {
+            $action = ForumReport::ACTION_DISMISSED;
+        }
+
+        $report
+            ->setStatus(ForumReport::STATUS_RESOLVED)
+            ->setResolutionAction($action)
+            ->setResolvedAt($now)
+            ->setResolvedBy($admin);
+
+        $em->flush();
+        $this->addFlash('success', 'Signalement traité.');
+
+        return $this->redirectToRoute('app_admin_forum_reports', [
+            'status' => ForumReport::STATUS_OPEN,
+        ]);
     }
 }

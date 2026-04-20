@@ -25,6 +25,7 @@
                 👍 J'aime
             </button>
             <a href="#comment-form" class="btn btn-outline btn-sm">Commenter</a>
+            <a href="{{ path('app_post_report', { id: post.id }) }}" class="btn btn-outline btn-sm">🚩 Signaler</a>
             
             <button type="button" class="btn btn-outline btn-sm" onclick="toggleQRCode()">📱 Partager via QR Code</button>
             

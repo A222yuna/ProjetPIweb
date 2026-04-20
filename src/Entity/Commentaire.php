@@ -43,6 +43,16 @@ class Commentaire
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $date = null;
 
+    #[ORM\Column(name: 'is_hidden', options: ['default' => 0])]
+    private bool $isHidden = false;
+
+    #[ORM\Column(name: 'hidden_at', type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $hiddenAt = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(name: 'hidden_by_id_user', referencedColumnName: 'id_user', nullable: true, onDelete: 'SET NULL')]
+    private ?User $hiddenBy = null;
+
     #[ORM\ManyToOne(inversedBy: 'replies')]
     #[ORM\JoinColumn(name: 'parent_comment_id', referencedColumnName: 'id_comment', nullable: true, onDelete: 'SET NULL')]
     private ?Commentaire $parent = null;
@@ -132,6 +142,39 @@ class Commentaire
     {
         $this->date = $date;
 
+        return $this;
+    }
+
+    public function isHidden(): bool
+    {
+        return $this->isHidden;
+    }
+
+    public function setIsHidden(bool $isHidden): static
+    {
+        $this->isHidden = $isHidden;
+        return $this;
+    }
+
+    public function getHiddenAt(): ?\DateTimeInterface
+    {
+        return $this->hiddenAt;
+    }
+
+    public function setHiddenAt(?\DateTimeInterface $hiddenAt): static
+    {
+        $this->hiddenAt = $hiddenAt;
+        return $this;
+    }
+
+    public function getHiddenBy(): ?User
+    {
+        return $this->hiddenBy;
+    }
+
+    public function setHiddenBy(?User $hiddenBy): static
+    {
+        $this->hiddenBy = $hiddenBy;
         return $this;
     }
 

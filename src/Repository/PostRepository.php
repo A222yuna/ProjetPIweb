@@ -23,17 +23,26 @@ class PostRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('p')
             ->leftJoin('p.auteur', 'u')->addSelect('u')
+            ->andWhere('p.isHidden = 0')
             ->orderBy('p.date', 'DESC')
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
     }
 
-    public function findOneWithComments(int $id): ?Post
+    public function findOneWithComments(int $id, bool $includeHidden = false): ?Post
     {
-        return $this->createQueryBuilder('p')
-            ->leftJoin('p.auteur', 'a')->addSelect('a')
-            ->leftJoin('p.commentaires', 'c')->addSelect('c')
+        $qb = $this->createQueryBuilder('p')
+            ->leftJoin('p.auteur', 'a')->addSelect('a');
+
+        if ($includeHidden) {
+            $qb->leftJoin('p.commentaires', 'c')->addSelect('c');
+        } else {
+            $qb->andWhere('p.isHidden = 0')
+               ->leftJoin('p.commentaires', 'c', 'WITH', 'c.isHidden = 0')->addSelect('c');
+        }
+
+        return $qb
             ->leftJoin('c.auteur', 'ca')->addSelect('ca')
             ->leftJoin('c.parent', 'cp')->addSelect('cp')
             ->leftJoin('c.replies', 'cr')->addSelect('cr')
@@ -48,11 +57,15 @@ class PostRepository extends ServiceEntityRepository
      *
      * @return Post[]
      */
-    public function searchConsultations(?string $query, ?string $categorie): array
+    public function searchConsultations(?string $query, ?string $categorie, bool $includeHidden = false): array
     {
         $qb = $this->createQueryBuilder('p')
             ->leftJoin('p.auteur', 'u')->addSelect('u')
             ->orderBy('p.date', 'DESC');
+
+        if (!$includeHidden) {
+            $qb->andWhere('p.isHidden = 0');
+        }
 
         if ($query !== null && $query !== '') {
             $qb->andWhere($qb->expr()->orX(
@@ -71,7 +84,7 @@ class PostRepository extends ServiceEntityRepository
     /**
      * @return array{items: Post[], total:int}
      */
-    public function searchConsultationsPaginated(?string $query, ?string $categorie, int $page, int $perPage = 6, ?string $sortBy = 'recent'): array
+    public function searchConsultationsPaginated(?string $query, ?string $categorie, int $page, int $perPage = 6, ?string $sortBy = 'recent', bool $includeHidden = false): array
     {
         $page = max(1, $page);
         $offset = ($page - 1) * $perPage;
@@ -79,6 +92,10 @@ class PostRepository extends ServiceEntityRepository
         // Base query without sorting
         $baseQb = $this->createQueryBuilder('p')
             ->leftJoin('p.auteur', 'u')->addSelect('u');
+
+        if (!$includeHidden) {
+            $baseQb->andWhere('p.isHidden = 0');
+        }
 
         if ($query !== null && $query !== '') {
             $baseQb->andWhere($baseQb->expr()->orX(

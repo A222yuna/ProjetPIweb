@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Commentaire;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -57,5 +58,25 @@ class CommentaireRepository extends ServiceEntityRepository
             'items' => $items,
             'total' => $total,
         ];
+    }
+
+    /**
+     * @return Commentaire[]
+     */
+    public function findLatestCommentsOnUserPosts(User $user, int $limit = 8): array
+    {
+        $limit = max(1, min(20, $limit));
+
+        return $this->createQueryBuilder('c')
+            ->leftJoin('c.post', 'p')->addSelect('p')
+            ->leftJoin('c.auteur', 'a')->addSelect('a')
+            ->andWhere('p.auteur = :user')->setParameter('user', $user)
+            ->andWhere('c.auteur != :user')->setParameter('user', $user)
+            ->andWhere('p.isHidden = 0')
+            ->andWhere('c.isHidden = 0')
+            ->orderBy('c.date', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
     }
 }

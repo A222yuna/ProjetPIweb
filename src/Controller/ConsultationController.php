@@ -149,7 +149,8 @@ final class ConsultationController extends AbstractController
             $filterCategorie !== '' ? $filterCategorie : null,
             $page,
             6,
-            $sortBy
+            $sortBy,
+            false
         );
         $totalPages = max(1, (int) ceil($result['total'] / 6));
 
@@ -174,7 +175,7 @@ final class ConsultationController extends AbstractController
     ): Response
     {
         $user = $this->requireForumRole();
-        $post = $posts->findOneWithComments($id);
+        $post = $posts->findOneWithComments($id, $this->isGranted('ROLE_ADMIN'));
         if (!$post) {
             throw $this->createNotFoundException('Publication introuvable.');
         }

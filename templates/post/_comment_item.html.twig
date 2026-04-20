@@ -10,6 +10,7 @@
         {% if level < 4 %}
             <a href="{{ path('app_post_show', { id: comment.post.id, reply_to: comment.id }) }}">Répondre</a>
         {% endif %}
+        <a href="{{ path('app_comment_report', { id: comment.id }) }}">Signaler</a>
         
         {% if app.user and comment.auteur and app.user.id == comment.auteur.id %}
             <a href="{{ path('app_comment_edit', { id: comment.id }) }}" class="btn btn-link btn-sm" style="margin-left: auto; text-decoration: none;">✏️ Modifier</a>
