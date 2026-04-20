@@ -26,6 +26,14 @@
             </button>
             <a href="#comment-form" class="btn btn-outline btn-sm">Commenter</a>
             <a href="{{ path('app_post_report', { id: post.id }) }}" class="btn btn-outline btn-sm">🚩 Signaler</a>
+            {% if app.user %}
+                <form method="post" action="{{ path('app_post_save_toggle', { id: post.id }) }}" style="display:inline-block">
+                    <input type="hidden" name="_token" value="{{ csrf_token('save_post_' ~ post.id) }}">
+                    <button type="submit" class="btn btn-outline btn-sm">
+                        {{ app.user.savedPosts is defined and (post in app.user.savedPosts) ? '★ Enregistré' : '☆ Enregistrer' }}
+                    </button>
+                </form>
+            {% endif %}
             
             <button type="button" class="btn btn-outline btn-sm" onclick="toggleQRCode()">📱 Partager via QR Code</button>
             

@@ -56,7 +56,12 @@
                 <a href="{{ path('app_consultation') }}" class="btn btn-outline">Réinitialiser</a>
             {% endif %}
         </form>
-        <a href="{{ path('app_post_new') }}" class="btn btn-primary">Nouvelle publication</a>
+        <div class="toolbar-actions">
+            {% if app.user %}
+                <a href="{{ path('app_saved_posts') }}" class="btn btn-outline">Favoris</a>
+            {% endif %}
+            <a href="{{ path('app_post_new') }}" class="btn btn-primary">Nouvelle publication</a>
+        </div>
     </div>
 
     <datalist id="consultation-categories">
@@ -100,6 +105,14 @@
                                data-likes-counter="post-card-{{ post.id }}">
                                 ❤️ J'aime
                             </button>
+                            {% if app.user %}
+                                <form method="post" action="{{ path('app_post_save_toggle', { id: post.id }) }}" style="display:inline-block">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('save_post_' ~ post.id) }}">
+                                    <button type="submit" class="btn btn-outline btn-sm">
+                                        {{ app.user.savedPosts is defined and (post in app.user.savedPosts) ? '★ Enregistré' : '☆ Enregistrer' }}
+                                    </button>
+                                </form>
+                            {% endif %}
                             
                             {% if app.user and post.auteur and app.user.id == post.auteur.id %}
                                 <a href="{{ path('app_post_edit', { id: post.id }) }}" class="btn btn-link btn-sm" style="margin-left: auto; text-decoration: none;">✏️ Modifier</a>
