@@ -1100,6 +1100,127 @@
             }
         </style>
         {% block stylesheets %}
+            <link rel="stylesheet" href="{{ asset('assets/styles/app.css') }}">
+            <style>
+                /* Bell Icon Styles */
+                .notification-bell {
+                    position: relative;
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    padding: 8px 12px;
+                    border-radius: 6px;
+                    transition: background-color 0.2s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                .notification-bell:hover {
+                    background-color: var(--surface-hover, rgba(0,0,0,0.05));
+                }
+                
+                .bell-icon {
+                    font-size: 20px;
+                    line-height: 1;
+                }
+                
+                .notification-count {
+                    position: absolute;
+                    top: 4px;
+                    right: 4px;
+                    background: #dc3545;
+                    color: white;
+                    font-size: 11px;
+                    font-weight: bold;
+                    padding: 2px 5px;
+                    border-radius: 10px;
+                    min-width: 18px;
+                    text-align: center;
+                    line-height: 1.2;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                }
+                
+                /* Notification Dropdown Styles */
+                .notification-dropdown {
+                    background: var(--surface, white);
+                    border: 1px solid var(--border, #e0e0e0);
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    width: 350px;
+                    max-height: 400px;
+                    overflow-y: auto;
+                    z-index: 1000;
+                }
+                
+                .notification-header {
+                    padding: 12px 16px;
+                    border-bottom: 1px solid var(--border, #e0e0e0);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    background: var(--surface, white);
+                    border-radius: 8px 8px 0 0;
+                    font-weight: 600;
+                }
+                
+                .notification-list {
+                    max-height: 300px;
+                    overflow-y: auto;
+                }
+                
+                .notification-item {
+                    border-bottom: 1px solid var(--border, #e0e0e0);
+                }
+                
+                .notification-item:last-child {
+                    border-bottom: none;
+                }
+                
+                .notification-link {
+                    display: block;
+                    padding: 12px 16px;
+                    text-decoration: none;
+                    color: var(--text, #333);
+                    transition: background-color 0.2s ease;
+                }
+                
+                .notification-link:hover {
+                    background-color: var(--surface-hover, rgba(0,0,0,0.05));
+                }
+                
+                .notification-content {
+                    font-size: 14px;
+                    line-height: 1.4;
+                    margin-bottom: 4px;
+                }
+                
+                .notification-meta {
+                    font-size: 12px;
+                    color: var(--text-muted, #666);
+                    line-height: 1.3;
+                }
+                
+                .notification-empty {
+                    padding: 20px 16px;
+                    text-align: center;
+                }
+                
+                /* Responsive adjustments */
+                @media (max-width: 768px) {
+                    .notification-dropdown {
+                        width: 300px;
+                        right: 10px !important;
+                    }
+                }
+                
+                @media (max-width: 480px) {
+                    .notification-dropdown {
+                        width: 280px;
+                        right: 5px !important;
+                    }
+                }
+            </style>
         {% endblock %}
 
         {% block javascripts %}
@@ -1296,10 +1417,69 @@
                 });
             }
 
+            /**
+             * Notification Dropdown Handler
+             * Handles the bell icon click to show/hide notifications
+             */
+            function setupNotificationDropdown() {
+                const bellButton = document.querySelector('[data-notification-toggle]');
+                const dropdown = document.getElementById('notification-dropdown');
+                
+                if (!bellButton || !dropdown) return;
+                
+                bellButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Toggle dropdown visibility
+                    if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+                        // Show dropdown
+                        dropdown.style.display = 'block';
+                        
+                        // Clear notification count and badge
+                        const notificationCount = bellButton.querySelector('.notification-count');
+                        if (notificationCount) {
+                            notificationCount.style.display = 'none';
+                        }
+                        
+                        // Position dropdown near the bell button
+                        const bellRect = bellButton.getBoundingClientRect();
+                        dropdown.style.position = 'fixed';
+                        dropdown.style.top = (bellRect.bottom + 5) + 'px';
+                        dropdown.style.right = '20px';
+                        dropdown.style.zIndex = '1000';
+                        
+                        // Adjust if dropdown goes below viewport
+                        const dropdownRect = dropdown.getBoundingClientRect();
+                        if (dropdownRect.bottom > window.innerHeight) {
+                            dropdown.style.top = (bellRect.top - dropdownRect.height - 5) + 'px';
+                        }
+                    } else {
+                        // Hide dropdown
+                        dropdown.style.display = 'none';
+                    }
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!bellButton.contains(e.target) && !dropdown.contains(e.target)) {
+                        dropdown.style.display = 'none';
+                    }
+                });
+                
+                // Close dropdown when pressing Escape key
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        dropdown.style.display = 'none';
+                    }
+                });
+            }
+
             // Initialize all interactive elements
             function initializeInteractiveElements() {
                 setupEmojiPicker();
                 setupLikeButtons();
+                setupNotificationDropdown();
             }
 
             // Re-run on every Turbo load and page changes
@@ -1317,38 +1497,41 @@
                 </button>
             </div>
         </header>
-        {% set r = app.request.attributes.get('_route') %}
-        {% if r in ['app_consultation', 'app_post_show'] and app.user %}
+        {# Notification Dropdown - Hidden by default, shown when bell is clicked #}
+        {% if app.user %}
             {% set notif = forum_notifications(app.user, 6) %}
-            {# Debug: Always show notification block for testing #}
-            <div class="flash-stack" style="margin-top: .75rem;">
-                <div class="flash" style="background: var(--surface); border: 1px solid var(--border); color: var(--text); box-shadow: var(--shadow);">
-                    <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;justify-content:space-between">
-                        <strong>Notifications</strong>
-                        <span class="muted" style="font-size:.9rem">
-                            {% if notif.total > 0 %}
-                                {{ notif.total }} nouveau(x) commentaire(s) sur vos publications
-                            {% else %}
-                                Aucune nouvelle notification
-                            {% endif %}
-                        </span>
-                    </div>
-                    {% if notif.total > 0 %}
-                        <ul class="plain" style="margin-top:.75rem">
-                            {% for c in notif.items %}
-                                <li style="padding:.55rem 0;border-bottom:1px solid var(--border)">
-                                    <a href="{{ path('app_post_show', { id: c.post.id }) }}" style="font-weight:600">
-                                        {{ c.auteur ? (c.auteur.prenom ~ ' ' ~ c.auteur.nom) : 'Quelqu’un' }}
-                                        a commenté votre post "{{ c.post.titre|length > 42 ? c.post.titre|slice(0, 42) ~ '...' : c.post.titre }}"
-                                    </a>
-                                    <div class="muted" style="font-size:.9rem;margin-top:.15rem">
-                                        {{ c.date|date('d/m/Y H:i') }} · {{ c.contenu|length > 120 ? c.contenu|slice(0, 120) ~ '...' : c.contenu }}
-                                    </div>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
+            <div id="notification-dropdown" class="notification-dropdown" style="display: none;">
+                <div class="notification-header">
+                    <strong>Notifications</strong>
+                    <span class="muted" style="font-size:.9rem">
+                        {% if notif.total > 0 %}
+                            {{ notif.total }} nouveau(x) commentaire(s)
+                        {% else %}
+                            Aucune nouvelle notification
+                        {% endif %}
+                    </span>
                 </div>
+                {% if notif.total > 0 %}
+                    <div class="notification-list">
+                        {% for c in notif.items %}
+                            <div class="notification-item">
+                                <a href="{{ path('app_post_show', { id: c.post.id }) }}" class="notification-link">
+                                    <div class="notification-content">
+                                        <strong>{{ c.auteur ? (c.auteur.prenom ~ ' ' ~ c.auteur.nom) : "Quelqu'un" }}</strong>
+                                        a commenté votre post "{{ c.post.titre|length > 45 ? c.post.titre|slice(0, 45) ~ '...' : c.post.titre }}"
+                                    </div>
+                                    <div class="notification-meta">
+                                        {{ c.date|date('d/m/Y H:i') }} · {{ c.contenu|length > 80 ? c.contenu|slice(0, 80) ~ '...' : c.contenu }}
+                                    </div>
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="notification-empty">
+                        <p class="muted">Vous n'avez pas de nouvelles notifications</p>
+                    </div>
+                {% endif %}
             </div>
         {% endif %}
         {% block flashes %}
@@ -1372,13 +1555,5 @@
         <main class="wrap">
             {% block body %}{% endblock %}
         </main>
-        <footer class="site-footer">
-            <div class="wrap site-footer-inner">
-                <strong>Cabinet de psychologie</strong> — Forum &amp; échanges. Pour toute urgence, contactez les services d’urgence ou votre médecin traitant.
-                <div class="site-footer-links">
-                    <a href="{{ path('app_mentions_legales') }}">Mentions légales</a>
-                </div>
-            </div>
-        </footer>
-    </body>
+            </body>
 </html>
