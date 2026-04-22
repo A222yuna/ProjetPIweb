@@ -10,7 +10,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/psychologue/programme/{programmeId}/activite')]
@@ -38,9 +37,7 @@ final class ActiviteProgrammeController extends AbstractController
             $em->persist($activite);
             $em->flush();
 
-            try {
-                $mailService->sendActivityAddedNotification($programme, $activite);
-            } catch (TransportExceptionInterface) {
+            if (!$mailService->sendActivityAddedNotification($programme, $activite)) {
                 $this->addFlash('warning', 'Activité ajoutée, mais l\'envoi de l\'email a échoué.');
             }
 

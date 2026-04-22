@@ -194,6 +194,24 @@
     .activity-line .calendar-btn {
         font-size: 1rem;
     }
+    .ai-helper-box {
+        margin-bottom: 1.5rem;
+        padding: 1rem 1.1rem;
+        border: 1px solid #ddd6fe;
+        border-left: 4px solid #8b5cf6;
+        background: #f5f3ff;
+        border-radius: 12px;
+    }
+    .ai-helper-box h3 {
+        margin: 0 0 .3rem;
+        font-size: 1rem;
+        color: #5b21b6;
+    }
+    .ai-helper-box p {
+        margin: 0;
+        font-size: .9rem;
+        color: #5b21b6;
+    }
 </style>
 {% endblock %}
 
@@ -205,6 +223,14 @@
     <a href="#all-activities">Toutes les activites</a>
     <a href="#reviews">Avis</a>
 </nav>
+
+<section class="ai-helper-box" aria-label="Assistant IA">
+    <h3>✨ Assistant IA patient</h3>
+    <p>
+        Pour obtenir un conseil Gemini, allez dans une activité puis cliquez sur le bouton
+        <strong>Conseil IA</strong>.
+    </p>
+</section>
 
 <div class="patient-prog-header">
     <div class="header-content">

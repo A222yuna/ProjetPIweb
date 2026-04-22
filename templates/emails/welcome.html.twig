@@ -1,38 +1,38 @@
 {% extends 'emails/base.html.twig' %}
 
 {% block body %}
-    <table width="100%" border="0" cellspacing="0" cellpadding="0">
-        <tr>
-            <td align="center">
-                <div style="width: 80px; height: 80px; background-color: #ecfdf5; border-radius: 50%; display: inline-block; line-height: 80px; font-size: 40px; margin-bottom: 24px;">
-                    🌱
-                </div>
-                <h1 class="h1" style="margin-bottom: 8px;">Bienvenue à bord !</h1>
-                <p class="text" style="font-size: 18px; color: #6b7280;">Salut {{ user.prenom|default('l\'ami') }}, nous sommes ravis de vous voir.</p>
-                
-                <div style="height: 1px; background-color: #e5e7eb; width: 100px; margin: 32px auto;"></div>
-                
-                <p class="text" style="text-align: center;">
-                    Vous venez de faire le premier pas vers une gestion intelligente et sereine de votre bien-être. Avec <strong>MindCare</strong>, tout est conçu pour vous simplifier la vie.
-                </p>
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+    <tr>
+        <td align="left">
+            <div style="display:inline-block;background:#ecfdf5;border:1px solid #a7f3d0;color:#047857;font-size:12px;font-weight:700;padding:6px 10px;border-radius:999px;margin-bottom:16px;">
+                BIENVENUE SUR MINDCARE
+            </div>
 
-                <div style="background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 24px; margin: 32px 0; text-align: left;">
-                    <p style="margin: 0 0 12px 0; font-weight: 700; color: #1e293b;">🚀 Prochaines étapes :</p>
-                    <ul style="margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 22px;">
-                        <li>Personnalisez votre profil utilisateur</li>
-                        <li>Explorez les programmes de bien-être disponibles</li>
-                        <li>Planifiez votre première séance d'activité</li>
-                    </ul>
-                </div>
+            <h1 class="h1" style="margin-bottom:10px;">Bienvenue {{ user.prenom|default('cher utilisateur') }} !</h1>
+            <p class="text" style="margin-bottom:20px;">
+                Votre compte est prêt. Vous pouvez maintenant découvrir des programmes bien-être,
+                suivre vos activités et garder un rythme régulier avec des conseils personnalisés.
+            </p>
 
-                <div style="margin-top: 40px;">
-                    <a href="{{ url('app_home') }}" class="btn" style="width: 280px; background: linear-gradient(135deg, #059669 0%, #10b981 100%);">Démarrer l'aventure</a>
-                </div>
+            <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:18px 20px;margin:0 0 24px 0;">
+                <p style="margin:0 0 10px 0;font-size:14px;font-weight:700;color:#0f172a;">Ce que vous pouvez faire maintenant :</p>
+                <ul style="margin:0;padding-left:18px;color:#475569;font-size:14px;line-height:22px;">
+                    <li>Compléter votre profil patient</li>
+                    <li>Explorer les programmes disponibles</li>
+                    <li>Commencer une première activité guidée</li>
+                </ul>
+            </div>
 
-                <p class="text" style="margin-top: 40px; font-size: 14px; color: #9ca3af;">
-                    Besoin d'aide ? Notre équipe est disponible 24/7 pour vous accompagner.
-                </p>
-            </td>
-        </tr>
-    </table>
+            <div style="text-align:center;margin:30px 0 12px;">
+                <a href="{{ url('app_home') }}" class="btn" style="width:280px;background:linear-gradient(135deg,#0f766e 0%,#10b981 100%);">
+                    Accéder à mon espace
+                </a>
+            </div>
+
+            <p class="text" style="font-size:13px;color:#94a3b8;margin-bottom:0;text-align:center;">
+                Vous recevez cet email car votre compte MindCare vient d'être créé.
+            </p>
+        </td>
+    </tr>
+</table>
 {% endblock %}

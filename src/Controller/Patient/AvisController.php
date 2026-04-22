@@ -30,9 +30,6 @@ final class AvisController extends AbstractController
             ->leftJoin('p.psychologue', 'psy')->addSelect('psy')
             ->leftJoin('p.activites', 'act')->addSelect('act')
             ->leftJoin('p.avis', 'av')->addSelect('av')
-            ->andWhere('LOWER(COALESCE(p.statut, :defaultStatut)) = :actif')
-            ->setParameter('defaultStatut', 'actif')
-            ->setParameter('actif', 'actif')
             ->orderBy('p.id', 'DESC')
             ->getQuery()
             ->getResult();

@@ -49,6 +49,89 @@
         font-size: .85rem;
         color: var(--muted);
     }
+    .required-hint {
+        margin: 1rem 0 1.25rem;
+        padding: .7rem .9rem;
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--accent);
+        border-radius: 10px;
+        background: #f8fafc;
+        font-size: .9rem;
+        color: var(--text);
+    }
+    .gemini-card {
+        margin-bottom: 1.5rem;
+        padding: 1.1rem 1.2rem;
+        border: 1px solid #ddd6fe;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #faf5ff 0%, #f8fafc 100%);
+        box-shadow: 0 6px 18px rgba(91, 33, 182, 0.08);
+    }
+    .gemini-title {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: .45rem;
+        font-size: 1rem;
+        color: #5b21b6;
+    }
+    .gemini-subtitle {
+        margin: .45rem 0 .95rem;
+        color: #6b7280;
+        font-size: .9rem;
+        line-height: 1.5;
+    }
+    .gemini-fields {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: .75rem;
+        margin-bottom: .75rem;
+    }
+    .gemini-field label {
+        display: block;
+        font-size: .82rem;
+        font-weight: 700;
+        margin-bottom: .35rem;
+        color: #4c1d95;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+    }
+    .gemini-field input {
+        width: 100%;
+        border: 1px solid #d8b4fe;
+        border-radius: 10px;
+        padding: .62rem .75rem;
+        font: inherit;
+        background: #fff;
+    }
+    .gemini-field input:focus {
+        outline: none;
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, .18);
+    }
+    .gemini-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .7rem;
+    }
+    .gemini-btn {
+        border: 1px solid #8b5cf6;
+        background: #7c3aed;
+        color: #fff;
+        border-radius: 999px;
+        padding: .55rem 1rem;
+        font-weight: 700;
+        font-size: .9rem;
+        cursor: pointer;
+    }
+    .gemini-btn:hover { background: #6d28d9; }
+    .gemini-btn:disabled { opacity: .6; cursor: not-allowed; }
+    .gemini-msg {
+        margin: 0;
+        font-size: .85rem;
+        color: #6b7280;
+    }
 </style>
 {% endblock %}
 
@@ -60,7 +143,32 @@
 <p class="page-lead">Définissez un nouveau programme bien-être pour accompagner vos patients.</p>
 
 <div class="form-card">
+    <div class="gemini-card">
+        <h3 class="gemini-title">✨ Assistant IA (Gemini)</h3>
+        <p class="gemini-subtitle">
+            Génère automatiquement un programme selon un thème et une durée, puis remplit le formulaire.
+        </p>
+        <div class="gemini-fields">
+            <div class="gemini-field">
+                <label for="ai-theme">Thème</label>
+                <input id="ai-theme" type="text" placeholder="Ex: gestion du stress" />
+            </div>
+            <div class="gemini-field">
+                <label for="ai-days">Durée (jours)</label>
+                <input id="ai-days" type="number" min="1" max="90" value="7" />
+            </div>
+        </div>
+        <div class="gemini-actions">
+            <button type="button" id="ai-generate-btn" class="gemini-btn">Générer avec IA</button>
+            <p id="ai-generate-msg" class="gemini-msg">Prêt à générer.</p>
+        </div>
+    </div>
+
     {{ form_start(form, {'attr': {'class': 'stack-form', 'novalidate': 'novalidate', 'enctype': 'multipart/form-data'}}) }}
+    <div class="required-hint">
+        Champs obligatoires: <strong>Nom</strong>, <strong>Durée</strong>.<br>
+        Champs optionnels: Objectif, Niveau de difficulté, Statut, Image.
+    </div>
 
     <div class="form-card-header">
         <h2>🧘 Informations du programme</h2>
@@ -92,4 +200,74 @@
 
     {{ form_end(form) }}
 </div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+    function initProgrammeAiGenerator() {
+        const btn = document.getElementById('ai-generate-btn');
+        const msg = document.getElementById('ai-generate-msg');
+        const themeInput = document.getElementById('ai-theme');
+        const daysInput = document.getElementById('ai-days');
+        if (!btn || !msg || !themeInput || !daysInput) return;
+        if (btn.dataset.aiBound === '1') return;
+        btn.dataset.aiBound = '1';
+
+        const nomField = document.getElementById('{{ form.nom.vars.id }}');
+        const objectifField = document.getElementById('{{ form.objectif.vars.id }}');
+        const dureeField = document.getElementById('{{ form.duree.vars.id }}');
+        const niveauField = document.getElementById('{{ form.niveauDifficulte.vars.id }}');
+
+        btn.addEventListener('click', async () => {
+            const theme = (themeInput.value || '').trim();
+            const days = parseInt(daysInput.value || '7', 10);
+
+            if (!theme) {
+                msg.textContent = 'Veuillez saisir un thème.';
+                msg.style.color = '#b91c1c';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Génération...';
+            msg.textContent = 'Gemini est en train de générer le programme...';
+            msg.style.color = '#4b5563';
+
+            try {
+                const response = await fetch('{{ path('app_psychologue_programme_ai_generate') }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ theme, days })
+                });
+
+                const data = await response.json();
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || 'Erreur de génération IA');
+                }
+
+                if (nomField && data.nom) nomField.value = data.nom;
+                if (objectifField && data.objectif) objectifField.value = data.objectif;
+                if (dureeField) dureeField.value = days;
+                if (niveauField && data.niveauDifficulte) {
+                    const wanted = String(data.niveauDifficulte).toLowerCase();
+                    const option = Array.from(niveauField.options).find((opt) => opt.value.toLowerCase() === wanted);
+                    if (option) niveauField.value = option.value;
+                }
+
+                msg.textContent = 'Programme généré par Gemini. Vérifiez et ajustez, puis cliquez sur "Créer le programme".';
+                msg.style.color = '#166534';
+            } catch (error) {
+                msg.textContent = error.message || 'Erreur IA.';
+                msg.style.color = '#b91c1c';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Générer avec IA';
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', initProgrammeAiGenerator);
+    document.addEventListener('turbo:load', initProgrammeAiGenerator);
+</script>
 {% endblock %}

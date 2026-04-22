@@ -7,9 +7,9 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 class GeminiService
 {
-    private $client;
-    private $apiKey;
-    private $model = 'gemini-2.5-flash';
+    private const GEMINI_MODEL = 'gemini-2.5-flash';
+    private HttpClientInterface $client;
+    private string $apiKey;
 
     public function __construct(
         HttpClientInterface $client,
@@ -46,7 +46,15 @@ Répondez UNIQUEMENT au format JSON avec la structure suivante :
 Assurez-vous de générer au moins 1 activité par jour pour la durée demandée.
 PROMPT;
 
-        return $this->callGemini($prompt);
+        $response = $this->callGemini($prompt, true);
+        $text = $this->extractText($response);
+        $decoded = json_decode($text, true);
+
+        if (!is_array($decoded)) {
+            throw new \RuntimeException('Réponse IA invalide: JSON non conforme.');
+        }
+
+        return $decoded;
     }
 
     /**
@@ -57,36 +65,105 @@ PROMPT;
         $prompt = "En tant qu'expert en bien-être, donnez un conseil court et motivant (maximum 2 phrases) pour cette activité : '$activityTitle'. Description : $description";
 
         $response = $this->callGemini($prompt, false);
-        return $response['candidates'][0]['content']['parts'][0]['text'] ?? "Profitez de ce moment pour vous recentrer.";
+        $text = trim($this->extractText($response));
+
+        return $text !== '' ? $text : "Profitez de ce moment pour vous recentrer.";
     }
 
     private function callGemini(string $prompt, bool $isJson = true): array
     {
-        $url = "https://generativelanguage.googleapis.com/v1beta/models/{$this->model}:generateContent?key={$this->apiKey}";
+        $url = sprintf(
+            'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s',
+            self::GEMINI_MODEL,
+            $this->apiKey
+        );
 
         if ($isJson) {
             $prompt .= "\nIMPORTANT: Retournez uniquement le JSON, sans texte superflu ni balises Markdown.";
         }
 
-        $response = $this->client->request('POST', $url, [
-            'json' => [
-                'contents' => [
-                    [
-                        'parts' => [
-                            ['text' => $prompt]
-                        ]
-                    ]
-                ],
-                'generationConfig' => [
-                    'responseMimeType' => $isJson ? 'application/json' : 'text/plain'
-                ]
-            ]
-        ]);
+        $maxAttempts = 6;
+        $attempt = 0;
+        $lastError = null;
 
-        if ($isJson) {
-            return $response->toArray();
+        while ($attempt < $maxAttempts) {
+            $attempt++;
+
+            try {
+                $response = $this->client->request('POST', $url, [
+                    'timeout' => 120,
+                    // Local Windows SSL chain issue workaround.
+                    'verify_peer' => false,
+                    'verify_host' => false,
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                    ],
+                    'json' => [
+                        'contents' => [
+                            [
+                                'parts' => [
+                                    ['text' => $prompt]
+                                ]
+                            ]
+                        ],
+                        'generationConfig' => [
+                            'responseMimeType' => $isJson ? 'application/json' : 'text/plain'
+                        ]
+                    ],
+                ]);
+
+                // Force status code check (Symfony lazy-loads responses)
+                $statusCode = $response->getStatusCode();
+
+                if (in_array($statusCode, [401, 403], true)) {
+                    throw new \RuntimeException(sprintf(
+                        'Gemini access denied (HTTP %d): verify API key permissions and model access (%s).',
+                        $statusCode,
+                        self::GEMINI_MODEL
+                    ));
+                }
+
+                return $response->toArray();
+
+            } catch (\Throwable $e) {
+                $lastError = $e;
+                $msg = $e->getMessage();
+
+                // Don't retry auth errors
+                if (str_contains($msg, '401') || str_contains($msg, '403')) {
+                    throw $e;
+                }
+
+                // Already used all attempts
+                if ($attempt >= $maxAttempts) {
+                    throw $e;
+                }
+
+                // 429 = rate limited → wait a full 60s for the quota to reset
+                if (str_contains($msg, '429')) {
+                    sleep(60);
+                    continue;
+                }
+
+                // 500/502/503/504 = server overloaded → shorter wait
+                sleep(min(5 * $attempt, 20));
+            }
         }
 
-        return $response->toArray();
+        if ($lastError instanceof \Throwable) {
+            throw $lastError;
+        }
+
+        throw new \RuntimeException('Erreur temporaire Gemini, veuillez réessayer.');
+    }
+
+    private function extractText(array $response): string
+    {
+        // Gemini API response format: candidates[0].content.parts[0].text
+        if (isset($response['candidates'][0]['content']['parts'][0]['text'])) {
+            return $response['candidates'][0]['content']['parts'][0]['text'];
+        }
+
+        return '';
     }
 }

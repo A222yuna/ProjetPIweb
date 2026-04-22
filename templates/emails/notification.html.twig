@@ -1,41 +1,43 @@
 {% extends 'emails/base.html.twig' %}
 
 {% block body %}
-    <table width="100%" border="0" cellspacing="0" cellpadding="0">
-        <tr>
-            <td>
-                <h1 class="h1">{{ subject|default('Mise à jour Importante') }}</h1>
-                <p class="text">
-                    {{ message|default('Bonjour, nous avons le plaisir de vous informer d\'une nouvelle mise à jour sur votre espace MindCare.') }}
-                </p>
-                
-                {% if details is defined and details is iterable %}
-                    <div style="margin: 32px 0; background-color: #f9fafb; border-radius: 12px; padding: 24px;">
-                        <h3 style="margin: 0 0 16px 0; font-family: sans-serif; font-size: 14px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: 0.05em;">Les détails en un coup d'œil</h3>
-                        
-                        {% for label, value in details %}
-                            <div class="detail-row" {% if loop.last %}style="border-bottom: none;"{% endif %}>
-                                <div class="detail-label">{{ label }}</div>
-                                <div class="detail-value">{{ value }}</div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+    <tr>
+        <td>
+            <div style="display:inline-block;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;font-size:12px;font-weight:700;padding:6px 10px;border-radius:999px;margin-bottom:16px;">
+                NOTIFICATION MINDCARE
+            </div>
 
-                <p class="text">
-                    Pour plus d'informations ou pour gérer vos préférences, connectez-vous directement à votre tableau de bord interactif.
-                </p>
+            <h1 class="h1" style="margin-bottom:10px;">{{ subject|default('Mise à jour importante') }}</h1>
+            <p class="text">
+                {{ message|default('Bonjour, une nouvelle mise à jour est disponible sur votre espace MindCare.') }}
+            </p>
 
-                <div style="margin-top: 32px; text-align: center;">
-                    <!--[if mso]>
-                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ action_url|default('#') }}" style="height:56px;v-text-anchor:middle;width:240px;" arcsize="22%" strokecolor="#10b981" fillcolor="#10b981">
-                        <w:anchorlock/>
-                        <center style="color:#ffffff;font-family:sans-serif;font-size:16px;font-weight:bold;">Accéder à mon espace</center>
-                    </v:roundrect>
-                    <![endif]-->
-                    <a href="{{ action_url|default('#') }}" class="btn">Accéder à mon espace</a>
+            {% if details is defined and details is iterable %}
+                <div style="margin: 28px 0; background-color: #f8fafc; border:1px solid #e2e8f0; border-radius: 12px; padding: 18px 20px;">
+                    <h3 style="margin: 0 0 14px 0; font-family: sans-serif; font-size: 13px; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.05em;">
+                        Détails
+                    </h3>
+
+                    {% for label, value in details %}
+                        <div class="detail-row" {% if loop.last %}style="border-bottom:none;padding-bottom:0;"{% endif %}>
+                            <div class="detail-label">{{ label }}</div>
+                            <div class="detail-value">{{ value }}</div>
+                        </div>
+                    {% endfor %}
                 </div>
-            </td>
-        </tr>
-    </table>
+            {% endif %}
+
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;margin:0 0 26px 0;">
+                <p style="margin:0;font-size:13px;color:#166534;">
+                    Conseil: connectez-vous à votre espace pour suivre les dernières activités et mises à jour de votre programme.
+                </p>
+            </div>
+
+            <div style="margin-top: 8px; text-align: center;">
+                <a href="{{ action_url|default('#') }}" class="btn">Ouvrir mon espace</a>
+            </div>
+        </td>
+    </tr>
+</table>
 {% endblock %}

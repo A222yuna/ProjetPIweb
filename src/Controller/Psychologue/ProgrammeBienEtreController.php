@@ -9,7 +9,6 @@ use App\Service\CloudinaryUploader;
 use App\Service\MailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -59,9 +58,7 @@ final class ProgrammeBienEtreController extends AbstractController
             $em->persist($programme);
             $em->flush();
 
-            try {
-                $mailService->sendProgrammeCreatedNotification($programme);
-            } catch (TransportExceptionInterface) {
+            if (!$mailService->sendProgrammeCreatedNotification($programme)) {
                 $this->addFlash('warning', 'Programme créé, mais l\'envoi de l\'email a échoué.');
             }
 
@@ -81,18 +78,35 @@ final class ProgrammeBienEtreController extends AbstractController
     {
         $data = $request->getPayload();
         $theme = $data->get('theme', 'Bien-être général');
-        $days = (int) $data->get('days', 7);
+        $days = max(1, (int) $data->get('days', 7));
 
         try {
-            $result = $gemini->generateProgram($theme, $days);
-            
-            // Extract the actual JSON from Gemini's response
-            $textResponse = $result['candidates'][0]['content']['parts'][0]['text'] ?? '{}';
-            $programData = json_decode($textResponse, true);
-
+            $programData = $gemini->generateProgram($theme, $days);
             return $this->json($programData);
         } catch (\Exception $e) {
-            return $this->json(['error' => 'Erreur lors de la génération : ' . $e->getMessage()], 500);
+            $errorMessage = $e->getMessage();
+
+            if (str_contains($errorMessage, '429')) {
+                return $this->json([
+                    'error' => 'Trop de requêtes envoyées à l\'IA. Merci de patienter 1 minute puis réessayer.'
+                ], 429);
+            }
+
+            if (str_contains($errorMessage, '403') || str_contains($errorMessage, '401') || str_contains($errorMessage, 'access denied')) {
+                return $this->json([
+                    'error' => 'Accès refusé par Gemini (401/403). Vérifiez la clé API et l\'accès au modèle gemini-2.5-flash.'
+                ], 403);
+            }
+
+            if (str_contains($errorMessage, '503') || str_contains($errorMessage, '500') || str_contains($errorMessage, '502')) {
+                return $this->json([
+                    'error' => 'Le service Gemini est temporairement surchargé. Merci de réessayer dans quelques secondes.'
+                ], 503);
+            }
+
+            return $this->json([
+                'error' => 'Erreur lors de la génération IA après plusieurs tentatives. Réessayez.'
+            ], 500);
         }
     }
 
