@@ -5,17 +5,24 @@ namespace App\Controller\Psychologue;
 use App\Entity\ActiviteProgramme;
 use App\Entity\ProgrammeBienEtre;
 use App\Form\ActiviteProgrammeType;
+use App\Service\MailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/psychologue/programme/{programmeId}/activite')]
 final class ActiviteProgrammeController extends AbstractController
 {
     #[Route('/new', name: 'app_psychologue_activite_new', methods: ['GET', 'POST'])]
-    public function new(int $programmeId, Request $request, EntityManagerInterface $em): Response
+    public function new(
+        int $programmeId,
+        Request $request,
+        EntityManagerInterface $em,
+        MailService $mailService
+    ): Response
     {
         $programme = $em->getRepository(ProgrammeBienEtre::class)->find($programmeId);
         if (!$programme) {
@@ -30,6 +37,12 @@ final class ActiviteProgrammeController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $em->persist($activite);
             $em->flush();
+
+            try {
+                $mailService->sendActivityAddedNotification($programme, $activite);
+            } catch (TransportExceptionInterface) {
+                $this->addFlash('warning', 'Activité ajoutée, mais l\'envoi de l\'email a échoué.');
+            }
 
             $this->addFlash('success', 'Activité ajoutée avec succès !');
 

@@ -5,14 +5,16 @@ namespace App\Controller\Psychologue;
 use App\Entity\ProgrammeBienEtre;
 use App\Form\ProgrammeBienEtreType;
 use App\Repository\ProgrammeBienEtreRepository;
+use App\Service\CloudinaryUploader;
+use App\Service\MailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
-use Symfony\Component\String\Slugger\SluggerInterface;
+use App\Service\GeminiService;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 #[Route('/psychologue/programme')]
 final class ProgrammeBienEtreController extends AbstractController
@@ -29,7 +31,12 @@ final class ProgrammeBienEtreController extends AbstractController
     }
 
     #[Route('/new', name: 'app_psychologue_programme_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $em, SluggerInterface $slugger, #[Autowire('%kernel.project_dir%/public/uploads')] string $uploadDir): Response
+    public function new(
+        Request $request,
+        EntityManagerInterface $em,
+        CloudinaryUploader $cloudinaryUploader,
+        MailService $mailService,
+    ): Response
     {
         $programme = new ProgrammeBienEtre();
         $form = $this->createForm(ProgrammeBienEtreType::class, $programme);
@@ -38,21 +45,25 @@ final class ProgrammeBienEtreController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $imageFile = $form->get('imageFile')->getData();
             if ($imageFile) {
-                $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
-                $safeFilename = $slugger->slug($originalFilename);
-                $newFilename = $safeFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
-
                 try {
-                    $imageFile->move($uploadDir, $newFilename);
-                } catch (FileException $e) {
+                    $imageUrl = $cloudinaryUploader->uploadProgrammeImage($imageFile);
+                    if ($imageUrl !== '') {
+                        $programme->setImage($imageUrl);
+                    }
+                } catch (\Throwable) {
                     $this->addFlash('error', 'Erreur lors de l\'upload de l\'image.');
                 }
-                $programme->setImage($newFilename);
             }
 
             $programme->setPsychologue($this->getUser());
             $em->persist($programme);
             $em->flush();
+
+            try {
+                $mailService->sendProgrammeCreatedNotification($programme);
+            } catch (TransportExceptionInterface) {
+                $this->addFlash('warning', 'Programme créé, mais l\'envoi de l\'email a échoué.');
+            }
 
             $this->addFlash('success', 'Programme créé avec succès !');
 
@@ -65,6 +76,26 @@ final class ProgrammeBienEtreController extends AbstractController
         ]);
     }
 
+    #[Route('/ai-generate', name: 'app_psychologue_programme_ai_generate', methods: ['POST'])]
+    public function aiGenerate(Request $request, GeminiService $gemini): JsonResponse
+    {
+        $data = $request->getPayload();
+        $theme = $data->get('theme', 'Bien-être général');
+        $days = (int) $data->get('days', 7);
+
+        try {
+            $result = $gemini->generateProgram($theme, $days);
+            
+            // Extract the actual JSON from Gemini's response
+            $textResponse = $result['candidates'][0]['content']['parts'][0]['text'] ?? '{}';
+            $programData = json_decode($textResponse, true);
+
+            return $this->json($programData);
+        } catch (\Exception $e) {
+            return $this->json(['error' => 'Erreur lors de la génération : ' . $e->getMessage()], 500);
+        }
+    }
+
     #[Route('/{id}', name: 'app_psychologue_programme_show', methods: ['GET'])]
     public function show(ProgrammeBienEtre $programme): Response
     {
@@ -74,7 +105,12 @@ final class ProgrammeBienEtreController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'app_psychologue_programme_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, ProgrammeBienEtre $programme, EntityManagerInterface $em, SluggerInterface $slugger, #[Autowire('%kernel.project_dir%/public/uploads')] string $uploadDir): Response
+    public function edit(
+        Request $request,
+        ProgrammeBienEtre $programme,
+        EntityManagerInterface $em,
+        CloudinaryUploader $cloudinaryUploader
+    ): Response
     {
         $form = $this->createForm(ProgrammeBienEtreType::class, $programme);
         $form->handleRequest($request);
@@ -82,16 +118,14 @@ final class ProgrammeBienEtreController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $imageFile = $form->get('imageFile')->getData();
             if ($imageFile) {
-                $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
-                $safeFilename = $slugger->slug($originalFilename);
-                $newFilename = $safeFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
-
                 try {
-                    $imageFile->move($uploadDir, $newFilename);
-                } catch (FileException $e) {
+                    $imageUrl = $cloudinaryUploader->uploadProgrammeImage($imageFile);
+                    if ($imageUrl !== '') {
+                        $programme->setImage($imageUrl);
+                    }
+                } catch (\Throwable) {
                     $this->addFlash('error', 'Erreur lors de l\'upload de l\'image.');
                 }
-                $programme->setImage($newFilename);
             }
 
             $em->flush();

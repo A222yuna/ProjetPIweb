@@ -19,13 +19,13 @@ final class AppointmentAdminController extends AbstractController
     {
         $status = $request->query->getString('status');
         $page = max(1, $request->query->getInt('page', 1));
-        $result = $appointments->findAdminPaginated($status !== '' ? $status : null, $page, 15);
+        $result = $appointments->findAdminPaginated($status !== '' ? $status : null, $page, 6);
 
         return $this->render('admin/appointments/index.html.twig', [
             'appointments' => $result['items'],
             'status_filter' => $status,
             'page' => $page,
-            'total_pages' => max(1, (int) ceil($result['total'] / 15)),
+            'total_pages' => max(1, (int) ceil($result['total'] / 6)),
         ]);
     }
 

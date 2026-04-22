@@ -288,7 +288,7 @@
             {% set dayValues = dayValues|sort %}
             <div class="prog-card-modern {{ loop.first ? 'is-featured' : '' }}" data-prog-card data-search="{{ searchText|e('html_attr') }}" data-duree="{{ p.duree|default(0) }}">
                 {% if p.image %}
-                    <div class="prog-visual" style="background-image:url('{{ asset('uploads/' ~ p.image) }}')">
+                    <div class="prog-visual" style="background-image:url('{{ p.image starts with 'http' ? p.image : asset('uploads/' ~ p.image) }}')">
                 {% else %}
                     <div class="prog-visual" style="background:linear-gradient(135deg,#e6f0ec,#f0f4f2);display:flex;align-items:center;justify-content:center">
                         <span style="font-size:4rem">🌿</span>

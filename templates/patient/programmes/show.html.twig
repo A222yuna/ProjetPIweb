@@ -178,7 +178,22 @@
     .review-stars { color: #e8a838; font-size: .9rem; }
     .review-text { font-size: .95rem; line-height: 1.6; color: var(--text); margin-bottom: 1rem; }
     .review-meta { font-size: .8rem; color: var(--muted); font-weight: 600; }
-
+    
+    .calendar-btn {
+        font-size: 1.2rem;
+        text-decoration: none;
+        padding: 4px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        line-height: 1;
+    }
+    .calendar-btn:hover {
+        background: var(--accent-light);
+        transform: scale(1.1);
+    }
+    .activity-line .calendar-btn {
+        font-size: 1rem;
+    }
 </style>
 {% endblock %}
 
@@ -217,13 +232,14 @@
             </div>
         </div>
 
-        <div style="margin-top: 2.5rem; display: flex; gap: 1rem;">
+        <div style="margin-top: 2.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
             <a href="#planning" class="btn btn-primary">📅 Voir le planning</a>
             <a href="{{ path('app_patient_avis_new', {id: programme.id}) }}" class="btn btn-outline">⭐ Donner mon avis</a>
+            <a href="{{ path('app_patient_programme_pdf', {id: programme.id}) }}" class="btn btn-outline" target="_blank" rel="noopener">📄 Télécharger en PDF</a>
         </div>
     </div>
     {% if programme.image %}
-        <div class="header-visual" style="background-image: url('{{ asset('uploads/' ~ programme.image) }}')"></div>
+        <div class="header-visual" style="background-image: url('{{ programme.image starts with 'http' ? programme.image : asset('uploads/' ~ programme.image) }}')"></div>
     {% else %}
         <div class="header-visual">
             <div class="header-placeholder">🧘</div>
@@ -258,10 +274,23 @@
                         <div class="activity-item">
                             <div class="activity-time">{{ a.heureDebut ? a.heureDebut|date('H:i') : '--:--' }}</div>
                             <div class="activity-body">
-                                <h5>{{ a.titre }}</h5>
+                                <div style="display: flex; justify-content: space-between; align-items: start;">
+                                    <h5>{{ a.titre }}</h5>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <button onclick="getAiAdvice({{ a.id }}, this)" class="btn btn-sm btn-outline" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; border-color: #8b5cf6; color: #8b5cf6;" title="Demander un conseil à l'IA">
+                                            ✨ Conseil IA
+                                        </button>
+                                        <a href="{{ path('app_patient_activite_google_calendar', {id: a.id}) }}" target="_blank" class="btn btn-sm btn-primary" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">
+                                            Commencer
+                                        </a>
+                                    </div>
+                                </div>
                                 {% if a.description %}
                                     <p>{{ a.description }}</p>
                                 {% endif %}
+                                <div id="ai-advice-{{ a.id }}" style="display: none; margin-top: 1rem; padding: 0.75rem; background: #f5f3ff; border-left: 3px solid #8b5cf6; border-radius: 4px; font-size: 0.85rem; color: #5b21b6; font-style: italic;">
+                                    <!-- AI advice will appear here -->
+                                </div>
                                 <span class="activity-item-type">
                                     {{ a.typeActivite|default('Activité')|capitalize }} 
                                     {% if a.dureeMinutes %} · {{ a.dureeMinutes }} min{% endif %}
@@ -293,7 +322,12 @@
                 <article class="activity-line">
                     <div class="activity-line-head">
                         <span class="activity-line-day">Jour {{ a.jour }}</span>
-                        <span class="activity-line-time">{{ a.heureDebut ? a.heureDebut|date('H:i') : '--:--' }}</span>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span class="activity-line-time">{{ a.heureDebut ? a.heureDebut|date('H:i') : '--:--' }}</span>
+                            <a href="{{ path('app_patient_activite_google_calendar', {id: a.id}) }}" target="_blank" class="btn btn-sm btn-outline" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;">
+                                Commencer
+                            </a>
+                        </div>
                     </div>
                     <h4>{{ a.titre }}</h4>
                     <p>
@@ -336,4 +370,34 @@
     {% endif %}
 </div>
 
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    function getAiAdvice(activityId, btn) {
+        const container = document.getElementById(`ai-advice-${activityId}`);
+        const originalText = btn.innerHTML;
+        
+        btn.innerHTML = '✨ Réflexion...';
+        btn.disabled = true;
+
+        fetch(`/patient/activite/${activityId}/ai-advice`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.advice) {
+                    container.innerHTML = `<strong>Conseil IA:</strong> ${data.advice}`;
+                    container.style.display = 'block';
+                    btn.innerHTML = '✨ Conseil reçu';
+                } else {
+                    btn.innerHTML = '❌ Erreur';
+                    btn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                btn.innerHTML = '❌ Erreur';
+                btn.disabled = false;
+            });
+    }
+</script>
 {% endblock %}

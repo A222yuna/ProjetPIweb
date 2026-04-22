@@ -6,6 +6,7 @@ use App\Entity\ActiviteProgramme;
 use App\Entity\Avis;
 use App\Entity\ProgrammeBienEtre;
 use Doctrine\ORM\EntityManagerInterface;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,7 +18,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class WellBeingAdminController extends AbstractController
 {
     #[Route('/programmes', name: 'app_admin_wellbeing_programmes', methods: ['GET'])]
-    public function programmes(Request $request, EntityManagerInterface $em): Response
+    public function programmes(Request $request, EntityManagerInterface $em, PaginatorInterface $paginator): Response
     {
         $q = trim($request->query->getString('q'));
         $statut = trim($request->query->getString('statut'));
@@ -41,7 +42,11 @@ final class WellBeingAdminController extends AbstractController
             $qb->andWhere('p.niveauDifficulte = :niveau')->setParameter('niveau', $niveau);
         }
 
-        $programmes = $qb->getQuery()->getResult();
+        $programmes = $paginator->paginate(
+            $qb,
+            max(1, $request->query->getInt('page', 1)),
+            6
+        );
 
         $stats = [
             'programmes_total' => (int) $em->createQuery('SELECT COUNT(p.id) FROM App\Entity\ProgrammeBienEtre p')->getSingleScalarResult(),
@@ -71,7 +76,7 @@ final class WellBeingAdminController extends AbstractController
     }
 
     #[Route('/activites', name: 'app_admin_wellbeing_activites', methods: ['GET'])]
-    public function activites(Request $request, EntityManagerInterface $em): Response
+    public function activites(Request $request, EntityManagerInterface $em, PaginatorInterface $paginator): Response
     {
         $q = trim($request->query->getString('q'));
         $type = trim($request->query->getString('type'));
@@ -99,7 +104,11 @@ final class WellBeingAdminController extends AbstractController
             $qb->andWhere('a.jour = :jour')->setParameter('jour', (int) $jour);
         }
 
-        $activites = $qb->getQuery()->getResult();
+        $activites = $paginator->paginate(
+            $qb,
+            max(1, $request->query->getInt('page', 1)),
+            6
+        );
 
         $stats = [
             'activites_total' => (int) $em->createQuery('SELECT COUNT(a.id) FROM App\Entity\ActiviteProgramme a')->getSingleScalarResult(),
@@ -130,7 +139,7 @@ final class WellBeingAdminController extends AbstractController
     }
 
     #[Route('/avis', name: 'app_admin_wellbeing_avis', methods: ['GET'])]
-    public function avis(Request $request, EntityManagerInterface $em): Response
+    public function avis(Request $request, EntityManagerInterface $em, PaginatorInterface $paginator): Response
     {
         $q = trim($request->query->getString('q'));
         $note = trim($request->query->getString('note'));
@@ -153,7 +162,11 @@ final class WellBeingAdminController extends AbstractController
             $qb->andWhere('p.id = :pid')->setParameter('pid', $programmeId);
         }
 
-        $avis = $qb->getQuery()->getResult();
+        $avis = $paginator->paginate(
+            $qb,
+            max(1, $request->query->getInt('page', 1)),
+            6
+        );
 
         $stats = [
             'avis_total' => (int) $em->createQuery('SELECT COUNT(a.id) FROM App\Entity\Avis a')->getSingleScalarResult(),

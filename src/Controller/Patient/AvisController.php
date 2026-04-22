@@ -6,11 +6,17 @@ use App\Entity\Avis;
 use App\Entity\ProgrammeBienEtre;
 use App\Form\AvisType;
 use App\Repository\ProgrammeBienEtreRepository;
+use App\Service\GeminiService;
 use Doctrine\ORM\EntityManagerInterface;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
+use App\Service\GoogleCalendarService;
+use App\Entity\ActiviteProgramme;
 
 #[Route('/patient')]
 final class AvisController extends AbstractController
@@ -64,6 +70,58 @@ final class AvisController extends AbstractController
         return $this->render('patient/programmes/show.html.twig', [
             'programme' => $programme,
         ]);
+    }
+
+    #[Route('/programmes/{id}/pdf', name: 'app_patient_programme_pdf', methods: ['GET'])]
+    public function downloadProgrammePdf(ProgrammeBienEtre $programme): Response
+    {
+        $options = new Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isRemoteEnabled', true);
+
+        $dompdf = new Dompdf($options);
+        $html = $this->renderView('patient/programmes/pdf.html.twig', [
+            'programme' => $programme,
+        ]);
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', (string) ($programme->getNom() ?? 'programme'));
+        $filename = sprintf('programme_%s.pdf', trim($safeName, '_'));
+
+        return new Response(
+            $dompdf->output(),
+            Response::HTTP_OK,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
+            ]
+        );
+    }
+
+    #[Route('/activite/{id}/ai-advice', name: 'app_patient_activite_ai_advice', methods: ['GET'])]
+    public function getActivityAdvice(
+        ActiviteProgramme $activite, 
+        GeminiService $gemini
+    ): JsonResponse {
+        $advice = $gemini->getActivityAdvice(
+            $activite->getTitre() ?? 'Activité',
+            $activite->getDescription() ?? ''
+        );
+        
+        return $this->json(['advice' => $advice]);
+    }
+
+    #[Route('/activite/{id}/google-calendar', name: 'app_patient_activite_google_calendar', methods: ['GET'])]
+    public function addToGoogleCalendar(
+        ActiviteProgramme $activite, 
+        GoogleCalendarService $calendarService
+    ): Response {
+        $url = $calendarService->generateLink($activite);
+        
+        return $this->redirect($url);
     }
 
     #[Route('/programmes/{id}/avis/new', name: 'app_patient_avis_new', methods: ['GET', 'POST'])]

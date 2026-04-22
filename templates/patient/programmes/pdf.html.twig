@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ programme.nom }} - Programme PDF</title>
+    <style>
+        body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #1f2937; }
+        h1, h2, h3 { margin: 0; }
+        .header { margin-bottom: 18px; border-bottom: 2px solid #2a6f5b; padding-bottom: 10px; }
+        .title { font-size: 24px; color: #2a6f5b; margin-bottom: 6px; }
+        .meta { font-size: 11px; color: #4b5563; }
+        .section { margin-top: 16px; }
+        .card { background: #f8fafc; border: 1px solid #d1d5db; border-radius: 6px; padding: 10px; }
+        .stats-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .stats-table td { border: 1px solid #e5e7eb; padding: 8px; }
+        .stats-label { width: 35%; font-weight: bold; background: #f3f4f6; }
+        .activities { margin-top: 14px; }
+        .day-title { font-size: 14px; color: #111827; margin: 12px 0 8px; border-left: 4px solid #2a6f5b; padding-left: 8px; }
+        .activity-table { width: 100%; border-collapse: collapse; }
+        .activity-table th, .activity-table td { border: 1px solid #d1d5db; padding: 6px 8px; vertical-align: top; }
+        .activity-table th { background: #eef2ff; text-align: left; }
+        .muted { color: #6b7280; }
+        .footer { margin-top: 18px; font-size: 10px; color: #6b7280; text-align: right; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">{{ programme.nom }}</h1>
+        <div class="meta">
+            Psychologue: Dr. {{ programme.psychologue.prenom|default('-') }} {{ programme.psychologue.nom|default('') }}<br>
+            Genere le {{ "now"|date("d/m/Y H:i") }}
+        </div>
+    </div>
+
+    <div class="section card">
+        <h2 style="font-size: 16px; margin-bottom: 8px;">Resume du programme</h2>
+        <p>{{ programme.objectif|default('Aucun objectif defini.') }}</p>
+
+        <table class="stats-table">
+            <tr>
+                <td class="stats-label">Duree</td>
+                <td>{{ programme.duree|default(0) }} jours</td>
+            </tr>
+            <tr>
+                <td class="stats-label">Niveau</td>
+                <td>{{ programme.niveauDifficulte|default('Standard') }}</td>
+            </tr>
+            <tr>
+                <td class="stats-label">Nombre d'activites</td>
+                <td>{{ programme.activites|length }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section activities">
+        <h2 style="font-size: 16px;">Planning des activites</h2>
+
+        {% if programme.activites is empty %}
+            <p class="muted">Aucune activite disponible pour ce programme.</p>
+        {% else %}
+            {% set days_data = {} %}
+            {% for a in programme.activites %}
+                {% set dayKey = 'day_' ~ a.jour %}
+                {% if days_data[dayKey] is not defined %}
+                    {% set days_data = days_data|merge({ (dayKey): [] }) %}
+                {% endif %}
+                {% set days_data = days_data|merge({ (dayKey): days_data[dayKey]|merge([a]) }) %}
+            {% endfor %}
+
+            {% for day_num in 1..(programme.duree|default(0)) %}
+                {% set currentDayKey = 'day_' ~ day_num %}
+                <h3 class="day-title">Jour {{ day_num }}</h3>
+
+                {% if days_data[currentDayKey] is defined %}
+                    <table class="activity-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 12%;">Heure</th>
+                                <th style="width: 28%;">Activite</th>
+                                <th style="width: 18%;">Type</th>
+                                <th style="width: 12%;">Duree</th>
+                                <th style="width: 30%;">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in days_data[currentDayKey]|sort((x, y) => x.heureDebut|date('H:i') <=> y.heureDebut|date('H:i')) %}
+                                <tr>
+                                    <td>{{ a.heureDebut ? a.heureDebut|date('H:i') : '--:--' }}</td>
+                                    <td>{{ a.titre|default('Sans titre') }}</td>
+                                    <td>{{ a.typeActivite|default('Activite') }}</td>
+                                    <td>{{ a.dureeMinutes ? a.dureeMinutes ~ ' min' : '-' }}</td>
+                                    <td>{{ a.description|default('-') }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="muted">Journee libre / repos.</p>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="footer">
+        MindCare - Programme patient
+    </div>
+</body>
+</html>

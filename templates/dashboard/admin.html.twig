@@ -7,55 +7,234 @@
     <p class="text-muted">Vue globale de la plateforme de consultation psychologique.</p>
 
     <div class="row g-3 mb-3">
-        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Utilisateurs</small><div class="h4 mb-0">1 248</div></div></div>
-        <div class="col-md-3"><div class="card p-3"><small class="text-muted">RDV planifies</small><div class="h4 mb-0">312</div></div></div>
-        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Cabinets en attente</small><div class="h4 mb-0">14</div></div></div>
-        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Messages non lus</small><div class="h4 mb-0">87</div></div></div>
+        <div class="col-md-3"><div class="card p-3 shadow-sm border-0"><small class="text-muted fw-bold">Utilisateurs</small><div class="h4 mb-0 text-primary">{{ totalUsers }}</div></div></div>
+        <div class="col-md-3"><div class="card p-3 shadow-sm border-0"><small class="text-muted fw-bold">Programmes</small><div class="h4 mb-0 text-success">{{ totalProgrammes }}</div></div></div>
+        <div class="col-md-3"><div class="card p-3 shadow-sm border-0"><small class="text-muted fw-bold">Activites</small><div class="h4 mb-0 text-info">{{ totalActivites }}</div></div></div>
+        <div class="col-md-3"><div class="card p-3 shadow-sm border-0"><small class="text-muted fw-bold">Avis publies</small><div class="h4 mb-0 text-warning">{{ totalAvis }}</div></div></div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-4"><div class="card p-3 shadow-sm border-0"><small class="text-muted fw-bold">Activites / programme</small><div class="h4 mb-0 text-primary">{{ avgActivitiesPerProgramme }}</div></div></div>
+        <div class="col-md-4"><div class="card p-3 shadow-sm border-0"><small class="text-muted fw-bold">Programmes sans activites</small><div class="h4 mb-0 text-danger">{{ programmesWithNoActivities }}</div></div></div>
+        <div class="col-md-4"><div class="card p-3 shadow-sm border-0"><small class="text-muted fw-bold">Note moyenne avis</small><div class="h4 mb-0 text-success">{{ avgAvisScore }}/5</div></div></div>
     </div>
 
     <div class="row g-3">
         <div class="col-lg-6">
-            <div class="card p-3 h-100">
-                <h2 class="h6">Modules plateforme</h2>
-                <ul class="mb-0">
-                    <li><strong>Gestion des comptes</strong> - Activation, verification email, moderation.</li>
-                    <li><strong>Consultations</strong> - Supervision des rendez-vous et statuts.</li>
-                    <li><strong>Psychologues / Cabinets</strong> - Validation annonces et archivage.</li>
-                    <li><strong>Bien-etre</strong> - Suivi programmes et avis.</li>
-                    <li><strong>Messagerie</strong> - Controle de la moderation.</li>
-                    <li><strong>Forum</strong> - Qualite des echanges et moderation contenu.</li>
+            <div class="card p-3 h-100 shadow-sm border-0">
+                <h2 class="h6 border-bottom pb-2">Modules plateforme</h2>
+                <ul class="mb-0 list-unstyled">
+                    <li class="mb-2"><i class="fa-solid fa-user-gear me-2 text-primary"></i><strong>Gestion des comptes</strong> - Activation, moderation.</li>
+                    <li class="mb-2"><i class="fa-solid fa-calendar me-2 text-success"></i><strong>Consultations</strong> - Supervision des rendez-vous.</li>
+                    <li class="mb-2"><i class="fa-solid fa-hospital me-2 text-info"></i><strong>Cabinets</strong> - Validation annonces.</li>
+                    <li class="mb-2"><i class="fa-solid fa-heart-pulse me-2 text-danger"></i><strong>Bien-etre</strong> - Suivi programmes et avis.</li>
+                    <li class="mb-2"><i class="fa-solid fa-comments me-2 text-warning"></i><strong>Forum</strong> - Qualite des echanges.</li>
                 </ul>
             </div>
         </div>
         <div class="col-lg-6">
-            <div class="card p-3 h-100">
-                <h2 class="h6">Actions rapides</h2>
-                <div class="d-flex flex-wrap gap-2">
+            <div class="card p-3 h-100 shadow-sm border-0">
+                <h2 class="h6 border-bottom pb-2">Actions rapides</h2>
+                <div class="d-flex flex-wrap gap-2 mt-2">
                     <a class="btn btn-sm btn-primary" href="{{ path('app_admin_users_index') }}">Comptes</a>
                     <a class="btn btn-sm btn-outline-primary" href="{{ path('app_admin_appointments_index') }}">Rendez-vous</a>
                     <a class="btn btn-sm btn-outline-primary" href="{{ path('app_admin_wellbeing_programmes') }}">Programmes</a>
                     <a class="btn btn-sm btn-outline-primary" href="{{ path('app_admin_wellbeing_activites') }}">Activites</a>
-                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_admin_wellbeing_avis') }}">Avis</a>
-                    <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_consultation') }}">Forum</a>
-                    <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_cabinet') }}">Cabinets</a>
                 </div>
                 <hr>
                 <h3 class="h6">Alertes</h3>
-                <ul class="mb-0">
+                <ul class="mb-0 small text-danger">
                     <li>3 signalements forum en attente.</li>
                     <li>2 comptes psychologues a verifier.</li>
-                    <li>5 annonces cabinet a valider.</li>
                 </ul>
             </div>
         </div>
     </div>
-    <div class="card p-3 mt-3">
-        <h2 class="h6">Timeline moderation</h2>
-        <ul class="mb-0">
-            <li>08:30 - Verification des nouveaux psychologues</li>
-            <li>10:15 - Revue signalements forum</li>
-            <li>14:00 - Validation annonces cabinets</li>
-            <li>16:30 - Synthese qualite hebdomadaire</li>
-        </ul>
+
+    <div class="card p-3 mt-3 shadow-sm border-0">
+        <h2 class="h6 border-bottom pb-2">Timeline moderation</h2>
+        <div class="timeline ps-3 border-start border-2 border-primary mt-2">
+            <div class="mb-2 position-relative">
+                <span class="position-absolute translate-middle start-0 bg-primary border border-white rounded-circle" style="width:12px;height:12px;left:-16px !important;"></span>
+                <span class="fw-bold small text-primary">08:30</span> - Verification des nouveaux psychologues
+            </div>
+            <div class="mb-2 position-relative">
+                <span class="position-absolute translate-middle start-0 bg-primary border border-white rounded-circle" style="width:12px;height:12px;left:-16px !important;"></span>
+                <span class="fw-bold small text-primary">10:15</span> - Revue signalements forum
+            </div>
+            <div class="mb-2 position-relative">
+                <span class="position-absolute translate-middle start-0 bg-primary border border-white rounded-circle" style="width:12px;height:12px;left:-16px !important;"></span>
+                <span class="fw-bold small text-primary">14:00</span> - Validation annonces cabinets
+            </div>
+            <div class="mb-2 position-relative">
+                <span class="position-absolute translate-middle start-0 bg-primary border border-white rounded-circle" style="width:12px;height:12px;left:-16px !important;"></span>
+                <span class="fw-bold small text-primary">16:30</span> - Synthese qualite hebdomadaire
+            </div>
+        </div>
     </div>
+
+    <div class="row g-3 mt-1">
+        <div class="col-lg-4">
+            <div class="card p-3 shadow-sm border-0 h-100">
+                <h2 class="h6 border-bottom pb-2">Difficulté des Programmes</h2>
+                <canvas id="difficultyChart"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card p-3 shadow-sm border-0 h-100">
+                <h2 class="h6 border-bottom pb-2">Types d'Activités</h2>
+                <canvas id="typeChart"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card p-3 shadow-sm border-0 h-100">
+                <h2 class="h6 border-bottom pb-2">Croissance Utilisateurs</h2>
+                <canvas id="growthChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mt-1">
+        <div class="col-lg-4">
+            <div class="card p-3 shadow-sm border-0 h-100">
+                <h2 class="h6 border-bottom pb-2">Distribution des Avis (1 a 5)</h2>
+                <canvas id="avisChart"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card p-3 shadow-sm border-0 h-100">
+                <h2 class="h6 border-bottom pb-2">Activites par Jour</h2>
+                <canvas id="activitiesDayChart"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card p-3 shadow-sm border-0 h-100">
+                <h2 class="h6 border-bottom pb-2">Top 5 Programmes (par avis)</h2>
+                <canvas id="topProgrammesChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let dashboardCharts = [];
+
+        function destroyDashboardCharts() {
+            dashboardCharts.forEach((chart) => chart.destroy());
+            dashboardCharts = [];
+        }
+
+        function initDashboardCharts() {
+            destroyDashboardCharts();
+
+            // Data for Difficulty Chart (Pie)
+            const diffEl = document.getElementById('difficultyChart');
+            const typeEl = document.getElementById('typeChart');
+            const growthEl = document.getElementById('growthChart');
+            const avisEl = document.getElementById('avisChart');
+            const activitiesDayEl = document.getElementById('activitiesDayChart');
+            const topProgrammesEl = document.getElementById('topProgrammesChart');
+            if (!diffEl || !typeEl || !growthEl || !avisEl || !activitiesDayEl || !topProgrammesEl) {
+                return;
+            }
+
+            const diffCtx = diffEl.getContext('2d');
+            dashboardCharts.push(new Chart(diffCtx, {
+                type: 'pie',
+                data: {
+                    labels: {{ difficultyStats|map(s => s.niveauDifficulte)|json_encode|raw }},
+                    datasets: [{
+                        data: {{ difficultyStats|map(s => s.count)|json_encode|raw }},
+                        backgroundColor: ['#7c6ba0', '#a094be', '#c7c0d8', '#e3def0']
+                    }]
+                }
+            }));
+
+            // Data for Type Chart (Bar)
+            const typeCtx = typeEl.getContext('2d');
+            dashboardCharts.push(new Chart(typeCtx, {
+                type: 'bar',
+                data: {
+                    labels: {{ typeStats|map(s => s.typeActivite)|json_encode|raw }},
+                    datasets: [{
+                        label: 'Nombre d\'activités',
+                        data: {{ typeStats|map(s => s.count)|json_encode|raw }},
+                        backgroundColor: '#7c6ba0'
+                    }]
+                },
+                options: {
+                    scales: { y: { beginAtZero: true } }
+                }
+            }));
+
+            // Data for Growth Chart (Line)
+            const growthCtx = growthEl.getContext('2d');
+            dashboardCharts.push(new Chart(growthCtx, {
+                type: 'line',
+                data: {
+                    labels: {{ userGrowth|map(s => s.month)|json_encode|raw }},
+                    datasets: [{
+                        label: 'Nouveaux utilisateurs',
+                        data: {{ userGrowth|map(s => s.count)|json_encode|raw }},
+                        borderColor: '#7c6ba0',
+                        tension: 0.1,
+                        fill: false
+                    }]
+                }
+            }));
+
+            // Data for Avis Distribution (Doughnut)
+            const avisCtx = avisEl.getContext('2d');
+            dashboardCharts.push(new Chart(avisCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: {{ avisDistribution|map(s => s.note ~ '★')|json_encode|raw }},
+                    datasets: [{
+                        data: {{ avisDistribution|map(s => s.count)|json_encode|raw }},
+                        backgroundColor: ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6']
+                    }]
+                }
+            }));
+
+            // Data for Activities by Day (Line)
+            const activitiesDayCtx = activitiesDayEl.getContext('2d');
+            dashboardCharts.push(new Chart(activitiesDayCtx, {
+                type: 'line',
+                data: {
+                    labels: {{ activitiesByDay|map(s => 'Jour ' ~ s.day)|json_encode|raw }},
+                    datasets: [{
+                        label: 'Activites',
+                        data: {{ activitiesByDay|map(s => s.count)|json_encode|raw }},
+                        borderColor: '#0ea5e9',
+                        backgroundColor: 'rgba(14, 165, 233, 0.2)',
+                        fill: true,
+                        tension: 0.25
+                    }]
+                },
+                options: {
+                    scales: { y: { beginAtZero: true } }
+                }
+            }));
+
+            // Data for Top Programmes by Avis (Horizontal Bar)
+            const topProgrammesCtx = topProgrammesEl.getContext('2d');
+            dashboardCharts.push(new Chart(topProgrammesCtx, {
+                type: 'bar',
+                data: {
+                    labels: {{ topProgrammesByAvis|map(s => s.name)|json_encode|raw }},
+                    datasets: [{
+                        label: 'Nombre d\'avis',
+                        data: {{ topProgrammesByAvis|map(s => s.count)|json_encode|raw }},
+                        backgroundColor: '#10b981'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    scales: { x: { beginAtZero: true } }
+                }
+            }));
+        }
+
+        document.addEventListener('DOMContentLoaded', initDashboardCharts);
+        document.addEventListener('turbo:load', initDashboardCharts);
+    </script>
 {% endblock %}

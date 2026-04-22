@@ -447,7 +447,7 @@
         {% for p in programmes %}
             <div class="post-card">
                 {% if p.image %}
-                    <div class="post-card-visual" style="background-image:url('{{ asset('uploads/' ~ p.image) }}')"></div>
+                    <div class="post-card-visual" style="background-image:url('{{ p.image starts with 'http' ? p.image : asset('uploads/' ~ p.image) }}')"></div>
                 {% else %}
                     <div class="post-card-visual" style="background:linear-gradient(135deg,var(--accent-soft),rgba(42,111,91,.15));display:flex;align-items:center;justify-content:center">
                         <span style="font-size:2.5rem">🧘</span>

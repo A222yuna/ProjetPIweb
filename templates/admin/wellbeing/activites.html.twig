@@ -52,23 +52,58 @@
         {% include 'admin/wellbeing/_activites_table.html.twig' with { activites: activites } %}
     </div>
 
+    <div class="card p-3 mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="h6 mb-0">Calendrier des activites</h2>
+            <small class="text-muted">Vue hebdomadaire basee sur le planning filtre</small>
+        </div>
+        <div id="admin-activites-calendar"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
     <script>
         (() => {
             const form = document.querySelector('.js-admin-filter');
             if (!form) return;
             const target = document.querySelector(form.dataset.target);
             if (!target) return;
+            const calendarHolder = document.getElementById('admin-activites-calendar');
+            let calendar = null;
             let timer = null;
-            const run = () => {
-                const url = new URL(form.action, window.location.origin);
+            const getFilters = () => {
+                const data = new FormData(form);
+                return {
+                    admin_wellbeing: true,
+                    q: (data.get('q') ?? '').toString().trim(),
+                    type: (data.get('type') ?? '').toString().trim(),
+                    programme_id: (data.get('programme_id') ?? '').toString().trim(),
+                    jour: (data.get('jour') ?? '').toString().trim(),
+                };
+            };
+            const run = (url = null) => {
+                const fetchUrl = url ?? new URL(form.action, window.location.origin);
                 const data = new FormData(form);
                 for (const [key, value] of data.entries()) {
-                    if (value !== '') url.searchParams.set(key, value);
+                    if (value !== '') fetchUrl.searchParams.set(key, value);
                 }
-                fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                fetch(fetchUrl.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                     .then((r) => r.text())
-                    .then((html) => { target.innerHTML = html; })
+                    .then((html) => {
+                        target.innerHTML = html;
+                        bindPaginationLinks();
+                        if (calendar) {
+                            calendar.refetchEvents();
+                        }
+                    })
                     .catch(() => {});
+            };
+            const bindPaginationLinks = () => {
+                target.querySelectorAll('.pagination a').forEach((link) => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        run(new URL(link.href, window.location.origin));
+                    });
+                });
             };
             const debouncedRun = () => {
                 clearTimeout(timer);
@@ -77,6 +112,31 @@
             form.addEventListener('input', debouncedRun);
             form.addEventListener('change', debouncedRun);
             form.addEventListener('submit', (e) => { e.preventDefault(); run(); });
+
+            if (calendarHolder && window.FullCalendar) {
+                calendar = new FullCalendar.Calendar(calendarHolder, {
+                    initialView: 'timeGridWeek',
+                    locale: 'fr',
+                    firstDay: 1,
+                    headerToolbar: {
+                        start: 'prev,next today',
+                        center: 'title',
+                        end: 'timeGridWeek,dayGridMonth'
+                    },
+                    eventSources: [
+                        {
+                            url: '{{ path('fc_load_events') }}',
+                            method: 'POST',
+                            extraParams: () => ({
+                                filters: JSON.stringify(getFilters())
+                            })
+                        }
+                    ]
+                });
+                calendar.render();
+            }
+
+            bindPaginationLinks();
         })();
     </script>
 {% endblock %}

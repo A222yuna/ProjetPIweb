@@ -55,16 +55,27 @@
             const target = document.querySelector(form.dataset.target);
             if (!target) return;
             let timer = null;
-            const run = () => {
-                const url = new URL(form.action, window.location.origin);
+            const run = (url = null) => {
+                const fetchUrl = url ?? new URL(form.action, window.location.origin);
                 const data = new FormData(form);
                 for (const [key, value] of data.entries()) {
-                    if (value !== '') url.searchParams.set(key, value);
+                    if (value !== '') fetchUrl.searchParams.set(key, value);
                 }
-                fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                fetch(fetchUrl.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                     .then((r) => r.text())
-                    .then((html) => { target.innerHTML = html; })
+                    .then((html) => {
+                        target.innerHTML = html;
+                        bindPaginationLinks();
+                    })
                     .catch(() => {});
+            };
+            const bindPaginationLinks = () => {
+                target.querySelectorAll('.pagination a').forEach((link) => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        run(new URL(link.href, window.location.origin));
+                    });
+                });
             };
             const debouncedRun = () => {
                 clearTimeout(timer);
@@ -73,6 +84,7 @@
             form.addEventListener('input', debouncedRun);
             form.addEventListener('change', debouncedRun);
             form.addEventListener('submit', (e) => { e.preventDefault(); run(); });
+            bindPaginationLinks();
         })();
     </script>
 {% endblock %}

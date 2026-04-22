@@ -91,7 +91,7 @@
             {{ form_row(form.imageFile) }}
             {% if programme.image %}
                 <div class="current-img">
-                    <img src="{{ asset('uploads/' ~ programme.image) }}" alt="Image actuelle">
+                    <img src="{{ programme.image starts with 'http' ? programme.image : asset('uploads/' ~ programme.image) }}" alt="Image actuelle">
                     <span>Image actuelle — Uploadez un fichier pour la remplacer</span>
                 </div>
             {% endif %}
