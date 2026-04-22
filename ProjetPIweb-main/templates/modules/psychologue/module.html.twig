@@ -1,0 +1,88 @@
+{% extends 'base_psychologue.html.twig' %}
+
+{% set labels = {
+    'comptes': 'Mon Compte',
+    'consultations': 'Consultations & Planning',
+    'cabinets': 'Mon Cabinet',
+    'bienetre': 'Programmes Bien-etre',
+    'messages': 'Messagerie',
+    'forum': 'Forum Professionnel'
+} %}
+
+{% block title %}Psychologue - {{ labels[module]|default(module) }}{% endblock %}
+
+{% block psychologue_body %}
+    <h1 class="h4 mb-3">{{ labels[module]|default(module) }}</h1>
+    <p class="text-muted">Template de travail psychologue: suivi patient, organisation et coordination.</p>
+
+    {% if module == 'comptes' %}
+        <div class="card p-3 mb-3">
+            <h2 class="h6">Mon profil professionnel</h2>
+            <p class="mb-2">Informations publiques, specialites, disponibilite de prise en charge.</p>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary" disabled>Modifier profil</button>
+                <button class="btn btn-sm btn-outline-secondary" disabled>Documents</button>
+            </div>
+        </div>
+    {% elseif module == 'consultations' %}
+        <div class="row g-3 mb-3">
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">Consultations semaine</small><div class="h5 mb-0">22</div></div></div>
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">Places restantes</small><div class="h5 mb-0">14</div></div></div>
+            <div class="col-md-4"><div class="card p-3"><small class="text-muted">Urgences signalees</small><div class="h5 mb-0">2</div></div></div>
+        </div>
+    {% elseif module == 'cabinets' %}
+        <div class="card p-3 mb-3">
+            <h2 class="h6">Mon cabinet / annonce</h2>
+            <ul class="mb-0">
+                <li>Statut annonce: <span class="badge text-bg-success">Validee</span></li>
+                <li>Ville: Tunis - horaires a jour.</li>
+                <li>Note moyenne patients: 4.6/5</li>
+            </ul>
+        </div>
+    {% elseif module == 'bienetre' %}
+        <div class="card p-3 mb-3">
+            <h2 class="h6">Programmes actifs</h2>
+            <ul class="mb-0">
+                <li>Programme respiration guidee - 31 patients</li>
+                <li>Routine anti-ruminations - 18 patients</li>
+                <li>Sommeil progressif - 22 patients</li>
+            </ul>
+        </div>
+    {% elseif module == 'messages' %}
+        <div class="card p-3 mb-3">
+            <h2 class="h6">Messages hors consultation</h2>
+            <p class="mb-0">9 conversations actives, 3 messages non lus, priorites classees par urgence.</p>
+        </div>
+    {% elseif module == 'forum' %}
+        <div class="card p-3 mb-3">
+            <h2 class="h6">Participation forum</h2>
+            <p class="mb-0">Espace d education therapeutique, reponses moderees et bienveillantes.</p>
+        </div>
+    {% endif %}
+
+    <div class="row g-3">
+        <div class="col-lg-7">
+            <div class="card p-3 h-100">
+                <h2 class="h6">Panneau metier</h2>
+                <ul class="mb-0">
+                    <li>Vision semaine / charge de travail.</li>
+                    <li>Actions principales priorisees.</li>
+                    <li>Acces aux elements critiques en 1 clic.</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card p-3 h-100">
+                <h2 class="h6">Acces rapide</h2>
+                <div class="d-grid gap-2">
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_psy_module_comptes') }}">Compte</a>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_psy_module_consultations') }}">Consultations</a>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_psy_module_cabinets') }}">Cabinet</a>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_psy_module_bienetre') }}">Bien-etre</a>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_psy_module_messages') }}">Messages</a>
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_psy_module_forum') }}">Forum</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

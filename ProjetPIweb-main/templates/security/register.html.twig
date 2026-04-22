@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Inscription{% endblock %}
+
+{% block body %}
+    <div class="card" style="max-width:640px;margin:2rem auto;">
+        <h1 style="margin-top:0">Inscription</h1>
+        <p class="muted">Creation de compte patient/psychologue. L admin valide ensuite selon vos regles metier.</p>
+        {{ form_start(registrationForm, { attr: { class: 'stack-form' } }) }}
+            {{ form_row(registrationForm.prenom) }}
+            {{ form_row(registrationForm.nom) }}
+            {{ form_row(registrationForm.email) }}
+            {{ form_row(registrationForm.telephone) }}
+            {{ form_row(registrationForm.role) }}
+            {{ form_row(registrationForm.plainPassword) }}
+            <div class="stack-form-actions">
+                <button class="btn btn-primary">Creer mon compte</button>
+                <a href="{{ path('app_login') }}" class="btn btn-outline">Connexion</a>
+            </div>
+        {{ form_end(registrationForm) }}
+    </div>
+{% endblock %}

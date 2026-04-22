@@ -1,0 +1,18 @@
+<h1 class="h4 mb-3">Mon profil</h1>
+<div class="row g-3 mb-3">
+    <div class="col-md-4"><div class="card p-3"><small class="text-muted">Role</small><div class="h6 mb-0">{{ app.user.role }}</div></div></div>
+    <div class="col-md-4"><div class="card p-3"><small class="text-muted">Compte actif</small><div class="h6 mb-0">{{ app.user.estActif ? 'Oui' : 'Non' }}</div></div></div>
+    <div class="col-md-4"><div class="card p-3"><small class="text-muted">Email verifie</small><div class="h6 mb-0">{{ app.user.emailVerifie ? 'Oui' : 'Non' }}</div></div></div>
+</div>
+<div class="card p-3">
+    {{ form_start(form, { attr: { class: 'stack-form' } }) }}
+        {{ form_row(form.prenom) }}
+        {{ form_row(form.nom) }}
+        {{ form_row(form.email) }}
+        {{ form_row(form.telephone) }}
+        <div class="stack-form-actions">
+            <button class="btn btn-primary">Enregistrer</button>
+            <a href="{{ path('app_account_password') }}" class="btn btn-outline-secondary">Changer mon mot de passe</a>
+        </div>
+    {{ form_end(form) }}
+</div>

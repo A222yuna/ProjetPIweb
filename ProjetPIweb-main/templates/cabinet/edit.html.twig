@@ -1,0 +1,40 @@
+{% extends 'back.html.twig' %}
+
+{% block title %}Modifier un cabinet{% endblock %}
+
+{% block stylesheets %}{{ parent() }}{% endblock %}
+
+{% block back_body %}
+    <div class="cab-form-card">
+            <h2 class="fw-bold mb-4">Modifier un cabinet</h2>
+            {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+                <div class="text-danger small mb-3">{{ form_errors(form) }}</div>
+                <div class="mb-3">
+                    {{ form_label(form.adresse, 'Adresse *', {'label_attr': {'class': 'cab-form-label'}}) }}
+                    {{ form_widget(form.adresse, {'attr': {'class': 'cab-form-input'}}) }}
+                    <div class="text-danger small">{{ form_errors(form.adresse) }}</div>
+                </div>
+                <div class="cab-form-grid">
+                    <div class="mb-3">
+                        {{ form_label(form.ville, 'Ville *', {'label_attr': {'class': 'cab-form-label'}}) }}
+                        {{ form_widget(form.ville, {'attr': {'class': 'cab-form-input'}}) }}
+                        <div class="text-danger small">{{ form_errors(form.ville) }}</div>
+                    </div>
+                    <div class="mb-3">
+                        {{ form_label(form.horaires, 'Horaires', {'label_attr': {'class': 'cab-form-label'}}) }}
+                        {{ form_widget(form.horaires, {'attr': {'class': 'cab-form-input'}}) }}
+                        <div class="text-danger small">{{ form_errors(form.horaires) }}</div>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    {{ form_label(form.description, 'Description', {'label_attr': {'class': 'cab-form-label'}}) }}
+                    {{ form_widget(form.description, {'attr': {'class': 'cab-form-input', 'rows': 4}}) }}
+                    <div class="text-danger small">{{ form_errors(form.description) }}</div>
+                </div>
+                <div class="d-grid gap-2">
+                    <button class="btn cab-btn cab-btn-primary cab-submit" type="submit">Mettre a jour</button>
+                    <a href="{{ path(index_route|default('app_cabinet_index')) }}" class="btn cab-btn cab-btn-outline">Annuler</a>
+                </div>
+            {{ form_end(form) }}
+    </div>
+{% endblock %}

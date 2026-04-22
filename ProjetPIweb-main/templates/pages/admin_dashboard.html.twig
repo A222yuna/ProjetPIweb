@@ -1,0 +1,60 @@
+{% extends 'base.html.twig' %}
+
+{% block body_attr %} class="layout-wide layout-admin"{% endblock %}
+
+{% block title %}Administration — Tableau de bord{% endblock %}
+
+{% block body %}
+    <div class="placeholder-banner" role="status">
+        <strong>Espace administrateur (maquette)</strong> — Aucune authentification pour l’instant. Cette page est servie sur la <em>même</em> adresse que le site public (ex. <code>http://127.0.0.1:8000/admin</code>). Vous pourrez protéger la route plus tard (firewall / rôles).
+    </div>
+
+    <div class="admin-shell">
+        <aside class="card admin-sidebar">
+            <p class="page-eyebrow" style="margin-bottom:0.75rem">Admin</p>
+            <h2 class="admin-sidebar-title">Menu</h2>
+            <ul class="admin-menu">
+                <li><span class="admin-menu-item is-active">Tableau de bord</span></li>
+                <li><a class="admin-menu-item" href="{{ path('app_consultation') }}">Publications / consultations</a></li>
+                <li><a class="admin-menu-item" href="{{ path('app_reservation') }}">Réservations (maquette)</a></li>
+                <li><span class="admin-menu-item admin-menu-item--muted">Rendez-vous (données)</span></li>
+                <li><span class="admin-menu-item admin-menu-item--muted">Utilisateurs</span></li>
+                <li><span class="admin-menu-item admin-menu-item--muted">Paramètres</span></li>
+            </ul>
+        </aside>
+
+        <div class="admin-content">
+            <div class="dash-header">
+                <div>
+                    <h1 style="margin-bottom:0.35rem">Tableau de bord</h1>
+                    <p class="muted" style="margin:0">Vue synthétique à relier à la base (appointments, users, etc.).</p>
+                </div>
+                <div class="dash-header-actions">
+                    <a href="{{ path('app_home') }}" class="btn btn-outline">Voir le site public</a>
+                </div>
+            </div>
+
+            <div class="stats">
+                <div class="stat"><div class="num">—</div><div class="muted">RDV du jour</div></div>
+                <div class="stat"><div class="num">—</div><div class="muted">Messages</div></div>
+                <div class="stat"><div class="num">—</div><div class="muted">Nouveaux patients</div></div>
+                <div class="stat"><div class="num">—</div><div class="muted">Taux occupation</div></div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <h2 style="margin-top:0">Prochains créneaux</h2>
+                    <p class="muted" style="margin-bottom:0">Liste à alimenter depuis <code>appointments</code>, <code>creneau</code> ou votre logique métier.</p>
+                </div>
+                <div class="card card-soft">
+                    <h2 style="margin-top:0">Actions rapides</h2>
+                    <div class="quick-links">
+                        <a href="{{ path('app_consultation') }}" class="quick-link">Modérer les publications</a>
+                        <a href="{{ path('app_reservation') }}" class="quick-link">Configurer les RDV</a>
+                        <a href="{{ path('app_contact') }}" class="quick-link">Coordonnées cabinet</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

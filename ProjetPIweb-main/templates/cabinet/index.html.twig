@@ -1,0 +1,153 @@
+{% extends 'back.html.twig' %}
+
+{% block title %}Gestion des cabinets{% endblock %}
+
+{% block stylesheets %}{{ parent() }}{% endblock %}
+
+{% block back_body %}
+    <div class="cab-hero mb-4">
+        <div>
+            <h2>{{ is_granted('ROLE_ADMIN') ? 'Gestion des cabinets' : 'Bonjour Dr. ' ~ (app.user ? app.user.prenom ~ ' ' ~ app.user.nom : 'Psychologue') ~ ' !' }}</h2>
+            <p>{{ is_granted('ROLE_ADMIN') ? 'Suivez et validez les demandes des psychologues en un clin d oeil.' : 'Gerez vos cabinets et suivez leur statut de validation.' }}</p>
+        </div>
+        <div class="cab-hero-icon">🏥</div>
+    </div>
+
+    {% if not is_granted('ROLE_ADMIN') %}
+        <div class="cab-actions">
+            <a href="{{ path(cabinet_route_prefix ~ 'new') }}" class="cab-btn cab-btn-primary">+ Ajouter</a>
+            <a href="{{ path(disponibilite_route_prefix ~ 'new') }}" class="cab-btn cab-btn-accent">Planifier creneaux</a>
+            <a href="{{ path(disponibilite_route_prefix ~ 'index') }}" class="cab-btn cab-btn-outline">Liste creneaux</a>
+        </div>
+    {% endif %}
+
+    <div class="cab-kpis">
+        <div class="cab-kpi cab-kpi-total">
+            <span class="cab-kpi-icon">📌</span>
+            <small>Total cabinets</small>
+            <h3>{{ stats.total }}</h3>
+        </div>
+        <div class="cab-kpi cab-kpi-valid">
+            <span class="cab-kpi-icon">✅</span>
+            <small>Cabinets valides</small>
+            <h3>{{ stats.valides }}</h3>
+        </div>
+        <div class="cab-kpi cab-kpi-wait">
+            <span class="cab-kpi-icon">⏳</span>
+            <small>En attente</small>
+            <h3>{{ stats.enAttente }}</h3>
+        </div>
+    </div>
+
+    {% if is_granted('ROLE_ADMIN') %}
+        <div class="cab-table-card p-3 mb-3">
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <h5 class="mb-0 me-auto">Liste des cabinets</h5>
+                <input type="text" class="cab-form-input" style="max-width:280px;padding:10px 14px;" placeholder="Rechercher un cabinet...">
+                <button class="cab-btn cab-btn-outline" type="button">Exporter</button>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <span class="status-pill status-valid">Tous ({{ stats.total }})</span>
+                <span class="status-pill status-valid">Valides ({{ stats.valides }})</span>
+                <span class="status-pill status-pending">En attente ({{ stats.enAttente }})</span>
+                <span class="status-pill status-rejected">Rejetes</span>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="cab-table-card">
+        <div class="table-responsive">
+            <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            {% if is_granted('ROLE_ADMIN') %}<th><input type="checkbox"></th>{% endif %}
+                            <th>Adresse</th>
+                            <th>Ville</th>
+                            <th>Statut</th>
+                            {% if is_granted('ROLE_ADMIN') %}<th>Réputation</th>{% endif %}
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for cabinet in cabinets %}
+                        <tr>
+                            {% if is_granted('ROLE_ADMIN') %}<td><input type="checkbox"></td>{% endif %}
+                            <td>{{ cabinet.adresse }}</td>
+                            <td>{{ cabinet.ville }}</td>
+                            <td>
+                                {% if cabinet.archive %}
+                                    <span class="status-pill status-rejected">Rejete</span>
+                                {% elseif cabinet.valide %}
+                                    <span class="status-pill status-valid">Valide</span>
+                                {% else %}
+                                    <span class="status-pill status-pending">En attente</span>
+                                {% endif %}
+                            </td>
+                            {% if is_granted('ROLE_ADMIN') %}
+                            <td>
+                                {% if cabinet.reputationBadge %}
+                                    <span class="reputation-badge badge-{{ cabinet.reputationBadge|lower|replace({' ': '-'}) }}">
+                                        {% if cabinet.reputationBadge == 'Excellence' %}💎
+                                        {% elseif cabinet.reputationBadge == 'Expert' %}🥇
+                                        {% elseif cabinet.reputationBadge == 'Confirmé' %}🥈
+                                        {% else %}⭐{% endif %}
+                                        {{ cabinet.reputationScore|number_format(1) }}/100 — {{ cabinet.reputationBadge }}
+                                    </span>
+                                {% else %}
+                                    <span class="reputation-badge badge-none">Non calculé</span>
+                                {% endif %}
+                            </td>
+                            {% endif %}
+                            <td class="text-nowrap">
+                                <div class="d-inline-flex align-items-center gap-2">
+                                {% if is_granted('ROLE_ADMIN') %}
+                                    <details>
+                                        <summary class="icon-action" title="Actions">⋯</summary>
+                                        <div class="mt-2 p-2 rounded-3 border bg-white d-grid gap-2" style="min-width:150px;">
+                                            <a class="btn btn-sm btn-outline-primary" href="{{ path(cabinet_route_prefix ~ 'show', {id: cabinet.id}) }}">Voir</a>
+                                            <a class="btn btn-sm btn-outline-secondary" href="{{ path('api_cabinet_rapport_pdf', {id: cabinet.id}) }}" target="_blank">📄 Rapport PDF</a>
+                                            <form method="post" action="{{ path(cabinet_route_prefix ~ 'validate', {id: cabinet.id}) }}">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('validate_cabinet_' ~ cabinet.id) }}">
+                                                <button class="btn btn-sm btn-success w-100" type="submit">Valider</button>
+                                            </form>
+                                            <form method="post" action="{{ path(cabinet_route_prefix ~ 'archive', {id: cabinet.id}) }}">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('archive_cabinet_' ~ cabinet.id) }}">
+                                                <button class="btn btn-sm btn-warning w-100" type="submit">Rejeter</button>
+                                            </form>
+                                            <form method="post" action="{{ path(cabinet_route_prefix ~ 'delete', {id: cabinet.id}) }}" onsubmit="return confirm('Supprimer ce cabinet ?');">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('delete_cabinet_' ~ cabinet.id) }}">
+                                                <button class="btn btn-sm btn-danger w-100" type="submit">Supprimer</button>
+                                            </form>
+                                        </div>
+                                    </details>
+                                {% else %}
+                                    <a class="icon-action" title="Voir" href="{{ path(cabinet_route_prefix ~ 'show', {id: cabinet.id}) }}">👁️</a>
+                                    <a class="icon-action" title="Rapport PDF" href="{{ path('api_cabinet_rapport_pdf', {id: cabinet.id}) }}" target="_blank">📄</a>
+                                    {% if cabinet.archive %}
+                                        <span class="small text-muted fw-semibold">Cabinet rejete: modification verrouillee</span>
+                                    {% else %}
+                                        <a class="icon-action" title="Modifier" href="{{ path(cabinet_route_prefix ~ 'edit', {id: cabinet.id}) }}">✏️</a>
+                                        <form method="post" action="{{ path(cabinet_route_prefix ~ 'delete', {id: cabinet.id}) }}" onsubmit="return confirm('Supprimer ce cabinet ?');">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete_cabinet_' ~ cabinet.id) }}">
+                                            <button class="icon-action" title="Supprimer" type="submit">🗑️</button>
+                                        </form>
+                                    {% endif %}
+                                {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="4">
+                                <div class="cab-empty">
+                                    <div class="cab-empty-emoji">🏥</div>
+                                    <div>Aucun cabinet disponible pour le moment.</div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

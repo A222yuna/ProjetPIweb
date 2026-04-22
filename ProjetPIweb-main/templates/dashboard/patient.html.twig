@@ -1,0 +1,52 @@
+{% extends 'base_patient.html.twig' %}
+
+{% block title %}Dashboard Patient{% endblock %}
+
+{% block patient_body %}
+    <h1 class="h4 mb-3">Dashboard Patient</h1>
+    <p class="text-muted">Votre espace de rendez-vous, bien-etre, messagerie et forum communautaire.</p>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-4"><div class="card p-3"><small class="text-muted">Rendez-vous a venir</small><div class="h4 mb-0">3</div></div></div>
+        <div class="col-md-4"><div class="card p-3"><small class="text-muted">Programmes suivis</small><div class="h4 mb-0">2</div></div></div>
+        <div class="col-md-4"><div class="card p-3"><small class="text-muted">Messages non lus</small><div class="h4 mb-0">5</div></div></div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="card p-3 h-100">
+                <h2 class="h6">Consultations</h2>
+                <p>Choisissez un psychologue, un plan, puis reservez un rendez-vous a distance.</p>
+                <a class="btn btn-sm btn-primary" href="{{ path('app_patient_rendezvous_index') }}">Reserver un rendez-vous</a>
+                <hr>
+                <h3 class="h6">Historique recent</h3>
+                <ul class="mb-0">
+                    <li>RDV #102 - SCHEDULED</li>
+                    <li>RDV #097 - COMPLETED</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card p-3 h-100">
+                <h2 class="h6">Bien-etre & Communaute</h2>
+                <ul>
+                    <li>Suivez vos programmes et laissez un avis.</li>
+                    <li>Participez au forum pour echanger.</li>
+                    <li>Echangez en prive avec votre psychologue.</li>
+                </ul>
+                <div class="d-flex flex-wrap gap-2">
+                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_consultation') }}">Acceder au forum</a>
+                    <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_cabinet') }}">Annuaire cabinets</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card p-3 mt-3">
+        <h2 class="h6">Objectifs de la semaine</h2>
+        <ul class="mb-0">
+            <li>Completer 5 activites bien-etre</li>
+            <li>Confirmer le prochain rendez-vous</li>
+            <li>Ecrire une reflexion dans le forum</li>
+        </ul>
+    </div>
+{% endblock %}
