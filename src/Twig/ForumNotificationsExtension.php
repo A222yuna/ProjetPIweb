@@ -3,38 +3,30 @@
 namespace App\Twig;
 
 use App\Entity\User;
-use App\Repository\CommentaireRepository;
+use App\Repository\ForumNotificationRepository;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
 final class ForumNotificationsExtension extends AbstractExtension
 {
-    public function __construct(private readonly CommentaireRepository $comments)
+    public function __construct(private readonly ForumNotificationRepository $notifRepo)
     {
     }
 
     public function getFunctions(): array
     {
         return [
-            new TwigFunction('forum_notifications', [$this, 'getForumNotifications']),
+            new TwigFunction('forum_unread_count', [$this, 'getUnreadCount']),
         ];
     }
 
-    /**
-     * @return array{items: array<\App\Entity\Commentaire>, total: int}
-     */
-    public function getForumNotifications(?User $user, int $limit = 6): array
+    public function getUnreadCount(?User $user): int
     {
         if (!$user instanceof User) {
-            return ['items' => [], 'total' => 0];
+            return 0;
         }
 
-        $items = $this->comments->findLatestCommentsOnUserPosts($user, $limit);
-
-        return [
-            'items' => $items,
-            'total' => \count($items),
-        ];
+        return $this->notifRepo->countUnread($user);
     }
 }
 

@@ -4,6 +4,7 @@ namespace App\Form;
 
 use App\Entity\Post;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
@@ -92,6 +93,11 @@ final class PostConsultationFormType extends AbstractType
                     ])
                 ],
                 'help' => 'Taille max 1Mo. Le format WebP est recommandé pour plus de rapidité.',
+            ])
+            ->add('isAnonymous', CheckboxType::class, [
+                'label' => 'Publier anonymement',
+                'required' => false,
+                'help' => 'Votre nom ne sera pas affiché publiquement. L\'administration peut toujours voir votre identité.',
             ]);
     }
 

@@ -56,6 +56,9 @@ class Post
     #[ORM\Column(name: 'is_hidden', options: ['default' => 0])]
     private bool $isHidden = false;
 
+    #[ORM\Column(name: 'is_anonymous', options: ['default' => false])]
+    private bool $isAnonymous = false;
+
     #[ORM\Column(name: 'hidden_at', type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $hiddenAt = null;
 
@@ -171,6 +174,17 @@ class Post
     public function setIsHidden(bool $isHidden): static
     {
         $this->isHidden = $isHidden;
+        return $this;
+    }
+
+    public function isAnonymous(): bool
+    {
+        return $this->isAnonymous;
+    }
+
+    public function setIsAnonymous(bool $isAnonymous): static
+    {
+        $this->isAnonymous = $isAnonymous;
         return $this;
     }
 

@@ -24,6 +24,12 @@
             </div>
             {{ form_widget(form.contenu) }}
             {{ form_errors(form.contenu) }}
+
+            <div class="anon-toggle">
+                {{ form_widget(form.isAnonymous) }}
+                {{ form_label(form.isAnonymous) }}
+                <p class="muted" style="margin:0.25rem 0 0; font-size:0.85rem">{{ form_help(form.isAnonymous) }}</p>
+            </div>
             
             <div class="stack-form-actions">
                 <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>

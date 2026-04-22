@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\ForumNotification;
 use App\Entity\Post;
 use App\Entity\Commentaire;
 use App\Form\CommentaireType;
@@ -203,6 +204,17 @@ final class ConsultationController extends AbstractController
             $comment->setNbLikes(0);
             $comment->setDate(new \DateTime());
             $em->persist($comment);
+
+            // Notify the post author if they are not the commenter
+            $postAuthor = $post->getAuteur();
+            if ($postAuthor instanceof User && $postAuthor->getId() !== $user->getId()) {
+                $notif = (new ForumNotification())
+                    ->setRecipient($postAuthor)
+                    ->setPost($post)
+                    ->setComment($comment);
+                $em->persist($notif);
+            }
+
             $em->flush();
             $this->addFlash('success', 'Votre commentaire a bien été ajouté.');
 

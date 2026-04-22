@@ -1,0 +1,48 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes notifications — Forum{% endblock %}
+
+{% block body %}
+    <p class="muted back-link"><a href="{{ path('app_consultation') }}">← Retour au forum</a></p>
+    <h1>Mes notifications</h1>
+
+    {% if notifications is empty %}
+        <div class="card empty-state">
+            <p class="muted" style="margin:0">Aucune notification pour le moment.</p>
+        </div>
+    {% else %}
+        <div class="card" style="padding:0">
+            <ul class="plain" style="margin:0">
+                {% for notif in notifications %}
+                    <li style="padding:1rem 1.5rem; display:flex; gap:0.75rem; align-items:flex-start; {% if not notif.isRead %}background:var(--accent-soft){% endif %}">
+                        <span style="font-size:1.25rem; flex-shrink:0">💬</span>
+                        <div style="flex:1; min-width:0">
+                            <p style="margin:0 0 0.25rem">
+                                <strong>
+                                    {% if notif.comment and notif.comment.auteur %}
+                                        {{ notif.comment.auteur.prenom }} {{ notif.comment.auteur.nom }}
+                                    {% else %}
+                                        Quelqu'un
+                                    {% endif %}
+                                </strong>
+                                a commenté votre publication
+                                {% if notif.post %}
+                                    <a href="{{ path('app_post_show', { id: notif.post.id }) }}">« {{ notif.post.titre|length > 60 ? notif.post.titre|slice(0,60) ~ '…' : notif.post.titre }} »</a>
+                                {% endif %}
+                            </p>
+                            {% if notif.comment %}
+                                <p class="muted" style="margin:0 0 0.25rem; font-size:0.9rem">
+                                    {{ notif.comment.contenu|length > 120 ? notif.comment.contenu|slice(0,120) ~ '…' : notif.comment.contenu }}
+                                </p>
+                            {% endif %}
+                            <span class="muted" style="font-size:0.8125rem">{{ notif.createdAt|date('d/m/Y H:i') }}</span>
+                        </div>
+                        {% if notif.post %}
+                            <a href="{{ path('app_post_show', { id: notif.post.id }) }}" class="btn btn-outline btn-sm" style="flex-shrink:0">Voir</a>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+{% endblock %}
