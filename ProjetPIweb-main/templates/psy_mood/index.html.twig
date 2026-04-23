@@ -1,0 +1,348 @@
+{% extends 'base_psychologue.html.twig' %}
+
+{% block title %}PsyMood — Analyse Émotionnelle IA{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .mood-page { max-width: 1100px; margin: 0 auto; padding: 0 8px; }
+
+        /* Header */
+        .mood-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:28px; }
+        .mood-title  { font-size:22px; font-weight:800; color:#1A1A2E; margin:0; }
+        .mood-subtitle { color:#6B7280; font-size:13px; margin:2px 0 0; }
+
+        /* Cabinet selector */
+        .mood-cabinet-bar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px; }
+        .mood-cab-btn {
+            padding:8px 16px; border-radius:999px; font-size:13px; font-weight:600;
+            border:2px solid #E5E7EB; background:white; color:#6B7280;
+            text-decoration:none; transition:all .15s;
+        }
+        .mood-cab-btn:hover, .mood-cab-btn.active {
+            background:#6B3FA0; border-color:#6B3FA0; color:white;
+        }
+
+        /* Alert banner */
+        .mood-alert {
+            background:#FEF2F2; border:1px solid #FECACA; border-radius:12px;
+            padding:14px 20px; margin-bottom:20px;
+            display:flex; align-items:center; gap:12px;
+        }
+        .mood-alert-icon { font-size:24px; }
+        .mood-alert-text { font-size:14px; color:#991B1B; font-weight:600; }
+
+        /* KPI grid */
+        .mood-kpi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; }
+        @media(max-width:700px){ .mood-kpi-grid { grid-template-columns:1fr; } }
+        .mood-kpi {
+            background:white; border-radius:14px; padding:20px;
+            box-shadow:0 2px 12px rgba(107,63,160,.08);
+            text-align:center;
+        }
+        .mood-kpi-value { font-size:36px; font-weight:900; }
+        .mood-kpi-label { font-size:12px; color:#6B7280; text-transform:uppercase; letter-spacing:.5px; margin-top:4px; }
+        .kpi-pos { color:#10B981; }
+        .kpi-neu { color:#6B7280; }
+        .kpi-neg { color:#EF4444; }
+
+        /* Charts row */
+        .mood-charts-row { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px; }
+        @media(max-width:800px){ .mood-charts-row { grid-template-columns:1fr; } }
+        .mood-card {
+            background:white; border-radius:14px; padding:20px;
+            box-shadow:0 2px 12px rgba(107,63,160,.08);
+        }
+        .mood-card-title { font-size:14px; font-weight:700; color:#1A1A2E; margin-bottom:16px; }
+
+        /* Emotion bars */
+        .emotion-bar-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+        .emotion-bar-label { width:110px; font-size:13px; color:#374151; font-weight:600; }
+        .emotion-bar-track { flex:1; background:#F3F4F6; border-radius:999px; height:10px; overflow:hidden; }
+        .emotion-bar-fill  { height:100%; border-radius:999px; transition:width .6s ease; }
+        .emotion-bar-value { width:40px; text-align:right; font-size:12px; font-weight:700; color:#6B3FA0; }
+
+        /* Word cloud */
+        .word-cloud { display:flex; flex-wrap:wrap; gap:8px; padding:8px 0; }
+        .word-tag {
+            padding:4px 12px; border-radius:999px; font-weight:600;
+            background:#EDE9FE; color:#6B3FA0; transition:transform .15s;
+        }
+        .word-tag:hover { transform:scale(1.08); }
+
+        /* Review details */
+        .review-item {
+            border-left:3px solid #E5E7EB; padding:10px 14px; margin-bottom:10px;
+            border-radius:0 8px 8px 0; background:#F9FAFB;
+        }
+        .review-item.pos { border-color:#10B981; }
+        .review-item.neg { border-color:#EF4444; }
+        .review-item.neu { border-color:#9CA3AF; }
+        .review-text  { font-size:13px; color:#374151; margin-bottom:4px; }
+        .review-badge { font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; }
+        .badge-pos { background:#DCFCE7; color:#166534; }
+        .badge-neg { background:#FEE2E2; color:#991B1B; }
+        .badge-neu { background:#F3F4F6; color:#6B7280; }
+
+        /* Analyse button */
+        .btn-analyse {
+            background:linear-gradient(135deg,#6B3FA0,#8B5CF6);
+            color:white; border:none; padding:10px 24px;
+            border-radius:10px; font-weight:600; font-size:14px;
+            cursor:pointer; transition:all .2s;
+        }
+        .btn-analyse:hover { transform:translateY(-2px); box-shadow:0 4px 14px rgba(107,63,160,.35); }
+
+        /* Empty state */
+        .mood-empty { text-align:center; padding:60px 20px; color:#6B7280; }
+        .mood-empty h3 { font-size:18px; font-weight:700; color:#1A1A2E; margin:12px 0 6px; }
+    </style>
+{% endblock %}
+
+{% block psychologue_body %}
+<div class="mood-page">
+
+    {# Flash #}
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label == 'success' ? 'success' : 'danger' }} alert-dismissible mb-3">
+                {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endfor %}
+
+    {# Header #}
+    <div class="mood-header">
+        <div>
+            <h1 class="mood-title">🧠 PsyMood Detector</h1>
+            <p class="mood-subtitle">Analyse émotionnelle IA des avis patients</p>
+        </div>
+        {% if alert_count > 0 %}
+            <span class="badge bg-danger fs-6">⚠️ {{ alert_count }} alerte(s) active(s)</span>
+        {% endif %}
+    </div>
+
+    {# Cabinet selector #}
+    {% if cabinets|length > 0 %}
+    <div class="mood-cabinet-bar">
+        {% for cabinet in cabinets %}
+            <a href="{{ path('psy_mood_index', {cabinet: cabinet.id}) }}"
+               class="mood-cab-btn {{ selected and selected.id == cabinet.id ? 'active' : '' }}">
+                🏥 {{ cabinet.ville }}
+            </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if selected %}
+
+        {# Trigger analysis button #}
+        <div class="d-flex justify-content-end mb-3">
+            <form method="POST" action="{{ path('psy_mood_analyser', {id: selected.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('analyse_' ~ selected.id) }}">
+                <button type="submit" class="btn-analyse">
+                    🤖 Lancer l'analyse IA
+                </button>
+            </form>
+        </div>
+
+        {% if analysis %}
+
+            {# Alert banner #}
+            {% if analysis.alerteActive %}
+            <div class="mood-alert">
+                <span class="mood-alert-icon">🚨</span>
+                <span class="mood-alert-text">
+                    ALERTE : {{ analysis.negatifPct }}% d'avis négatifs détectés (seuil : 40%).
+                    Une attention particulière est recommandée pour ce cabinet.
+                </span>
+            </div>
+            {% endif %}
+
+            {# KPIs #}
+            <div class="mood-kpi-grid">
+                <div class="mood-kpi">
+                    <div class="mood-kpi-value kpi-pos">{{ analysis.positifPct }}%</div>
+                    <div class="mood-kpi-label">😊 Avis positifs</div>
+                </div>
+                <div class="mood-kpi">
+                    <div class="mood-kpi-value kpi-neu">{{ analysis.neutrePct }}%</div>
+                    <div class="mood-kpi-label">😐 Avis neutres</div>
+                </div>
+                <div class="mood-kpi">
+                    <div class="mood-kpi-value kpi-neg">{{ analysis.negatifPct }}%</div>
+                    <div class="mood-kpi-label">😞 Avis négatifs</div>
+                </div>
+            </div>
+
+            {# Charts row #}
+            <div class="mood-charts-row">
+
+                {# Radar Chart #}
+                <div class="mood-card">
+                    <div class="mood-card-title">📡 Radar des émotions</div>
+                    <canvas id="radarChart" height="260"></canvas>
+                </div>
+
+                {# Emotion bars #}
+                <div class="mood-card">
+                    <div class="mood-card-title">📊 Détail des émotions</div>
+                    {% set emotions = [
+                        {label:'🤝 Confiance',    value: analysis.confianceScore,    color:'#6B3FA0'},
+                        {label:'😊 Satisfaction', value: analysis.satisfactionScore, color:'#10B981'},
+                        {label:'😰 Anxiété',      value: analysis.anxieteScore,      color:'#F59E0B'},
+                        {label:'😞 Déception',    value: analysis.deceptionScore,    color:'#EF4444'},
+                        {label:'😤 Stress',       value: analysis.stressScore,       color:'#F97316'},
+                        {label:'🙏 Gratitude',    value: analysis.gratitudeScore,    color:'#00BFA5'},
+                    ] %}
+                    {% for e in emotions %}
+                    <div class="emotion-bar-row">
+                        <span class="emotion-bar-label">{{ e.label }}</span>
+                        <div class="emotion-bar-track">
+                            <div class="emotion-bar-fill"
+                                 style="width:{{ e.value }}%;background:{{ e.color }};"></div>
+                        </div>
+                        <span class="emotion-bar-value">{{ e.value }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {# Sentiment doughnut + word cloud #}
+            <div class="mood-charts-row">
+
+                {# Doughnut #}
+                <div class="mood-card">
+                    <div class="mood-card-title">🥧 Répartition des sentiments</div>
+                    <canvas id="doughnutChart" height="220"></canvas>
+                    <p class="text-center text-muted mt-2" style="font-size:12px;">
+                        Basé sur {{ analysis.totalReviews }} avis analysés
+                        {% if analysis.analysedAt %}
+                            — {{ analysis.analysedAt|date('d/m/Y H:i') }}
+                        {% endif %}
+                    </p>
+                </div>
+
+                {# Word cloud #}
+                <div class="mood-card">
+                    <div class="mood-card-title">☁️ Mots les plus fréquents</div>
+                    {% if analysis.topMots|length > 0 %}
+                    <div class="word-cloud">
+                        {% for mot in analysis.topMots %}
+                            {% set size = [12, 13, 14, 15, 16, 18, 20][(mot.count > 6 ? 6 : mot.count - 1)] %}
+                            <span class="word-tag" style="font-size:{{ size }}px;">
+                                {{ mot.text }}
+                                <span style="font-size:10px;opacity:.6;">({{ mot.count }})</span>
+                            </span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                        <p class="text-muted">Aucun mot fréquent détecté.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Review details #}
+            {% if analysis.detailsAnalyse|length > 0 %}
+            <div class="mood-card">
+                <div class="mood-card-title">💬 Détail des avis analysés</div>
+                {% for detail in analysis.detailsAnalyse %}
+                <div class="review-item {{ detail.sentiment == 'positif' ? 'pos' : (detail.sentiment == 'negatif' ? 'neg' : 'neu') }}">
+                    <div class="review-text">"{{ detail.text }}"</div>
+                    <span class="review-badge badge-{{ detail.sentiment == 'positif' ? 'pos' : (detail.sentiment == 'negatif' ? 'neg' : 'neu') }}">
+                        {{ detail.sentiment == 'positif' ? '😊 Positif' : (detail.sentiment == 'negatif' ? '😞 Négatif' : '😐 Neutre') }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+        {% else %}
+            {# No analysis yet #}
+            <div class="mood-empty">
+                <div style="font-size:56px;">🤖</div>
+                <h3>Aucune analyse disponible</h3>
+                <p>Cliquez sur "Lancer l'analyse IA" pour analyser les avis de ce cabinet.</p>
+            </div>
+        {% endif %}
+
+    {% else %}
+        <div class="mood-empty">
+            <div style="font-size:56px;">🏥</div>
+            <h3>Aucun cabinet lié</h3>
+            <p>Associez-vous à un cabinet pour accéder à l'analyse émotionnelle.</p>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    {% if analysis %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // ── Radar Chart ──────────────────────────────────────────────────────
+        const radarCtx = document.getElementById('radarChart');
+        if (radarCtx) {
+            new Chart(radarCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Confiance','Satisfaction','Anxiété','Déception','Stress','Gratitude'],
+                    datasets: [{
+                        label: 'Score émotionnel',
+                        data: [
+                            {{ analysis.confianceScore }},
+                            {{ analysis.satisfactionScore }},
+                            {{ analysis.anxieteScore }},
+                            {{ analysis.deceptionScore }},
+                            {{ analysis.stressScore }},
+                            {{ analysis.gratitudeScore }}
+                        ],
+                        backgroundColor: 'rgba(107,63,160,0.15)',
+                        borderColor: '#6B3FA0',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#6B3FA0',
+                        pointRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { r: { min: 0, max: 100, ticks: { stepSize: 20 } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // ── Doughnut Chart ───────────────────────────────────────────────────
+        const doughnutCtx = document.getElementById('doughnutChart');
+        if (doughnutCtx) {
+            new Chart(doughnutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Positif','Neutre','Négatif'],
+                    datasets: [{
+                        data: [
+                            {{ analysis.positifPct }},
+                            {{ analysis.neutrePct }},
+                            {{ analysis.negatifPct }}
+                        ],
+                        backgroundColor: ['#10B981','#9CA3AF','#EF4444'],
+                        borderWidth: 0,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    cutout: '65%',
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+    });
+    </script>
+    {% endif %}
+{% endblock %}

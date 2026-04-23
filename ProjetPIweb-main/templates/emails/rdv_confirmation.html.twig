@@ -1,0 +1,27 @@
+{% extends 'emails/_base.html.twig' %}
+{% block content %}
+<div class="header">
+  <h1>✅ Rendez-vous Confirmé</h1>
+  <p>Cabinet de Psychologie</p>
+</div>
+<div class="body">
+  <p>Bonjour <strong>{{ patient.prenom }} {{ patient.nom }}</strong>,</p>
+  <p>Votre rendez-vous a été enregistré avec succès.</p>
+
+  {% if date is defined %}
+  <div class="row"><span class="label">📅 Date</span><span class="value">{{ date }}</span></div>
+  {% endif %}
+  {% if heure is defined %}
+  <div class="row"><span class="label">🕐 Heure</span><span class="value">{{ heure }}</span></div>
+  {% endif %}
+  {% if cabinet is defined %}
+  <div class="row"><span class="label">🏥 Cabinet</span><span class="value">{{ cabinet.ville }}</span></div>
+  {% endif %}
+  {% if appointment is defined %}
+  <div class="row"><span class="label">📋 Statut</span><span class="value">{{ appointment.status }}</span></div>
+  {% endif %}
+
+  <a href="http://127.0.0.1:8000/patient/rendezvous/" class="btn">Voir mes rendez-vous</a>
+  <p style="color:#6B7280;font-size:13px;">En cas d'empêchement, merci d'annuler au moins 24h à l'avance.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends 'emails/_base.html.twig' %}
+{% block content %}
+<div class="header" style="background:linear-gradient(135deg,#10B981,#00BFA5);">
+  <h1>🎉 Cabinet Validé !</h1>
+  <p>Cabinet de Psychologie</p>
+</div>
+<div class="body">
+  <p>Bonjour <strong>{{ psychologue.prenom }} {{ psychologue.nom }}</strong>,</p>
+  <p>Votre cabinet a été <strong>validé</strong> par l'administrateur.</p>
+  <div class="row"><span class="label">🏥 Cabinet</span><span class="value">{{ cabinet.adresse }}, {{ cabinet.ville }}</span></div>
+  <a href="http://127.0.0.1:8000/psychologue/cabinets/" class="btn" style="background:#10B981;">Voir mon cabinet</a>
+</div>
+{% endblock %}
