@@ -46,15 +46,34 @@ Répondez UNIQUEMENT au format JSON avec la structure suivante :
 Assurez-vous de générer au moins 1 activité par jour pour la durée demandée.
 PROMPT;
 
-        $response = $this->callGemini($prompt, true);
-        $text = $this->extractText($response);
-        $decoded = json_decode($text, true);
+        try {
+            $response = $this->callGemini($prompt, true);
+            $text = $this->extractText($response);
+            $decoded = json_decode($text, true);
 
-        if (!is_array($decoded)) {
-            throw new \RuntimeException('Réponse IA invalide: JSON non conforme.');
+            if (!is_array($decoded)) {
+                throw new \RuntimeException('Réponse IA invalide: JSON non conforme.');
+            }
+
+            return $decoded;
+        } catch (\Throwable $e) {
+            // Fallback content just like in the other project if API is down
+            return [
+                'nom' => "Programme de base ($theme)",
+                'objectif' => "Découverte et détente",
+                'niveauDifficulte' => "débutant",
+                'activites' => [
+                    [
+                        'jour' => 1,
+                        'titre' => "Introduction à l'activité",
+                        'description' => "Le service IA est temporairement indisponible, mais vous pouvez commencer par cette activité de base.",
+                        'heureDebut' => "09:00",
+                        'dureeMinutes' => 30,
+                        'typeActivite' => "Général"
+                    ]
+                ]
+            ];
         }
-
-        return $decoded;
     }
 
     /**
@@ -64,25 +83,45 @@ PROMPT;
     {
         $prompt = "En tant qu'expert en bien-être, donnez un conseil court et motivant (maximum 2 phrases) pour cette activité : '$activityTitle'. Description : $description";
 
-        $response = $this->callGemini($prompt, false);
-        $text = trim($this->extractText($response));
+        try {
+            $response = $this->callGemini($prompt, false);
+            $text = trim($this->extractText($response));
 
-        return $text !== '' ? $text : "Profitez de ce moment pour vous recentrer.";
+            return $text !== '' ? $text : "Profitez de ce moment pour vous recentrer.";
+        } catch (\Throwable $e) {
+            return "Profitez de ce moment pour vous recentrer. (Service IA temporairement indisponible)";
+        }
+    }
+
+    /**
+     * Génère une description détaillée et engageante pour une activité ou un programme.
+     */
+    public function generateDescription(string $topic): string
+    {
+        $prompt = "Vous êtes un expert en psychologie et bien-être. Rédigez une description professionnelle, motivante et détaillée (environ 3-4 phrases) pour le sujet ou l'activité suivante : '$topic'. La description doit donner envie aux patients de participer. Retournez UNIQUEMENT le texte de la description sans aucun titre ni mise en forme spéciale.";
+
+        try {
+            $response = $this->callGemini($prompt, false);
+            $text = trim($this->extractText($response));
+
+            return $text !== '' ? $text : "Une excellente activité pour améliorer votre bien-être au quotidien.";
+        } catch (\Throwable $e) {
+            return "Une excellente activité pour améliorer votre bien-être au quotidien. (Service IA temporairement indisponible)";
+        }
     }
 
     private function callGemini(string $prompt, bool $isJson = true): array
     {
         $url = sprintf(
-            'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s',
-            self::GEMINI_MODEL,
-            $this->apiKey
+            'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent',
+            self::GEMINI_MODEL
         );
 
         if ($isJson) {
             $prompt .= "\nIMPORTANT: Retournez uniquement le JSON, sans texte superflu ni balises Markdown.";
         }
 
-        $maxAttempts = 6;
+        $maxAttempts = 3;
         $attempt = 0;
         $lastError = null;
 
@@ -91,12 +130,12 @@ PROMPT;
 
             try {
                 $response = $this->client->request('POST', $url, [
-                    'timeout' => 120,
-                    // Local Windows SSL chain issue workaround.
+                    'timeout' => 20,
                     'verify_peer' => false,
                     'verify_host' => false,
                     'headers' => [
                         'Content-Type' => 'application/json',
+                        'x-goog-api-key' => $this->apiKey,
                     ],
                     'json' => [
                         'contents' => [
@@ -107,51 +146,62 @@ PROMPT;
                             ]
                         ],
                         'generationConfig' => [
-                            'responseMimeType' => $isJson ? 'application/json' : 'text/plain'
+                            'responseMimeType' => $isJson ? 'application/json' : 'text/plain',
+                            'temperature' => 0.7,
+                            'maxOutputTokens' => 800,
                         ]
                     ],
                 ]);
 
-                // Force status code check (Symfony lazy-loads responses)
                 $statusCode = $response->getStatusCode();
 
-                if (in_array($statusCode, [401, 403], true)) {
-                    throw new \RuntimeException(sprintf(
-                        'Gemini access denied (HTTP %d): verify API key permissions and model access (%s).',
-                        $statusCode,
-                        self::GEMINI_MODEL
-                    ));
+                // If fallback needed
+                if (\in_array($statusCode, [400, 401, 403], true)) {
+                    $queryUrl = $url . '?key=' . urlencode($this->apiKey);
+                    $response = $this->client->request('POST', $queryUrl, [
+                        'timeout' => 20,
+                        'verify_peer' => false,
+                        'verify_host' => false,
+                        'headers' => [
+                            'Content-Type' => 'application/json',
+                        ],
+                        'json' => [
+                            'contents' => [['parts' => [['text' => $prompt]]]],
+                            'generationConfig' => [
+                                'responseMimeType' => $isJson ? 'application/json' : 'text/plain'
+                            ]
+                        ]
+                    ]);
+                    $statusCode = $response->getStatusCode();
                 }
 
-                return $response->toArray();
+                if ($statusCode === 200) {
+                    return $response->toArray();
+                }
+
+                // If 5xx or 429, retry
+                if (\in_array($statusCode, [429, 500, 502, 503, 504], true)) {
+                    if ($attempt < $maxAttempts) {
+                        usleep(1000000 * $attempt);
+                        continue;
+                    }
+                }
+
+                throw new \RuntimeException('Gemini API error HTTP ' . $statusCode);
 
             } catch (\Throwable $e) {
                 $lastError = $e;
-                $msg = $e->getMessage();
-
-                // Don't retry auth errors
-                if (str_contains($msg, '401') || str_contains($msg, '403')) {
-                    throw $e;
-                }
-
-                // Already used all attempts
+                
+                // Only retry on network errors or 5xx, if we haven't maxed out
                 if ($attempt >= $maxAttempts) {
-                    throw $e;
+                    break;
                 }
-
-                // 429 = rate limited → wait a full 60s for the quota to reset
-                if (str_contains($msg, '429')) {
-                    sleep(60);
-                    continue;
-                }
-
-                // 500/502/503/504 = server overloaded → shorter wait
-                sleep(min(5 * $attempt, 20));
+                usleep(1000000 * $attempt);
             }
         }
 
         if ($lastError instanceof \Throwable) {
-            throw $lastError;
+            throw clone $lastError;
         }
 
         throw new \RuntimeException('Erreur temporaire Gemini, veuillez réessayer.');
