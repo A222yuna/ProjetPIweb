@@ -4,6 +4,7 @@ namespace App\Controller\Psychologue;
 
 use App\Entity\Appointment;
 use App\Entity\User;
+use App\Service\NotificationMailer;
 use App\Repository\DisponibiliteRepository;
 use App\Repository\PsychologuePlanRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -58,9 +59,10 @@ final class PlanningController extends AbstractController
         int $id,
         Request $request,
         \App\Repository\AppointmentRepository $appointments,
-        \Doctrine\ORM\EntityManagerInterface $em
+        \Doctrine\ORM\EntityManagerInterface $em,
+        NotificationMailer $mailer
     ): Response {
-        return $this->updateAppointmentStatus($id, Appointment::STATUS_COMPLETED, $request, $appointments, $em);
+        return $this->updateAppointmentStatus($id, Appointment::STATUS_COMPLETED, $request, $appointments, $em, $mailer);
     }
 
     #[Route('/appointments/{id}/cancel', name: 'app_psychologue_appointment_cancel', methods: ['POST'])]
@@ -68,9 +70,10 @@ final class PlanningController extends AbstractController
         int $id,
         Request $request,
         \App\Repository\AppointmentRepository $appointments,
-        \Doctrine\ORM\EntityManagerInterface $em
+        \Doctrine\ORM\EntityManagerInterface $em,
+        NotificationMailer $mailer
     ): Response {
-        return $this->updateAppointmentStatus($id, Appointment::STATUS_CANCELLED, $request, $appointments, $em);
+        return $this->updateAppointmentStatus($id, Appointment::STATUS_CANCELLED, $request, $appointments, $em, $mailer);
     }
 
     private function updateAppointmentStatus(
@@ -78,7 +81,8 @@ final class PlanningController extends AbstractController
         string $status,
         Request $request,
         \App\Repository\AppointmentRepository $appointments,
-        \Doctrine\ORM\EntityManagerInterface $em
+        \Doctrine\ORM\EntityManagerInterface $em,
+        NotificationMailer $mailer
     ): Response {
         $user = $this->getUser();
         if (!$user instanceof User) {
@@ -103,7 +107,14 @@ final class PlanningController extends AbstractController
 
         $appointment->setStatus($status);
         $em->flush();
-        $this->addFlash('success', 'Statut du rendez-vous mis a jour: '.$status);
+
+        try {
+            $mailer->sendStatusChangeNotificationToPatient($appointment);
+        } catch (\Exception $e) {
+            // Log error or ignore
+        }
+
+        $this->addFlash('success', 'Statut du rendez-vous mis à jour.');
 
         return $this->redirectToRoute('app_psychologue_planning_index');
     }

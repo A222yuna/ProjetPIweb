@@ -1,0 +1,91 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes Messages{% endblock %}
+
+{% block body %}
+    <div class="container py-5">
+        <div class="row g-4 justify-content-center">
+            <div class="col-lg-10">
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                    <div class="row g-0">
+                        <!-- Sidebar -->
+                        <aside class="col-md-4 border-end bg-light d-flex flex-column min-vh-100">
+                            <div class="p-4 border-bottom bg-white d-flex justify-content-between align-items-center">
+                                <h4 class="fw-bold mb-0 text-primary">Conversations</h4>
+                                <button class="btn btn-sm btn-outline-primary rounded-circle shadow-sm">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                            </div>
+                            <div class="list-group list-group-flush flex-grow-1 overflow-auto">
+                                {% for conversation in conversations %}
+                                    <a href="#" class="list-group-item list-group-item-action border-0 p-4 d-flex align-items-center gap-3">
+                                        <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 50px; height: 50px;">
+                                            <i class="fa-solid fa-user"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <h6 class="mb-0 fw-bold">Dr. Psychologue</h6>
+                                                <small class="text-muted">{{ conversation.dateCreation|date('d/m') }}</small>
+                                            </div>
+                                            <p class="mb-0 small text-muted text-truncate">Dernier message envoyé...</p>
+                                        </div>
+                                    </a>
+                                {% else %}
+                                    <div class="text-center py-5">
+                                        <i class="fa-solid fa-comments text-muted fs-1 mb-3"></i>
+                                        <p class="text-muted">Aucune conversation.</p>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </aside>
+
+                        <!-- Chat Area -->
+                        <main class="col-md-8 d-flex flex-column min-vh-100">
+                            <div class="p-4 border-bottom bg-white d-flex align-items-center gap-3 shadow-sm sticky-top">
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px;">
+                                    PS
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 fw-bold">Dr. Psychologue</h6>
+                                    <small class="text-success"><i class="fa-solid fa-circle me-1 small"></i> En ligne</small>
+                                </div>
+                            </div>
+
+                            <div class="flex-grow-1 p-4 bg-light overflow-auto">
+                                <div class="d-flex flex-column gap-3">
+                                    <!-- Messages display -->
+                                    <div class="d-flex justify-content-center my-4">
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-3 py-2 small">Aujourd'hui</span>
+                                    </div>
+                                    
+                                    <div class="d-flex flex-column align-items-start gap-1">
+                                        <div class="bg-white p-3 rounded-4 shadow-sm border border-white" style="max-width: 80%;">
+                                            <p class="mb-0 text-dark">Bonjour, comment puis-je vous aider aujourd'hui ?</p>
+                                        </div>
+                                        <small class="text-muted px-2">10:30</small>
+                                    </div>
+
+                                    <div class="d-flex flex-column align-items-end gap-1">
+                                        <div class="bg-primary p-3 rounded-4 shadow-sm border border-primary text-white" style="max-width: 80%;">
+                                            <p class="mb-0">Je souhaiterais avoir des informations sur le programme de méditation.</p>
+                                        </div>
+                                        <small class="text-muted px-2">10:35</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-4 border-top bg-white sticky-bottom">
+                                <form class="d-flex gap-3 align-items-center bg-light rounded-pill p-2 shadow-sm border">
+                                    <input type="text" class="form-control border-0 bg-transparent rounded-pill p-2" placeholder="Tapez votre message ici...">
+                                    <button type="submit" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center shadow" style="width: 45px; height: 45px;">
+                                        <i class="fa-solid fa-paper-plane"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </main>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

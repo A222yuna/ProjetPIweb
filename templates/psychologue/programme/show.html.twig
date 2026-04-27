@@ -1,0 +1,89 @@
+{% extends 'base_psychologue.html.twig' %}
+
+{% block psychologue_title %}Programme: {{ programme.nom }}{% endblock %}
+
+{% block psychologue_body %}
+    <div class="row g-4 mb-4">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                <div class="d-flex align-items-center mb-4">
+                    <a href="{{ path('app_psychologue_programmes_index') }}" class="btn btn-sm btn-white border rounded-circle me-3">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </a>
+                    <h5 class="fw-bold mb-0">Détails du Programme</h5>
+                </div>
+                <div class="mb-4">
+                    <h6 class="text-muted text-uppercase small fw-bold ls-1 mb-2">Objectif</h6>
+                    <p class="mb-0">{{ programme.objectif ?: 'Aucun objectif spécifié.' }}</p>
+                </div>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="bg-light p-3 rounded-4">
+                            <small class="text-muted d-block mb-1">Durée</small>
+                            <span class="fw-bold">{{ programme.duree }} jours</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light p-3 rounded-4">
+                            <small class="text-muted d-block mb-1">Difficulté</small>
+                            <span class="fw-bold">{{ programme.niveauDifficulte ?: 'N/A' }}</span>
+                        </div>
+                    </div>
+                </div>
+                <hr class="my-4 opacity-25">
+                <div class="d-grid gap-2">
+                    <a href="{{ path('app_psychologue_programmes_edit', {id: programme.id}) }}" class="btn btn-outline-secondary rounded-pill">Éditer le programme</a>
+                    <a href="{{ path('app_psychologue_activite_new', {id: programme.id}) }}" class="btn btn-primary rounded-pill">Ajouter une activité</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                <h5 class="fw-bold mb-4">Calendrier des activités</h5>
+                {% if programme.activites is empty %}
+                    <div class="text-center py-5">
+                        <i class="fa-solid fa-list-check text-muted fs-1 mb-3"></i>
+                        <p class="text-muted">Aucune activité ajoutée pour ce programme.</p>
+                        <a href="{{ path('app_psychologue_activite_new', {id: programme.id}) }}" class="btn btn-sm btn-outline-primary rounded-pill">Ajouter la première activité</a>
+                    </div>
+                {% else %}
+                    <div class="list-group list-group-flush gap-3">
+                        {% for activite in programme.activites|sort((a, b) => a.jour <=> b.jour or a.heureDebut <=> b.heureDebut) %}
+                            <div class="list-group-item border rounded-4 p-4 d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-4">
+                                    <div class="bg-primary text-white rounded-4 p-3 text-center" style="min-width: 80px;">
+                                        <small class="d-block text-uppercase fw-bold ls-1 opacity-75">Jour</small>
+                                        <span class="fs-3 fw-bold">{{ activite.jour }}</span>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold mb-1">{{ activite.titre }}</h6>
+                                        <div class="small text-muted mb-2">
+                                            <i class="fa-regular fa-clock me-1"></i> {{ activite.heureDebut|date('H:i') }}
+                                            {% if activite.dureeMinutes %}
+                                                <span class="mx-2">•</span> <i class="fa-solid fa-stopwatch me-1"></i> {{ activite.dureeMinutes }} min
+                                            {% endif %}
+                                            {% if activite.typeActivite %}
+                                                <span class="mx-2">•</span> <span class="badge bg-light text-dark">{{ activite.typeActivite }}</span>
+                                            {% endif %}
+                                        </div>
+                                        <p class="mb-0 small text-muted">{{ activite.description|slice(0, 100) }}...</p>
+                                    </div>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-white border rounded-circle" data-bs-toggle="dropdown">
+                                        <i class="fa-solid fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                                        <li><a class="dropdown-item" href="#">Modifier</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#">Supprimer</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

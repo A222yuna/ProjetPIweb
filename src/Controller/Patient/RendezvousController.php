@@ -5,6 +5,7 @@ namespace App\Controller\Patient;
 use App\Entity\Appointment;
 use App\Entity\User;
 use App\Form\PatientAppointmentType;
+use App\Service\NotificationMailer;
 use App\Repository\AppointmentRepository;
 use App\Repository\PsychologuePlanRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -23,7 +24,8 @@ final class RendezvousController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         AppointmentRepository $appointments,
-        PsychologuePlanRepository $plans
+        PsychologuePlanRepository $plans,
+        NotificationMailer $mailer
     ): Response {
         $user = $this->getUser();
         if (!$user instanceof User) {
@@ -56,6 +58,13 @@ final class RendezvousController extends AbstractController
             $appointment->setStatus(Appointment::STATUS_SCHEDULED);
             $em->persist($appointment);
             $em->flush();
+
+            try {
+                $mailer->sendReservationNotificationToPsychologue($appointment);
+            } catch (\Exception $e) {
+                // Log error or ignore
+            }
+
             $this->addFlash('success', 'Rendez-vous reserve avec succes.');
 
             return $this->redirectToRoute('app_patient_rendezvous_index');
@@ -77,7 +86,8 @@ final class RendezvousController extends AbstractController
         int $id,
         Request $request,
         AppointmentRepository $appointments,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        NotificationMailer $mailer
     ): Response {
         $user = $this->getUser();
         if (!$user instanceof User) {
@@ -98,6 +108,13 @@ final class RendezvousController extends AbstractController
 
         $appointment->setStatus(Appointment::STATUS_CANCELLED);
         $em->flush();
+
+        try {
+            $mailer->sendReservationNotificationToPsychologue($appointment);
+        } catch (\Exception $e) {
+            // Log error or ignore
+        }
+
         $this->addFlash('success', 'Rendez-vous annule.');
 
         return $this->redirectToRoute('app_patient_rendezvous_index');

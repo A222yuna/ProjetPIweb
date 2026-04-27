@@ -32,7 +32,7 @@ class UserRepository extends ServiceEntityRepository
     /**
      * @return array{items: User[], total:int}
      */
-    public function findAdminPaginated(?string $role, ?bool $active, int $page, int $perPage = 15): array
+    public function findAdminPaginated(?string $role, ?bool $active, int $page, int $perPage = 15, ?string $search = null): array
     {
         $page = max(1, $page);
         $offset = ($page - 1) * $perPage;
@@ -45,6 +45,10 @@ class UserRepository extends ServiceEntityRepository
         }
         if ($active !== null) {
             $qb->andWhere('u.estActif = :active')->setParameter('active', $active);
+        }
+        if ($search !== null && $search !== '') {
+            $qb->andWhere('u.nom LIKE :search OR u.prenom LIKE :search OR u.email LIKE :search')
+                ->setParameter('search', '%' . $search . '%');
         }
 
         $items = (clone $qb)->setFirstResult($offset)->setMaxResults($perPage)->getQuery()->getResult();

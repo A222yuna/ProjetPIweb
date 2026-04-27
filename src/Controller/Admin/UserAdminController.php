@@ -20,14 +20,22 @@ final class UserAdminController extends AbstractController
         $role = $request->query->getString('role');
         $activeRaw = $request->query->get('active');
         $active = $activeRaw === null || $activeRaw === '' ? null : $activeRaw === '1';
+        $search = $request->query->get('q');
         $page = max(1, $request->query->getInt('page', 1));
 
-        $result = $users->findAdminPaginated($role !== '' ? $role : null, $active, $page, 15);
+        $result = $users->findAdminPaginated(
+            $role !== '' ? $role : null,
+            $active,
+            $page,
+            15,
+            $search ?: null
+        );
 
         return $this->render('admin/users/index.html.twig', [
             'users' => $result['items'],
             'role_filter' => $role,
             'active_filter' => $activeRaw,
+            'search_term' => $search,
             'page' => $page,
             'total_pages' => max(1, (int) ceil($result['total'] / 15)),
         ]);

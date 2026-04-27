@@ -1,0 +1,58 @@
+{% extends 'base_admin.html.twig' %}
+
+{% block admin_title %}Gestion des Cabinets{% endblock %}
+
+{% block admin_body %}
+    <div class="card border-0 shadow-sm rounded-4 p-4">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle border-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="border-0 rounded-start">Ville</th>
+                        <th class="border-0">Adresse</th>
+                        <th class="border-0">Horaires</th>
+                        <th class="border-0">Statut</th>
+                        <th class="border-0 rounded-end text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cabinet in cabinets %}
+                        <tr>
+                            <td><strong>{{ cabinet.ville }}</strong></td>
+                            <td>{{ cabinet.adresse }}</td>
+                            <td>{{ cabinet.horaires ?: 'Non spécifiés' }}</td>
+                            <td>
+                                {% if cabinet.valide %}
+                                    <span class="badge bg-success rounded-pill">Validé</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark rounded-pill">En attente</span>
+                                {% endif %}
+                                {% if cabinet.archive %}
+                                    <span class="badge bg-secondary rounded-pill ms-1">Archivé</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-2">
+                                    {% if not cabinet.valide %}
+                                        <form action="{{ path('app_admin_cabinets_validate', {id: cabinet.id}) }}" method="POST" onsubmit="return confirm('Valider ce cabinet ?')">
+                                            <button type="submit" class="btn btn-sm btn-outline-success rounded-pill">Valider</button>
+                                        </form>
+                                    {% endif %}
+                                    {% if not cabinet.archive %}
+                                        <form action="{{ path('app_admin_cabinets_archive', {id: cabinet.id}) }}" method="POST" onsubmit="return confirm('Archiver ce cabinet ?')">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill">Archiver</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5">Aucun cabinet trouvé.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

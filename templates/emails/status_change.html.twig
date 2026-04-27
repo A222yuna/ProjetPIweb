@@ -1,0 +1,21 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    {% if is_psy %}
+        <h1>Mise à jour d'un rendez-vous</h1>
+        <p>Bonjour {{ psychologue.prenom }},</p>
+        <p>Le statut du rendez-vous avec <strong>{{ patient.prenom }} {{ patient.nom }}</strong> a été modifié.</p>
+    {% else %}
+        <h1>Mise à jour de votre rendez-vous</h1>
+        <p>Bonjour {{ patient.prenom }},</p>
+        <p>Le statut de votre rendez-vous avec le <strong>Dr {{ psychologue.nom }}</strong> a été mis à jour.</p>
+    {% endif %}
+
+    <ul>
+        <li><strong>Nouveau statut :</strong> {{ appointment.status }}</li>
+        <li><strong>Date prévue :</strong> {{ appointment.plan.dayOfWeek }}</li>
+        <li><strong>Période :</strong> {{ appointment.plan.period }}</li>
+    </ul>
+
+    <p>Consultez votre tableau de bord pour plus de détails.</p>
+{% endblock %}

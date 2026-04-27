@@ -2,45 +2,86 @@
 
 {% block title %}Mes rendez-vous{% endblock %}
 
+{% block psychologue_title %}Mes rendez-vous{% endblock %}
+
 {% block psychologue_body %}
-    <h1 class="h4 mb-3">Mes rendez-vous</h1>
-    <div class="d-flex gap-2 mb-3">
-        <a class="btn btn-sm btn-outline-primary" href="{{ path('app_psychologue_plans_index') }}">Plans</a>
-        <a class="btn btn-sm btn-outline-primary" href="{{ path('app_psychologue_disponibilites_index') }}">Disponibilités</a>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold mb-0">Gestion des rendez-vous</h3>
+        <div class="d-flex gap-2">
+            <a class="btn btn-sm btn-outline-primary rounded-pill" href="{{ path('app_psychologue_plans_index') }}">Plans</a>
+            <a class="btn btn-sm btn-outline-primary rounded-pill" href="{{ path('app_psychologue_disponibilites_index') }}">Disponibilités</a>
+        </div>
     </div>
 
-    <div class="card p-3">
+    <!-- Filter Bar -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+        <form method="GET" action="{{ path('app_psychologue_appointments_index') }}" class="row g-3">
+            <div class="col-md-5">
+                <div class="input-group rounded-pill overflow-hidden border">
+                    <span class="input-group-text border-0 bg-white ps-3">
+                        <i class="fa-solid fa-user text-muted"></i>
+                    </span>
+                    <input type="text" name="patient" value="{{ search_patient }}" class="form-control border-0 p-2" placeholder="Nom du patient...">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select name="status" class="form-select rounded-pill border p-2" onchange="this.form.submit()">
+                    <option value="">Tous les statuts</option>
+                    <option value="SCHEDULED" {{ current_status == 'SCHEDULED' ? 'selected' : '' }}>Prévu (SCHEDULED)</option>
+                    <option value="COMPLETED" {{ current_status == 'COMPLETED' ? 'selected' : '' }}>Terminé (COMPLETED)</option>
+                    <option value="CANCELLED" {{ current_status == 'CANCELLED' ? 'selected' : '' }}>Annulé (CANCELLED)</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-grid">
+                <button type="submit" class="btn btn-primary rounded-pill fw-bold">Rechercher</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 p-4">
         <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0">
-                <thead>
+            <table class="table table-hover align-middle border-0">
+                <thead class="bg-light">
                     <tr>
-                        <th>ID</th>
-                        <th>Patient</th>
-                        <th>Date</th>
-                        <th>Statut</th>
-                        <th>Action</th>
+                        <th class="border-0 rounded-start">ID</th>
+                        <th class="border-0">Patient</th>
+                        <th class="border-0">Planifié le</th>
+                        <th class="border-0">Statut</th>
+                        <th class="border-0 rounded-end text-end">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                 {% for a in appointments %}
                     <tr>
-                        <td>#{{ a.id }}</td>
-                        <td>{{ a.patient ? a.patient.prenom ~ ' ' ~ a.patient.nom : '-' }}</td>
-                        <td>{{ a.createdAt ? a.createdAt|date('d/m/Y H:i') : '-' }}</td>
-                        <td>{{ a.status }}</td>
+                        <td><span class="text-muted fw-bold">#{{ a.id }}</span></td>
                         <td>
+                            <div class="fw-bold">{{ a.patient ? a.patient.prenom ~ ' ' ~ a.patient.nom : '-' }}</div>
+                            <div class="small text-muted">{{ a.patient ? a.patient.email : '' }}</div>
+                        </td>
+                        <td>
+                            <div><i class="fa-solid fa-calendar-day me-1 text-primary"></i> {{ a.plan.dayOfWeek }}</div>
+                            <div class="small text-muted"><i class="fa-solid fa-clock me-1"></i> {{ a.plan.period }}</div>
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill {% if a.status == 'COMPLETED' %}bg-success{% elseif a.status == 'SCHEDULED' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                {{ a.status }}
+                            </span>
+                        </td>
+                        <td class="text-end">
                             {% if a.status == 'SCHEDULED' %}
                                 <form method="post" action="{{ path('app_psychologue_appointments_complete', { id: a.id }) }}" style="display:inline">
                                     <input type="hidden" name="_token" value="{{ csrf_token('complete_appointment_' ~ a.id) }}">
-                                    <button class="btn btn-sm btn-outline-success" type="submit">Marquer COMPLETED</button>
+                                    <button class="btn btn-sm btn-success rounded-pill px-3 shadow-sm" type="submit">
+                                        <i class="fa-solid fa-check me-1"></i> Terminer
+                                    </button>
                                 </form>
                             {% else %}
-                                -
+                                <span class="text-muted small">Aucune action</span>
                             {% endif %}
                         </td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="5">Aucun rendez-vous.</td></tr>
+                    <tr><td colspan="5" class="text-center py-5 text-muted">Aucun rendez-vous trouvé.</td></tr>
                 {% endfor %}
                 </tbody>
             </table>

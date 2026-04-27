@@ -1,0 +1,122 @@
+{% extends 'base_patient.html.twig' %}
+
+{% block patient_title %}Programme: {{ programme.nom }}{% endblock %}
+
+{% block patient_body %}
+    <div class="row g-4 mb-4">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                <div class="d-flex align-items-center mb-4">
+                    <a href="{{ path('app_patient_programmes_index') }}" class="btn btn-sm btn-white border rounded-circle me-3">
+                        <i class="fa-solid fa-arrow-left text-primary"></i>
+                    </a>
+                    <h5 class="fw-bold mb-0">Détails du Programme</h5>
+                </div>
+                <div class="mb-4">
+                    <h6 class="text-muted text-uppercase small fw-bold ls-1 mb-2">Objectif</h6>
+                    <p class="mb-0">{{ programme.objectif ?: 'Aucun objectif spécifié.' }}</p>
+                </div>
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-4">
+                            <small class="text-primary d-block mb-1">Durée</small>
+                            <span class="fw-bold text-primary">{{ programme.duree }} jours</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-4">
+                            <small class="text-primary d-block mb-1">Difficulté</small>
+                            <span class="fw-bold text-primary">{{ programme.niveauDifficulte ?: 'N/A' }}</span>
+                        </div>
+                    </div>
+                </div>
+                <hr class="my-4 opacity-25">
+                <div class="card border-0 bg-light p-3 rounded-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px;">
+                            {{ programme.psychologue.prenom|first }}{{ programme.psychologue.nom|first }}
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold">Dr. {{ programme.psychologue.prenom }} {{ programme.psychologue.nom }}</h6>
+                            <small class="text-muted">Votre praticien référent</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-grid mt-4">
+                    <button class="btn btn-primary rounded-pill p-3 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#avisModal">
+                        <i class="fa-solid fa-star me-2"></i> Laisser un avis
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                <h5 class="fw-bold mb-4">Planning des activités</h5>
+                {% if programme.activites is empty %}
+                    <div class="text-center py-5">
+                        <i class="fa-solid fa-list-check text-muted fs-1 mb-3"></i>
+                        <p class="text-muted">Aucune activité pour ce programme.</p>
+                    </div>
+                {% else %}
+                    <div class="list-group list-group-flush gap-3">
+                        {% for activite in programme.activites|sort((a, b) => a.jour <=> b.jour or a.heureDebut <=> b.heureDebut) %}
+                            <div class="list-group-item border rounded-4 p-4 d-flex align-items-center">
+                                <div class="d-flex align-items-center gap-4">
+                                    <div class="bg-primary bg-opacity-10 text-primary rounded-4 p-3 text-center" style="min-width: 80px;">
+                                        <small class="d-block text-uppercase fw-bold ls-1 opacity-75">Jour</small>
+                                        <span class="fs-3 fw-bold">{{ activite.jour }}</span>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold mb-1">{{ activite.titre }}</h6>
+                                        <div class="small text-muted mb-2">
+                                            <i class="fa-regular fa-clock me-1 text-primary"></i> {{ activite.heureDebut|date('H:i') }}
+                                            {% if activite.dureeMinutes %}
+                                                <span class="mx-2">•</span> <i class="fa-solid fa-stopwatch me-1 text-primary"></i> {{ activite.dureeMinutes }} min
+                                            {% endif %}
+                                            {% if activite.typeActivite %}
+                                                <span class="mx-2">•</span> <span class="badge bg-primary bg-opacity-10 text-primary">{{ activite.typeActivite }}</span>
+                                            {% endif %}
+                                        </div>
+                                        <p class="mb-0 small text-muted">{{ activite.description }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Avis Modal -->
+    <div class="modal fade" id="avisModal" tabindex="-1" aria-labelledby="avisModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+                <div class="modal-header bg-primary text-white border-0">
+                    <h5 class="modal-title fw-bold" id="avisModalLabel">Votre avis sur ce programme</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                {{ form_start(form) }}
+                    <div class="modal-body p-4">
+                        <div class="mb-4 text-center">
+                            <label class="form-label d-block mb-3 fw-bold">Comment évaluez-vous ce programme ?</label>
+                            <div class="d-flex justify-content-center gap-3 star-rating">
+                                {{ form_widget(form.note, {
+                                    'attr': {'class': 'd-flex justify-content-center gap-3'}
+                                }) }}
+                            </div>
+                        </div>
+                        {{ form_row(form.commentaire, {
+                            'label': 'Votre commentaire',
+                            'attr': {'class': 'form-control rounded-4 p-3', 'rows': 4, 'placeholder': 'Dites-nous ce que vous avez pensé de ce programme...'}
+                        }) }}
+                    </div>
+                    <div class="modal-footer border-0 p-4 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">Publier mon avis</button>
+                    </div>
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+{% endblock %}

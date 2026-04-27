@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    {% if is_psy %}
+        <h1>Nouveau rendez-vous réservé</h1>
+        <p>Bonjour {{ psychologue.prenom }},</p>
+        <p>Un nouveau rendez-vous a été réservé par <strong>{{ patient.prenom }} {{ patient.nom }}</strong>.</p>
+    {% else %}
+        <h1>Confirmation de votre réservation</h1>
+        <p>Bonjour {{ patient.prenom }},</p>
+        <p>Votre rendez-vous avec le <strong>Dr {{ psychologue.nom }}</strong> a été confirmé.</p>
+    {% endif %}
+    
+    <ul>
+        <li><strong>Date :</strong> {{ appointment.plan.dayOfWeek }}</li>
+        <li><strong>Période :</strong> {{ appointment.plan.period }}</li>
+    </ul>
+    
+    {% if is_psy %}
+        <p>Vous pouvez consulter les détails sur votre tableau de bord.</p>
+    {% else %}
+        <p>Merci de votre confiance.</p>
+    {% endif %}
+{% endblock %}
