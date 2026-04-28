@@ -66,6 +66,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="{{ path('app_psychologue_statistiques') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') == 'app_psychologue_statistiques' ? 'active bg-primary' : '' }}">
+                            <i class="fa-solid fa-chart-line"></i>
+                            <span class="d-none d-md-inline">Statistiques</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="{{ path('app_messages_index') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') starts with 'app_messages' ? 'active bg-primary' : '' }}">
                             <i class="fa-solid fa-envelope"></i>
                             <span class="d-none d-md-inline">{{ 'nav.messages'|trans }}</span>

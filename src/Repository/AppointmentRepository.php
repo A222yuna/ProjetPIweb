@@ -185,4 +185,63 @@ class AppointmentRepository extends ServiceEntityRepository
 
         return $count > 0;
     }
+
+    public function countByStatusForPsy(int $psyId): array
+    {
+        return $this->createQueryBuilder('a')
+            ->select('a.status, COUNT(a.id) as count')
+            ->leftJoin('a.plan', 'p')
+            ->leftJoin('p.psychologue', 'psy')
+            ->andWhere('psy.id = :id')
+            ->setParameter('id', $psyId)
+            ->groupBy('a.status')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function countByMonthForPsy(int $psyId): array
+    {
+        $date = new \DateTimeImmutable('-12 months');
+        return $this->createQueryBuilder('a')
+            ->select('SUBSTRING(a.createdAt, 1, 7) as month, COUNT(a.id) as count')
+            ->leftJoin('a.plan', 'p')
+            ->leftJoin('p.psychologue', 'psy')
+            ->andWhere('psy.id = :id')
+            ->andWhere('a.createdAt >= :date')
+            ->setParameter('id', $psyId)
+            ->setParameter('date', $date)
+            ->groupBy('month')
+            ->orderBy('month', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function getTopPatientsForPsy(int $psyId, int $limit = 5): array
+    {
+        return $this->createQueryBuilder('a')
+            ->select('pt.nom, pt.prenom, pt.email, COUNT(a.id) as count, MAX(a.createdAt) as lastAppointment')
+            ->leftJoin('a.patient', 'pt')
+            ->leftJoin('a.plan', 'p')
+            ->leftJoin('p.psychologue', 'psy')
+            ->andWhere('psy.id = :id')
+            ->setParameter('id', $psyId)
+            ->groupBy('pt.id')
+            ->orderBy('count', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function countByDayOfWeekForPsy(int $psyId): array
+    {
+        return $this->createQueryBuilder('a')
+            ->select('p.dayOfWeek, COUNT(a.id) as count')
+            ->leftJoin('a.plan', 'p')
+            ->leftJoin('p.psychologue', 'psy')
+            ->andWhere('psy.id = :id')
+            ->setParameter('id', $psyId)
+            ->groupBy('p.dayOfWeek')
+            ->getQuery()
+            ->getResult();
+    }
 }
