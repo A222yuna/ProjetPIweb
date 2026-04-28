@@ -112,4 +112,18 @@ class CreneauRepository extends ServiceEntityRepository
 
         return $count > 0;
     }
+
+    public function findLatestForPatientAndPlan(
+        ?\App\Entity\User $patient,
+        ?\App\Entity\PsychologuePlan $plan
+    ): ?\App\Entity\Creneau {
+        if (!$patient) return null;
+        return $this->createQueryBuilder('cr')
+            ->andWhere('cr.patient = :p')->setParameter('p', $patient)
+            ->andWhere('cr.statut != :a')->setParameter('a', 'ANNULE')
+            ->orderBy('cr.dateCreneau', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }

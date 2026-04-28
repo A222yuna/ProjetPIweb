@@ -1,0 +1,61 @@
+nav:
+  calendar: "Calendrier"
+  appointments: "Mes Rendez-vous"
+  planning: "Planning"
+  availability: "Disponibilités"
+  logout: "Déconnexion"
+  profile: "Mon Profil"
+  dashboard: "Tableau de bord"
+  forum: "Forum"
+  messages: "Messages"
+  programmes: "Programmes"
+  cabinets: "Mes Cabinets"
+  plans: "Plans"
+
+appointment:
+  book: "Réserver"
+  cancel: "Annuler"
+  confirm: "Confirmer"
+  accept: "Accepter"
+  reject: "Rejeter"
+  complete: "Terminer"
+  status_scheduled: "Prévu"
+  status_confirmed: "Confirmé"
+  status_completed: "Terminé"
+  status_cancelled: "Annulé"
+  status_paid: "Payé"
+  date: "Date"
+  time: "Heure"
+  duration: "Durée"
+
+user:
+  name: "Nom"
+  email: "Email"
+  phone: "Téléphone"
+  role: "Rôle"
+  active: "Actif"
+  inactive: "Inactif"
+  welcome: "Bienvenue"
+
+flash:
+  booking_success: "Rendez-vous réservé avec succès !"
+  booking_error: "Erreur lors de la réservation."
+  cancel_success: "Rendez-vous annulé."
+  plan_created: "Planning créé."
+  plan_deleted: "Planning supprimé."
+  payment_success: "Paiement réussi !"
+
+pdf:
+  download: "Télécharger PDF"
+  history: "Mon Historique PDF"
+  rdv_pdf: "PDF"
+
+qr:
+  scan: "Scanner"
+  generate: "Générer"
+
+weather:
+  temperature: "Température"
+  humidity: "Humidité"
+  wind: "Vent"
+  unavailable: "Météo indisponible"

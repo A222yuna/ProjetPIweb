@@ -12,3 +12,36 @@ controllers:
         path: ../src/Controller/
         namespace: App\Controller
     type: attribute
+    prefix:
+        en: /en
+        fr: /fr
+        ar: /ar
+
+root_redirect:
+    path: /
+    controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::redirectAction
+    defaults:
+        route: app_home
+        _locale: fr
+        permanent: true
+
+logout_redirect:
+    path: /logout
+    controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::redirectAction
+    defaults:
+        route: app_logout
+        _locale: fr
+
+login_redirect:
+    path: /login
+    controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::redirectAction
+    defaults:
+        route: app_login
+        _locale: fr
+
+register_redirect:
+    path: /register
+    controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::redirectAction
+    defaults:
+        route: app_register
+        _locale: fr

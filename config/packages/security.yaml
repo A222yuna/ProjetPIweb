@@ -23,12 +23,12 @@ security:
                 target: app_login
 
     access_control:
-        - { path: ^/admin, roles: ROLE_ADMIN }
-        - { path: ^/psychologue, roles: ROLE_PSYCHOLOGUE }
-        - { path: ^/patient, roles: ROLE_PATIENT }
-        - { path: ^/consultation, roles: [ROLE_PATIENT, ROLE_PSYCHOLOGUE] }
-        - { path: ^/posts, roles: [ROLE_PATIENT, ROLE_PSYCHOLOGUE] }
-        - { path: ^/logout, roles: ROLE_USER }
+        - { path: ^/(en|fr|ar)/admin, roles: ROLE_ADMIN }
+        - { path: ^/(en|fr|ar)/psychologue, roles: ROLE_PSYCHOLOGUE }
+        - { path: ^/(en|fr|ar)/patient, roles: ROLE_PATIENT }
+        - { path: ^/(en|fr|ar)/consultation, roles: [ROLE_PATIENT, ROLE_PSYCHOLOGUE] }
+        - { path: ^/(en|fr|ar)/posts, roles: [ROLE_PATIENT, ROLE_PSYCHOLOGUE] }
+        - { path: ^/(en|fr|ar)/logout, roles: ROLE_USER }
 
 when@test:
     security:

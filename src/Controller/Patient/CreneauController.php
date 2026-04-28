@@ -186,7 +186,7 @@ final class CreneauController extends AbstractController
             }
 
             $this->addFlash('success', 'Votre créneau a été réservé avec succès ✓');
-            return $this->redirectToRoute('app_patient_creneaux_index');
+            return $this->redirectToRoute('app_patient_calendar');
         }
 
         return $this->render('patient/creneaux/book.html.twig', [

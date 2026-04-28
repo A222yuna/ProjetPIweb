@@ -1,0 +1,67 @@
+{% extends 'base_patient.html.twig' %}
+
+{% block title %}Paiement du rendez-vous{% endblock %}
+
+{% block patient_title %}Paiement Sécurisé{% endblock %}
+
+{% block patient_body %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="bg-primary bg-opacity-10 p-4 text-center">
+                    <div class="rounded-circle bg-white shadow-sm d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="fa-solid fa-credit-card fs-1 text-primary"></i>
+                    </div>
+                    <h4 class="fw-bold mb-0">Détails du paiement</h4>
+                </div>
+                
+                <div class="card-body p-4">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Consultation avec :</span>
+                            <span class="fw-bold">Dr. {{ appointment.plan.psychologue.prenom }} {{ appointment.plan.psychologue.nom }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Date :</span>
+                            <span class="fw-bold">{{ appointment.plan.dayOfWeek }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Période :</span>
+                            <span class="badge bg-light text-dark">{{ appointment.plan.period }}</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="h5 mb-0">Total à payer</span>
+                            <span class="h3 mb-0 fw-bold text-primary">{{ price|number_format(2, ',', ' ') }} €</span>
+                        </div>
+                    </div>
+
+                    <form action="{{ path('app_patient_appointment_stripe_session', {id: appointment.id}) }}" method="POST">
+                        <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold fs-5 shadow-sm">
+                            <i class="fa-brands fa-stripe me-2"></i> Payer maintenant
+                        </button>
+                    </form>
+                    
+                    <div class="text-center mt-4">
+                        <p class="text-muted small mb-0">
+                            <i class="fa-solid fa-lock me-1"></i> Paiement sécurisé par Stripe
+                        </p>
+                        <div class="mt-2 d-flex justify-content-center gap-2 opacity-50">
+                            <i class="fa-brands fa-cc-visa fs-4"></i>
+                            <i class="fa-brands fa-cc-mastercard fs-4"></i>
+                            <i class="fa-brands fa-cc-amex fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="{{ path('app_patient_rendezvous_index') }}" class="text-decoration-none text-muted small">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Retour à mes rendez-vous
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

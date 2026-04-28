@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+body{font-family:Arial,sans-serif;background:#F8F6FF;margin:0;padding:0}
+.wrap{max-width:580px;margin:30px auto;background:#fff;
+      border-radius:16px;overflow:hidden;
+      box-shadow:0 4px 20px rgba(124,107,160,0.15)}
+.header{background:linear-gradient(135deg,#7C6BA0,#5B9BD5);
+        color:#fff;padding:32px;text-align:center}
+.header h1{margin:0;font-size:24px}
+.header p{margin:4px 0 0;opacity:.85;font-size:12px}
+.body{padding:28px}
+.confirmed{display:inline-block;background:#6DBFA7;color:#fff;
+           padding:8px 20px;border-radius:20px;font-weight:bold;
+           font-size:14px;margin-bottom:16px}
+.info-table{width:100%;border-collapse:collapse;margin:16px 0}
+.info-table td{padding:10px 12px;border-bottom:1px solid #f0eef8}
+.info-table td:first-child{font-weight:bold;color:#7C6BA0;width:36%}
+.qr-box{text-align:center;background:#F8F6FF;border-radius:12px;
+        padding:20px;margin:20px 0}
+.qr-box img{width:190px;height:190px;border-radius:8px;
+            border:3px solid #7C6BA0}
+.qr-title{font-weight:bold;color:#7C6BA0;margin-bottom:10px}
+.qr-caption{color:#888;font-size:11px;margin-top:8px}
+.pay-btn{display:block;background:#5B9BD5;color:#fff;text-align:center;
+         padding:15px;border-radius:10px;text-decoration:none;
+         font-weight:bold;font-size:16px;margin:20px 0}
+.pay-btn:hover{background:#4a8bc4}
+.footer{background:#f0eef8;padding:14px;text-align:center;
+        font-size:11px;color:#aaa}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>🧠 PsyConnect</h1>
+    <p>Plateforme de Consultation Psychologique en Ligne</p>
+  </div>
+  <div class="body">
+    <span class="confirmed">✅ Rendez-vous Confirmé</span>
+    <p>Bonjour <strong>{{ patient.prenom }} {{ patient.nom }}</strong>,</p>
+    <p>Votre rendez-vous a été <strong>confirmé</strong> par votre psychologue.</p>
+
+    <table class="info-table">
+      <tr><td>👨‍⚕️ Psychologue</td>
+          <td>Dr. {{ psy.prenom }} {{ psy.nom }}</td></tr>
+      <tr><td>📧 Email</td>
+          <td>{{ psy.email }}</td></tr>
+      <tr><td>📞 Téléphone</td>
+          <td>{{ psy.telephone ?? 'N/A' }}</td></tr>
+      <tr><td>📅 Date</td>
+          <td><strong>{{ date }}</strong></td></tr>
+      <tr><td>🕐 Heure</td>
+          <td><strong>{{ heure }}</strong></td></tr>
+      {% if cabinet %}
+      <tr><td>🏥 Cabinet</td>
+          <td>{{ cabinet.ville }} — {{ cabinet.adresse }}</td></tr>
+      {% endif %}
+      <tr><td>🔢 Référence</td>
+          <td>#{{ appointment.id }}</td></tr>
+    </table>
+
+    <a href="{{ payment_url }}" class="pay-btn">
+      💳 Payer mon rendez-vous maintenant
+    </a>
+
+    <div class="qr-box">
+      <p class="qr-title">🔳 QR Code — Profil Psychologue</p>
+      <img src="data:image/svg+xml;base64,{{ qr_base64 }}" alt="QR Code">
+      <p class="qr-caption">
+        Scannez pour voir le profil de Dr. {{ psy.prenom }} {{ psy.nom }}<br>
+        <small>Le QR Code est aussi en pièce jointe</small>
+      </p>
+    </div>
+
+    <p style="font-size:12px;color:#999;border-top:1px solid #f0eef8;padding-top:12px">
+      Pour annuler, connectez-vous à votre espace patient sur PsyConnect.
+    </p>
+  </div>
+  <div class="footer">
+    © PsyConnect — Email automatique, merci de ne pas répondre.
+  </div>
+</div>
+</body>
+</html>

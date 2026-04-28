@@ -12,6 +12,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 class Appointment
 {
     public const STATUS_SCHEDULED = 'SCHEDULED';
+    public const STATUS_CONFIRMED = 'CONFIRMED';
+    public const STATUS_PAID = 'PAID';
     public const STATUS_CANCELLED = 'CANCELLED';
     public const STATUS_COMPLETED = 'COMPLETED';
 
@@ -31,7 +33,7 @@ class Appointment
     #[ORM\Column(length: 20, options: ['default' => 'SCHEDULED'])]
     #[Assert\NotBlank(message: 'Le statut est obligatoire')]
     #[Assert\Length(max: 20)]
-    #[Assert\Choice(choices: [self::STATUS_SCHEDULED, self::STATUS_CANCELLED, self::STATUS_COMPLETED], message: 'Statut invalide')]
+    #[Assert\Choice(choices: [self::STATUS_SCHEDULED, self::STATUS_CONFIRMED, self::STATUS_PAID, self::STATUS_CANCELLED, self::STATUS_COMPLETED], message: 'Statut invalide')]
     private string $status = self::STATUS_SCHEDULED;
 
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE)]

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Rendez-vous #{{ appointment.id }}</title>
+    <style>
+        body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; line-height: 1.6; }
+        .header { background-color: #7C6BA0; color: white; padding: 30px; text-align: center; border-radius: 0 0 20px 20px; }
+        .logo { font-size: 28px; font-weight: bold; }
+        .content { padding: 40px; }
+        .section { margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .section-title { color: #7C6BA0; font-weight: bold; font-size: 18px; margin-bottom: 10px; }
+        .row { display: block; margin-bottom: 8px; }
+        .label { font-weight: bold; color: #666; width: 150px; display: inline-block; }
+        .value { color: #333; }
+        .badge { display: inline-block; padding: 5px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .badge-success { background-color: #d4edda; color: #155724; }
+        .badge-primary { background-color: #cce5ff; color: #004085; }
+        .badge-warning { background-color: #fff3cd; color: #856404; }
+        .qr-section { text-align: center; margin-top: 30px; }
+        .qr-code { width: 150px; height: 150px; border: 1px solid #eee; padding: 10px; border-radius: 10px; }
+        .footer { text-align: center; font-size: 10px; color: #999; margin-top: 50px; position: fixed; bottom: 20px; width: 100%; }
+        .accent { color: #5B9BD5; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">PsyConnect</div>
+        <div>Confirmation de Rendez-vous / Appointment Confirmation</div>
+    </div>
+
+    <div class="content">
+        <div class="section">
+            <div class="section-title">Informations du Patient / Patient Info</div>
+            <div class="row"><span class="label">Nom / Name:</span> <span class="value">{{ appointment.patient.nom }} {{ appointment.patient.prenom }}</span></div>
+            <div class="row"><span class="label">Email:</span> <span class="value">{{ appointment.patient.email }}</span></div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Détails de la Consultation / Consultation Details</div>
+            <div class="row"><span class="label">Psychologue:</span> <span class="value">Dr. {{ appointment.plan.psychologue.nom }} {{ appointment.plan.psychologue.prenom }}</span></div>
+            <div class="row"><span class="label">Date:</span> <span class="value accent">{{ appointment.plan.dayOfWeek }}</span></div>
+            <div class="row"><span class="label">Heure / Time:</span> <span class="value accent">{{ appointment.plan.period }}</span></div>
+            <div class="row">
+                <span class="label">Statut / Status:</span> 
+                <span class="badge {% if appointment.status == 'PAID' %}badge-success{% elseif appointment.status == 'CONFIRMED' %}badge-primary{% else %}badge-warning{% endif %}">
+                    {{ appointment.status }}
+                </span>
+            </div>
+            <div class="row"><span class="label">Référence:</span> <span class="value">#{{ appointment.id }}</span></div>
+        </div>
+
+        <div class="qr-section">
+            <p class="small">Présentez ce QR Code lors de votre séance / Present this QR Code at your session</p>
+            <img src="{{ qrCode }}" class="qr-code" alt="QR Code">
+        </div>
+    </div>
+
+    <div class="footer">
+        Généré le / Generated on {{ generatedAt|date('d/m/Y H:i') }} - PsyConnect &copy; {{ "now"|date("Y") }}
+    </div>
+</body>
+</html>

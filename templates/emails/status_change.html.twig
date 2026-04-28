@@ -17,5 +17,15 @@
         <li><strong>Période :</strong> {{ appointment.plan.period }}</li>
     </ul>
 
+    {% if not is_psy and appointment.status == 'CONFIRMED' %}
+        <div style="margin: 30px 0; padding: 20px; background-color: #f8f9fa; border-radius: 10px; text-align: center;">
+            <p>Votre rendez-vous est maintenant confirmé. Vous pouvez procéder au paiement sécurisé en ligne pour finaliser votre réservation.</p>
+            <a href="{{ url('app_patient_appointment_pay', {id: appointment.id}) }}" 
+               style="background-color: #5B9BD5; color: white; padding: 12px 25px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block;">
+                Payer maintenant
+            </a>
+        </div>
+    {% endif %}
+
     <p>Consultez votre tableau de bord pour plus de détails.</p>
 {% endblock %}

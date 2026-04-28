@@ -7,7 +7,16 @@
     <div class="row g-3 mb-3">
         <div class="col-md-4"><div class="card p-3"><small class="text-muted">Elements visibles</small><div class="h5 mb-0">{{ appointments|length }}</div></div></div>
         <div class="col-md-4"><div class="card p-3"><small class="text-muted">Page</small><div class="h6 mb-0">{{ page }}/{{ total_pages }}</div></div></div>
-        <div class="col-md-4"><div class="card p-3"><small class="text-muted">Conseil</small><div class="h6 mb-0">Verifiez le statut</div></div></div>
+        <div class="col-md-4">
+            <div class="card p-3">
+                <small class="text-muted">Documents</small>
+                <div class="mt-1">
+                    <a href="{{ path('app_patient_history_pdf', {id: app.user.id}) }}" class="btn btn-sm btn-outline-danger rounded-pill w-100">
+                        <i class="fa-solid fa-file-pdf me-1"></i> Mon Historique PDF
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="card mb-3">
         {{ form_start(form, { attr: { class: 'stack-form' } }) }}
@@ -29,13 +38,31 @@
                 <li class="mb-2">
                     <strong>#{{ a.id }}</strong> - plan {{ a.plan ? a.plan.dayOfWeek ~ ' ' ~ a.plan.period : 'N/A' }}
                     {% if a.status == 'SCHEDULED' %}<span class="badge text-bg-primary">SCHEDULED</span>{% endif %}
-                    {% if a.status == 'COMPLETED' %}<span class="badge text-bg-success">COMPLETED</span>{% endif %}
+                    {% if a.status == 'CONFIRMED' %}<span class="badge text-bg-warning">CONFIRMED</span>{% endif %}
+                    {% if a.status == 'PAID' %}<span class="badge text-bg-success">PAID ✓</span>{% endif %}
+                    {% if a.status == 'COMPLETED' %}<span class="badge text-bg-info">COMPLETED</span>{% endif %}
                     {% if a.status == 'CANCELLED' %}<span class="badge text-bg-danger">CANCELLED</span>{% endif %}
+                    
                     {% if a.status == 'SCHEDULED' %}
                         <form method="post" action="{{ path('app_patient_rendezvous_cancel', { id: a.id }) }}" style="display:inline">
                             <input type="hidden" name="_token" value="{{ csrf_token('cancel_appointment_' ~ a.id) }}">
                             <button class="btn btn-sm btn-outline-danger" type="submit">Annuler</button>
                         </form>
+                    {% endif %}
+
+                    {% if a.status == 'CONFIRMED' %}
+                        <a href="{{ path('app_patient_appointment_pay', {id: a.id}) }}" class="btn btn-sm btn-success text-white">
+                            <i class="fa-solid fa-credit-card me-1"></i> Payer
+                        </a>
+                    {% endif %}
+
+                    {% if a.status == 'PAID' %}
+                        <a href="{{ path('app_patient_appointment_pay_success', {id: a.id}) }}" class="btn btn-sm btn-outline-success">
+                            <i class="fa-solid fa-qrcode me-1"></i> Ticket
+                        </a>
+                        <a href="{{ path('app_appointment_pdf', {id: a.id}) }}" class="btn btn-sm btn-outline-danger">
+                            <i class="fa-solid fa-file-pdf"></i>
+                        </a>
                     {% endif %}
                 </li>
             {% else %}

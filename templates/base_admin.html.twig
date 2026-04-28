@@ -26,25 +26,25 @@
                     <li class="nav-item">
                         <a href="{{ path('app_admin_dashboard') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') == 'app_admin_dashboard' ? 'active bg-primary' : '' }}">
                             <i class="fa-solid fa-gauge-high"></i>
-                            <span class="d-none d-md-inline">Dashboard</span>
+                            <span class="d-none d-md-inline">{{ 'nav.dashboard'|trans }}</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="{{ path('app_admin_users_index') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') starts with 'app_admin_users' ? 'active bg-primary' : '' }}">
                             <i class="fa-solid fa-users"></i>
-                            <span class="d-none d-md-inline">Utilisateurs</span>
+                            <span class="d-none d-md-inline">{{ 'user.role'|trans }}s</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="{{ path('app_admin_appointments_index') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') starts with 'app_admin_appointments' ? 'active bg-primary' : '' }}">
                             <i class="fa-solid fa-calendar-check"></i>
-                            <span class="d-none d-md-inline">Rendez-vous</span>
+                            <span class="d-none d-md-inline">{{ 'nav.appointments'|trans }}</span>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="{{ path('app_admin_cabinets_index') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') starts with 'app_admin_cabinets' ? 'active bg-primary' : '' }}">
                             <i class="fa-solid fa-hospital"></i>
-                            <span class="d-none d-md-inline">Cabinets</span>
+                            <span class="d-none d-md-inline">{{ 'nav.cabinets'|trans }}</span>
                         </a>
                     </li>
                     <!-- Add more admin routes as needed -->
@@ -58,9 +58,9 @@
                         <strong class="d-none d-md-inline">{{ app.user.prenom }}</strong>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
-                        <li><a class="dropdown-item" href="{{ path('app_account_profile') }}">Mon Profil</a></li>
+                        <li><a class="dropdown-item" href="{{ path('app_account_profile') }}">{{ 'nav.profile'|trans }}</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ path('app_logout') }}">Déconnexion</a></li>
+                        <li><a class="dropdown-item" href="{{ path('app_logout', {'_locale': app.request.locale}) }}">{{ 'nav.logout'|trans }}</a></li>
                     </ul>
                 </div>
             </aside>
@@ -71,8 +71,26 @@
                     <!-- Top Bar in Content -->
                     <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
                         <h2 class="h4 mb-0 fw-bold">{% block admin_title %}Administration{% endblock %}</h2>
-                        <div class="text-muted small">
-                            {{ "now"|date("d F Y") }}
+                        <div class="d-flex align-items-center gap-4">
+                            <!-- Lang Switcher -->
+                            <div class="lang-switcher d-flex gap-1 bg-white p-1 rounded-pill shadow-sm border">
+                                <a href="{{ path(app.request.get('_route'), app.request.get('_route_params')|merge({'_locale': 'fr'})) }}" 
+                                   class="btn btn-sm py-0 px-2 rounded-pill {{ app.request.locale == 'fr' ? 'btn-primary' : 'btn-outline-secondary border-0' }}">
+                                   FR
+                                </a>
+                                <a href="{{ path(app.request.get('_route'), app.request.get('_route_params')|merge({'_locale': 'en'})) }}" 
+                                   class="btn btn-sm py-0 px-2 rounded-pill {{ app.request.locale == 'en' ? 'btn-primary' : 'btn-outline-secondary border-0' }}">
+                                   EN
+                                </a>
+                                <a href="{{ path(app.request.get('_route'), app.request.get('_route_params')|merge({'_locale': 'ar'})) }}" 
+                                   class="btn btn-sm py-0 px-2 rounded-pill {{ app.request.locale == 'ar' ? 'btn-primary' : 'btn-outline-secondary border-0' }}">
+                                   AR
+                                </a>
+                            </div>
+
+                            <div class="text-muted small">
+                                {{ 'user.welcome'|trans }}, {{ app.user.prenom }}
+                            </div>
                         </div>
                     </div>
 

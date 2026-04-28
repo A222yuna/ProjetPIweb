@@ -7,6 +7,12 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    stripe_public_key: '%env(STRIPE_PUBLIC_KEY)%'
+    stripe_secret_key: '%env(STRIPE_SECRET_KEY)%'
+    stripe_price: '%env(int:STRIPE_PRICE)%'
+    openweather_api_key: '%env(OPENWEATHER_API_KEY)%'
+    mailer_from_email: '%env(MAILER_FROM_EMAIL)%'
+    mailer_from_name: '%env(MAILER_FROM_NAME)%'
 
 services:
     # default configuration for services in *this* file
@@ -18,6 +24,17 @@ services:
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
+
+    App\Service\WeatherService:
+        arguments:
+            $openweatherApiKey: '%openweather_api_key%'
+
+    App\Service\QrCodeService: ~
+
+    App\Service\NotificationMailer:
+        arguments:
+            $fromEmail: '%mailer_from_email%'
+            $fromName: '%mailer_from_name%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

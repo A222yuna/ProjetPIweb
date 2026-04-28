@@ -1,0 +1,61 @@
+nav:
+  calendar: "التقويم"
+  appointments: "مواعيدي"
+  planning: "التخطيط"
+  availability: "المواعيد المتاحة"
+  logout: "تسجيل الخروج"
+  profile: "ملفي الشخصي"
+  dashboard: "لوحة القيادة"
+  forum: "المنتدى"
+  messages: "الرسائل"
+  programmes: "البرامج"
+  cabinets: "عياداتي"
+  plans: "الخطط"
+
+appointment:
+  book: "حجز"
+  cancel: "إلغاء"
+  confirm: "تأكيد"
+  accept: "قبول"
+  reject: "رفض"
+  complete: "إتمام"
+  status_scheduled: "مجدول"
+  status_confirmed: "مؤكد"
+  status_completed: "مكتمل"
+  status_cancelled: "ملغى"
+  status_paid: "مدفوع"
+  date: "التاريخ"
+  time: "الوقت"
+  duration: "المدة"
+
+user:
+  name: "الاسم"
+  email: "البريد الإلكتروني"
+  phone: "الهاتف"
+  role: "الدور"
+  active: "نشط"
+  inactive: "غير نشط"
+  welcome: "مرحباً"
+
+flash:
+  booking_success: "تم حجز الموعد بنجاح!"
+  booking_error: "خطأ أثناء الحجز."
+  cancel_success: "تم إلغاء الموعد."
+  plan_created: "تم إنشاء التخطيط."
+  plan_deleted: "تم حذف التخطيط."
+  payment_success: "تم الدفع بنجاح!"
+
+pdf:
+  download: "تحميل PDF"
+  history: "تاريخي PDF"
+  rdv_pdf: "PDF"
+
+qr:
+  scan: "مسح"
+  generate: "توليد"
+
+weather:
+  temperature: "درجة الحرارة"
+  humidity: "الرطوبة"
+  wind: "الرياح"
+  unavailable: "الطقس غير متوفر"

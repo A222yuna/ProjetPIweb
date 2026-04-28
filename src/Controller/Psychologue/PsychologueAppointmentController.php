@@ -4,6 +4,7 @@ namespace App\Controller\Psychologue;
 
 use App\Entity\Appointment;
 use App\Entity\User;
+use App\Repository\CreneauRepository;
 use App\Service\NotificationMailer;
 use App\Repository\AppointmentRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -84,6 +85,55 @@ final class PsychologueAppointmentController extends AbstractController
         }
 
         $this->addFlash('success', 'Rendez-vous marqué comme terminé.');
+
+        return $this->redirectToRoute('app_psychologue_appointments_index');
+    }
+
+    #[Route('/{id}/confirm', name: 'app_psychologue_appointments_confirm', methods: ['POST'])]
+    public function confirm(
+        int $id, 
+        Request $request, 
+        AppointmentRepository $appointments, 
+        CreneauRepository $creneauRepo, 
+        \App\Repository\PsyCabinetRepository $psyCabinetRepo,
+        EntityManagerInterface $em, 
+        NotificationMailer $mailer
+    ): Response
+    {
+        $user = $this->getUser();
+        \assert($user instanceof User);
+
+        $appointment = $appointments->find($id);
+        if (!$appointment) {
+            throw $this->createNotFoundException();
+        }
+        if ($appointment->getPlan()?->getPsychologue()?->getId() !== $user->getId()) {
+            throw $this->createAccessDeniedException();
+        }
+        if (!$this->isCsrfTokenValid('confirm_appointment_'.$appointment->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('error', 'Jeton CSRF invalide.');
+            return $this->redirectToRoute('app_psychologue_appointments_index');
+        }
+
+        if ($appointment->getStatus() !== Appointment::STATUS_SCHEDULED) {
+            $this->addFlash('warning', 'Seuls les rendez-vous SCHEDULED peuvent être confirmés.');
+            return $this->redirectToRoute('app_psychologue_appointments_index');
+        }
+
+        $appointment->setStatus(Appointment::STATUS_CONFIRMED);
+        $em->flush();
+
+        $creneau = $creneauRepo->findLatestForPatientAndPlan(
+            $appointment->getPatient(),
+            $appointment->getPlan()
+        );
+        try {
+            $mailer->sendConfirmation($appointment, $creneau, $user, $psyCabinetRepo);
+            $this->addFlash('success', 'RDV confirmé ✓ Email + QR Code envoyé au patient.');
+        } catch (\Exception $e) {
+            $this->addFlash('success', 'RDV confirmé ✓');
+            $this->addFlash('warning', 'Email non envoyé: '.$e->getMessage());
+        }
 
         return $this->redirectToRoute('app_psychologue_appointments_index');
     }

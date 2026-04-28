@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport d'Activité - Dr. {{ psychologue.nom }}</title>
+    <style>
+        body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; font-size: 11px; }
+        .header { background-color: #7C6BA0; color: white; padding: 20px; text-align: center; }
+        .psy-info { margin: 20px 0; border-left: 5px solid #5B9BD5; padding-left: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background-color: #7C6BA0; color: white; padding: 8px; text-align: left; }
+        td { border-bottom: 1px solid #eee; padding: 8px; }
+        .summary { margin-top: 30px; background: #f8f9fa; padding: 15px; border-radius: 5px; }
+        .footer { text-align: center; font-size: 9px; color: #999; margin-top: 30px; }
+        tr:nth-child(even) { background-color: #fcfcfc; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>PsyConnect - Espace Praticien</h1>
+        <div>Rapport d'Activité / Activity Report</div>
+    </div>
+
+    <div class="psy-info">
+        <strong>Psychologue:</strong> Dr. {{ psychologue.prenom }} {{ psychologue.nom }}<br>
+        <strong>Période:</strong> Historique complet jusqu'au {{ generatedAt|date('d/m/Y') }}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Réf</th>
+                <th>Patient</th>
+                <th>Date</th>
+                <th>Heure / Time</th>
+                <th>Statut / Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in appointments %}
+                <tr>
+                    <td>#{{ a.id }}</td>
+                    <td>{{ a.patient.nom }} {{ a.patient.prenom }}</td>
+                    <td>{{ a.plan.dayOfWeek }}</td>
+                    <td>{{ a.plan.period }}</td>
+                    <td><strong>{{ a.status }}</strong></td>
+                </tr>
+            {% else %}
+                <tr><td colspan="5" style="text-align: center;">Aucun rendez-vous enregistré.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="summary">
+        <h3>Résumé des Statistiques / Summary</h3>
+        Total des rendez-vous: <strong>{{ stats.total }}</strong><br>
+        Rendez-vous payés: <strong>{{ stats.paid }}</strong><br>
+        Rendez-vous terminés: <strong>{{ stats.completed }}</strong><br>
+        Rendez-vous annulés: <strong>{{ stats.cancelled }}</strong>
+    </div>
+
+    <div class="footer">
+        Document confidentiel à usage professionnel uniquement - PsyConnect &copy; {{ "now"|date("Y") }}
+    </div>
+</body>
+</html>

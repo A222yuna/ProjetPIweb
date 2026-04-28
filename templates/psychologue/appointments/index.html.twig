@@ -8,6 +8,9 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3 class="fw-bold mb-0">Gestion des rendez-vous</h3>
         <div class="d-flex gap-2">
+            <a class="btn btn-sm btn-outline-danger rounded-pill" href="{{ path('app_psychologue_history_pdf', {id: app.user.id}) }}">
+                <i class="fa-solid fa-file-pdf me-1"></i> Mon Historique PDF
+            </a>
             <a class="btn btn-sm btn-outline-primary rounded-pill" href="{{ path('app_psychologue_plans_index') }}">Plans</a>
             <a class="btn btn-sm btn-outline-primary rounded-pill" href="{{ path('app_psychologue_disponibilites_index') }}">Disponibilités</a>
         </div>
@@ -28,6 +31,8 @@
                 <select name="status" class="form-select rounded-pill border p-2" onchange="this.form.submit()">
                     <option value="">Tous les statuts</option>
                     <option value="SCHEDULED" {{ current_status == 'SCHEDULED' ? 'selected' : '' }}>Prévu (SCHEDULED)</option>
+                    <option value="CONFIRMED" {{ current_status == 'CONFIRMED' ? 'selected' : '' }}>Confirmé (CONFIRMED)</option>
+                    <option value="PAID" {{ current_status == 'PAID' ? 'selected' : '' }}>Payé (PAID)</option>
                     <option value="COMPLETED" {{ current_status == 'COMPLETED' ? 'selected' : '' }}>Terminé (COMPLETED)</option>
                     <option value="CANCELLED" {{ current_status == 'CANCELLED' ? 'selected' : '' }}>Annulé (CANCELLED)</option>
                 </select>
@@ -63,18 +68,42 @@
                             <div class="small text-muted"><i class="fa-solid fa-clock me-1"></i> {{ a.plan.period }}</div>
                         </td>
                         <td>
-                            <span class="badge rounded-pill {% if a.status == 'COMPLETED' %}bg-success{% elseif a.status == 'SCHEDULED' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
-                                {{ a.status }}
-                            </span>
+                            {% if a.status == 'SCHEDULED' %}
+                                <span class="badge bg-warning text-dark">⏳ En attente</span>
+                            {% elseif a.status == 'CONFIRMED' %}
+                                <span class="badge bg-success">✅ Confirmé</span>
+                            {% elseif a.status == 'COMPLETED' %}
+                                <span class="badge bg-primary">🏁 Terminé</span>
+                            {% elseif a.status == 'CANCELLED' %}
+                                <span class="badge bg-danger">❌ Annulé</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ a.status }}</span>
+                            {% endif %}
                         </td>
                         <td class="text-end">
                             {% if a.status == 'SCHEDULED' %}
-                                <form method="post" action="{{ path('app_psychologue_appointments_complete', { id: a.id }) }}" style="display:inline">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('complete_appointment_' ~ a.id) }}">
-                                    <button class="btn btn-sm btn-success rounded-pill px-3 shadow-sm" type="submit">
-                                        <i class="fa-solid fa-check me-1"></i> Terminer
-                                    </button>
-                                </form>
+                                <div class="d-flex gap-1 justify-content-end">
+                                    <form method="post" action="{{ path('app_psychologue_appointments_confirm', { id: a.id }) }}" style="display:inline" onsubmit="return confirm('Confirmer ce rendez-vous ?')">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('confirm_appointment_' ~ a.id) }}">
+                                        <button class="btn btn-sm btn-success rounded-pill px-3 shadow-sm" type="submit">
+                                            ✅ Confirmer
+                                        </button>
+                                    </form>
+                                </div>
+                            {% elseif a.status == 'CONFIRMED' %}
+                                <span class="text-muted small">En attente de paiement</span>
+                            {% elseif a.status == 'PAID' %}
+                                <div class="d-flex gap-1 justify-content-end">
+                                    <a href="{{ path('app_appointment_pdf', {id: a.id}) }}" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                        <i class="fa-solid fa-file-pdf"></i>
+                                    </a>
+                                    <form method="post" action="{{ path('app_psychologue_appointments_complete', { id: a.id }) }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('complete_appointment_' ~ a.id) }}">
+                                        <button class="btn btn-sm btn-success rounded-pill px-3 shadow-sm" type="submit">
+                                            <i class="fa-solid fa-flag-checkered me-1"></i> Terminer
+                                        </button>
+                                    </form>
+                                </div>
                             {% else %}
                                 <span class="text-muted small">Aucune action</span>
                             {% endif %}

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html dir="{{ app.request.locale == 'ar' ? 'rtl' : 'ltr' }}" lang="{{ app.request.locale }}">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -1086,5 +1086,46 @@
             </div>
         </footer>
         {% endblock %}
+        <script>
+            function applyStoredLocale() {
+                const currentPath = window.location.pathname;
+                const match = currentPath.match(/^\/(fr|en|ar)(\/|$)/);
+                const currentLocale = match ? match[1] : null;
+                const storedLocale = localStorage.getItem('_locale');
+                const validLocales = ['fr', 'en', 'ar'];
+
+                if (storedLocale && validLocales.includes(storedLocale) && storedLocale !== currentLocale) {
+                    let newPath;
+                    if (currentLocale) {
+                        newPath = currentPath.replace(/^\/(fr|en|ar)/, '/' + storedLocale);
+                    } else {
+                        newPath = '/' + storedLocale + currentPath;
+                    }
+                    window.location.href = newPath + window.location.search + window.location.hash;
+                    return false;
+                } else if (storedLocale && validLocales.includes(storedLocale) && !currentLocale) {
+                    localStorage.setItem('_locale', storedLocale);
+                } else if (!currentLocale && !storedLocale) {
+                    localStorage.setItem('_locale', 'fr');
+                }
+                return true;
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                applyStoredLocale();
+            });
+
+            document.querySelectorAll('.lang-switcher a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const url = new URL(this.href);
+                    const locale = url.pathname.split('/')[1];
+                    if (['fr', 'en', 'ar'].includes(locale)) {
+                        localStorage.setItem('_locale', locale);
+                        window.location.href = this.href;
+                    }
+                });
+            });
+        </script>
     </body>
 </html>
