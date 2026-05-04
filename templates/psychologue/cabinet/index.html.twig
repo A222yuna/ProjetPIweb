@@ -1,0 +1,45 @@
+{% extends 'base_psychologue.html.twig' %}
+
+{% block psychologue_title %}Mes Cabinets{% endblock %}
+
+{% block psychologue_body %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold mb-0">Mes Cabinets liés</h3>
+        <a href="{{ path('app_psychologue_cabinets_new') }}" class="btn btn-primary rounded-pill d-flex align-items-center gap-2 shadow-sm">
+            <i class="fa-solid fa-plus-circle"></i> Ajouter un cabinet
+        </a>
+    </div>
+
+    <div class="row g-4">
+        {% for psyCabinet in psyCabinets %}
+            {% set cabinet = psyCabinet.cabinet %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+                    <div class="card-body p-4 d-flex flex-column h-100">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="fw-bold mb-0 text-primary">{{ cabinet.ville }}</h5>
+                            {% if cabinet.valide %}
+                                <span class="badge bg-success rounded-pill">Validé</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark rounded-pill">En attente</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-muted small mb-3 flex-grow-1">{{ cabinet.adresse }}</p>
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <span class="small text-muted"><i class="fa-solid fa-clock me-1 text-primary"></i> {{ cabinet.horaires ?: 'Non spécifiés' }}</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="#" class="btn btn-sm btn-outline-primary rounded-pill flex-grow-1">Détails</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <i class="fa-solid fa-hospital text-muted fs-1 mb-3"></i>
+                <p class="text-muted">Vous n'avez pas encore lié de cabinet.</p>
+                <a href="{{ path('app_psychologue_cabinets_new') }}" class="btn btn-primary rounded-pill mt-3 shadow-sm">Lier mon premier cabinet</a>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

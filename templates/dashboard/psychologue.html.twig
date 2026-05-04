@@ -2,52 +2,137 @@
 
 {% block title %}Dashboard Psychologue{% endblock %}
 
+{% block psychologue_title %}Tableau de Bord Praticien{% endblock %}
+
 {% block psychologue_body %}
-    <h1 class="h4 mb-3">Dashboard Psychologue</h1>
-    <p class="text-muted">Organisation des consultations, programmes bien-etre et suivi patient.</p>
-
-    <div class="row g-3 mb-3">
-        <div class="col-md-4"><div class="card p-3"><small class="text-muted">RDV de la semaine</small><div class="h4 mb-0">22</div></div></div>
-        <div class="col-md-4"><div class="card p-3"><small class="text-muted">Patients suivis</small><div class="h4 mb-0">48</div></div></div>
-        <div class="col-md-4"><div class="card p-3"><small class="text-muted">Programmes actifs</small><div class="h4 mb-0">7</div></div></div>
-    </div>
-
-    <div class="row g-3">
-        <div class="col-lg-7">
-            <div class="card p-3 h-100">
-                <h2 class="h6">Planning & disponibilites</h2>
-                <p class="mb-2">Configurez vos jours, periode <code>DAY/NIGHT</code>, capacite et creneaux.</p>
-                <a class="btn btn-sm btn-primary" href="{{ path('app_psychologue_planning_index') }}">Ouvrir planning</a>
-                <hr>
-                <h3 class="h6">Prochains rendez-vous</h3>
-                <ul class="mb-0">
-                    <li>Lundi - 09:00 - Patient A</li>
-                    <li>Mardi - 14:30 - Patient B</li>
-                    <li>Jeudi - 11:00 - Patient C</li>
-                </ul>
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3 text-primary">
+                        <i class="fa-solid fa-calendar-check fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 text-uppercase fw-bold small ls-1">Mes Rendez-vous</h6>
+                        <h3 class="mb-0 fw-bold">{{ upcoming_appointments|length }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col-lg-5">
-            <div class="card p-3 h-100">
-                <h2 class="h6">Suivi therapeutique</h2>
-                <ul>
-                    <li>Programmes bien-etre: edition des activites quotidiennes.</li>
-                    <li>Forum: participation pedagogique et moderee.</li>
-                    <li>Messagerie: reponses hors consultation.</li>
-                </ul>
-                <div class="d-flex flex-wrap gap-2">
-                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_consultation') }}">Forum</a>
-                    <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_contact') }}">Messages (UI)</a>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3 text-info">
+                        <i class="fa-solid fa-clock fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 text-uppercase fw-bold small ls-1">Disponibilités</h6>
+                        <h3 class="mb-0 fw-bold">Active</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3 text-success">
+                        <i class="fa-solid fa-comments fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 text-uppercase fw-bold small ls-1">Forum</h6>
+                        <h3 class="mb-0 fw-bold">Participer</h3>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="card p-3 mt-3">
-        <h2 class="h6">Plan de journee</h2>
-        <div class="row g-2">
-            <div class="col-md-4"><div class="border rounded p-2">09:00 - Consultation patient</div></div>
-            <div class="col-md-4"><div class="border rounded p-2">12:00 - Notes cliniques</div></div>
-            <div class="col-md-4"><div class="border rounded p-2">17:30 - Mise a jour programme</div></div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                <h5 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-list-check text-primary"></i>
+                    Dernières demandes de rendez-vous
+                </h5>
+                
+                {% if upcoming_appointments is empty %}
+                    <div class="text-center py-5">
+                        <i class="fa-solid fa-calendar-xmark text-muted fs-1 mb-3"></i>
+                        <p class="text-muted">Aucun rendez-vous pour le moment.</p>
+                    </div>
+                {% else %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle border-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="border-0 rounded-start">Patient</th>
+                                    <th class="border-0">Date & Heure</th>
+                                    <th class="border-0">Status</th>
+                                    <th class="border-0 rounded-end text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appointment in upcoming_appointments|slice(0, 5) %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="rounded-circle bg-secondary bg-opacity-10 p-2 text-secondary small">
+                                                    {{ appointment.patient.prenom|first }}{{ appointment.patient.nom|first }}
+                                                </div>
+                                                <span class="fw-semibold">{{ appointment.patient.prenom }} {{ appointment.patient.nom }}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="small">
+                                                <i class="fa-regular fa-calendar me-1"></i> {{ appointment.plan.dayOfWeek }}<br>
+                                                <i class="fa-regular fa-clock me-1 text-muted"></i> {{ appointment.plan.period }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge rounded-pill {% if appointment.status == 'CONFIRMED' %}bg-success{% elseif appointment.status == 'PENDING' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                                {{ appointment.status }}
+                                            </span>
+                                        </td>
+                                        <td class="text-end">
+                                            <a href="{{ path('app_psychologue_appointments_index') }}" class="btn btn-sm btn-white border shadow-sm rounded-circle">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                <h5 class="fw-bold mb-4">Gestion rapide</h5>
+                <div class="d-grid gap-2">
+                    <a href="{{ path('app_psychologue_planning_index') }}" class="btn btn-primary rounded-pill d-flex align-items-center justify-content-center gap-2">
+                        <i class="fa-solid fa-plus"></i>
+                        Ajouter au planning
+                    </a>
+                    <a href="{{ path('app_psychologue_disponibilites_index') }}" class="btn btn-outline-primary rounded-pill d-flex align-items-center justify-content-center gap-2">
+                        <i class="fa-solid fa-clock"></i>
+                        Mes horaires
+                    </a>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow-sm rounded-4 p-4" style="background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%); color: white;">
+                <h5 class="fw-bold mb-3">Conseil du jour</h5>
+                <p class="small opacity-75 mb-0">
+                    "Prendre soin de sa santé mentale est aussi important que prendre soin de sa santé physique."
+                </p>
+                <hr class="my-3 opacity-25">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-lightbulb text-warning"></i>
+                    <small>N'oubliez pas de mettre à jour vos disponibilités régulièrement.</small>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}

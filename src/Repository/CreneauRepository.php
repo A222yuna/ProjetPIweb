@@ -99,4 +99,17 @@ class CreneauRepository extends ServiceEntityRepository
 
         return $count > 0;
     }
+
+    public function hasAppointmentOnDay(User $patient, \DateTimeInterface $date): bool
+    {
+        $count = (int) $this->createQueryBuilder('cr')
+            ->select('COUNT(cr.id)')
+            ->andWhere('cr.patient = :p')->setParameter('p', $patient)
+            ->andWhere('cr.dateCreneau = :date')->setParameter('date', $date, Types::DATE_IMMUTABLE)
+            ->andWhere('cr.statut != :annule')->setParameter('annule', Creneau::STATUT_ANNULE)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $count > 0;
+    }
 }

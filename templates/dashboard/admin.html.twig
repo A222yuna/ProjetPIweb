@@ -2,57 +2,128 @@
 
 {% block title %}Dashboard Admin{% endblock %}
 
+{% block admin_title %}Tableau de Bord Administrateur{% endblock %}
+
 {% block admin_body %}
-    <h1 class="h4 mb-3">Dashboard Administrateur</h1>
-    <p class="text-muted">Vue globale de la plateforme de consultation psychologique.</p>
-
-    <div class="row g-3 mb-3">
-        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Utilisateurs</small><div class="h4 mb-0">1 248</div></div></div>
-        <div class="col-md-3"><div class="card p-3"><small class="text-muted">RDV planifies</small><div class="h4 mb-0">312</div></div></div>
-        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Cabinets en attente</small><div class="h4 mb-0">14</div></div></div>
-        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Messages non lus</small><div class="h4 mb-0">87</div></div></div>
-    </div>
-
-    <div class="row g-3">
-        <div class="col-lg-6">
-            <div class="card p-3 h-100">
-                <h2 class="h6">Modules plateforme</h2>
-                <ul class="mb-0">
-                    <li><strong>Gestion des comptes</strong> - Activation, verification email, moderation.</li>
-                    <li><strong>Consultations</strong> - Supervision des rendez-vous et statuts.</li>
-                    <li><strong>Psychologues / Cabinets</strong> - Validation annonces et archivage.</li>
-                    <li><strong>Bien-etre</strong> - Suivi programmes et avis.</li>
-                    <li><strong>Messagerie</strong> - Controle de la moderation.</li>
-                    <li><strong>Forum</strong> - Qualite des echanges et moderation contenu.</li>
-                </ul>
-            </div>
-        </div>
-        <div class="col-lg-6">
-            <div class="card p-3 h-100">
-                <h2 class="h6">Actions rapides</h2>
-                <div class="d-flex flex-wrap gap-2">
-                    <a class="btn btn-sm btn-primary" href="{{ path('app_admin_users_index') }}">Comptes</a>
-                    <a class="btn btn-sm btn-outline-primary" href="{{ path('app_admin_appointments_index') }}">Rendez-vous</a>
-                    <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_consultation') }}">Forum</a>
-                    <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_cabinet') }}">Cabinets</a>
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3 text-primary">
+                        <i class="fa-solid fa-users fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 text-uppercase fw-bold small ls-1">Utilisateurs</h6>
+                        <h3 class="mb-0 fw-bold">{{ stats.users }}</h3>
+                    </div>
                 </div>
-                <hr>
-                <h3 class="h6">Alertes</h3>
-                <ul class="mb-0">
-                    <li>3 signalements forum en attente.</li>
-                    <li>2 comptes psychologues a verifier.</li>
-                    <li>5 annonces cabinet a valider.</li>
-                </ul>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3 text-success">
+                        <i class="fa-solid fa-calendar-check fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 text-uppercase fw-bold small ls-1">Rendez-vous</h6>
+                        <h3 class="mb-0 fw-bold">{{ stats.appointments }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3 text-warning">
+                        <i class="fa-solid fa-hospital fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 text-uppercase fw-bold small ls-1">Cabinets à valider</h6>
+                        <h3 class="mb-0 fw-bold">{{ stats.cabinets }}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="card p-3 mt-3">
-        <h2 class="h6">Timeline moderation</h2>
-        <ul class="mb-0">
-            <li>08:30 - Verification des nouveaux psychologues</li>
-            <li>10:15 - Revue signalements forum</li>
-            <li>14:00 - Validation annonces cabinets</li>
-            <li>16:30 - Synthese qualite hebdomadaire</li>
-        </ul>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                <h5 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-chart-line text-primary"></i>
+                    Vue d'ensemble
+                </h5>
+                <div class="alert alert-light border rounded-3 p-3 mb-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="fa-solid fa-info-circle text-primary fs-4"></i>
+                        <div>
+                            <p class="mb-0 text-dark fw-semibold">Bienvenue dans votre espace d'administration.</p>
+                            <small class="text-muted">Vous pouvez gérer les utilisateurs, valider les cabinets et superviser les rendez-vous.</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <h6 class="fw-bold text-uppercase small text-muted mb-3 ls-1">Modules Principaux</h6>
+                <div class="list-group list-group-flush gap-2">
+                    <div class="list-group-item border-0 rounded-3 bg-light p-3 mb-2 d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-user-shield text-primary"></i>
+                            <div>
+                                <h6 class="mb-0 fw-bold">Gestion des comptes</h6>
+                                <small class="text-muted">Activation et modération des profils.</small>
+                            </div>
+                        </div>
+                        <a href="{{ path('app_admin_users_index') }}" class="btn btn-sm btn-white border shadow-sm rounded-pill">Gérer</a>
+                    </div>
+                    <div class="list-group-item border-0 rounded-3 bg-light p-3 mb-2 d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-3">
+                            <i class="fa-solid fa-calendar-days text-success"></i>
+                            <div>
+                                <h6 class="mb-0 fw-bold">Consultations</h6>
+                                <small class="text-muted">Supervision globale de l'activité.</small>
+                            </div>
+                        </div>
+                        <a href="{{ path('app_admin_appointments_index') }}" class="btn btn-sm btn-white border shadow-sm rounded-pill">Voir</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
+                <h5 class="fw-bold mb-4">Actions Rapides</h5>
+                <div class="d-grid gap-2">
+                    <a href="{{ path('app_admin_users_index') }}" class="btn btn-primary rounded-pill d-flex align-items-center justify-content-center gap-2">
+                        <i class="fa-solid fa-plus-circle"></i>
+                        Nouveau Psychologue
+                    </a>
+                    <a href="{{ path('app_consultation') }}" class="btn btn-outline-dark rounded-pill d-flex align-items-center justify-content-center gap-2">
+                        <i class="fa-solid fa-comments"></i>
+                        Voir le Forum
+                    </a>
+                </div>
+                
+                <hr class="my-4 opacity-25">
+                
+                <h6 class="fw-bold text-uppercase small text-muted mb-3 ls-1">Dernières Alertes</h6>
+                <div class="d-flex flex-column gap-3">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="badge bg-danger rounded-circle p-2 mt-1"></div>
+                        <div>
+                            <p class="mb-0 small fw-bold">Nouveau signalement</p>
+                            <small class="text-muted">Signalement sur le forum à vérifier.</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="badge bg-warning rounded-circle p-2 mt-1"></div>
+                        <div>
+                            <p class="mb-0 small fw-bold">Cabinet en attente</p>
+                            <small class="text-muted">Le cabinet "Psy Zen" attend validation.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 {% endblock %}

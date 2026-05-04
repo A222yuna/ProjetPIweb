@@ -6,6 +6,7 @@ use App\Entity\Appointment;
 use App\Entity\Creneau;
 use App\Entity\User;
 use App\Form\CreneauType;
+use App\Service\NotificationMailer;
 use App\Repository\AppointmentRepository;
 use App\Repository\CreneauRepository;
 use App\Repository\DisponibiliteRepository;
@@ -65,7 +66,8 @@ final class CreneauController extends AbstractController
         CreneauRepository $creneauxRepo,
         PsychologuePlanRepository $plans,
         AppointmentRepository $appointments,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        NotificationMailer $mailer
     ): Response {
         $user = $this->getUser();
         \assert($user instanceof User);
@@ -88,9 +90,17 @@ final class CreneauController extends AbstractController
             }
 
             // RULE 5 — No past booking
-            $today = new \DateTimeImmutable('today');
+            $now = new \DateTimeImmutable();
+            $today = $now->setTime(0, 0, 0);
             if ($date < $today) {
                 $this->addFlash('error', 'Vous ne pouvez pas réserver un créneau dans le passé.');
+                return $this->redirectToRoute('app_patient_creneaux_book');
+            }
+
+            // ADVANCED RULE 1 — Minimum 2 hours lead time
+            $bookingDateTime = $date->setTime((int)$heure->format('H'), (int)$heure->format('i'), 0);
+            if ($bookingDateTime < $now->modify('+2 hours')) {
+                $this->addFlash('error', 'Les rendez-vous doivent être réservés au moins 2 heures à l\'avance.');
                 return $this->redirectToRoute('app_patient_creneaux_book');
             }
 
@@ -106,7 +116,13 @@ final class CreneauController extends AbstractController
                 return $this->redirectToRoute('app_patient_creneaux_book');
             }
 
-            // RULE 4 — No double booking
+            // ADVANCED RULE 2 — Double booking on the same day for the same patient
+            if ($creneauxRepo->hasAppointmentOnDay($user, $date)) {
+                $this->addFlash('error', 'Vous avez déjà un rendez-vous prévu pour cette journée.');
+                return $this->redirectToRoute('app_patient_creneaux_book');
+            }
+
+            // RULE 4 — No double booking for the same slot
             if ($creneauxRepo->isSlotAlreadyBooked($dispo, $date, $heure)) {
                 $this->addFlash('error', 'Ce créneau est déjà réservé, veuillez en choisir un autre.');
                 return $this->redirectToRoute('app_patient_creneaux_book');
@@ -115,6 +131,13 @@ final class CreneauController extends AbstractController
             // Trouver psychologue via cabinet
             $psy = null;
             $cabinet = $dispo->getCabinet();
+
+            // ADVANCED RULE 3 — Cabinet must be validated
+            if ($cabinet && !$cabinet->isValide()) {
+                $this->addFlash('error', 'Ce cabinet n\'est pas encore validé par l\'administration.');
+                return $this->redirectToRoute('app_patient_creneaux_book');
+            }
+
             if ($cabinet && $cabinet->getPsyCabinets()->count() > 0) {
                 $psy = $cabinet->getPsyCabinets()->first()?->getPsychologue();
             }
@@ -155,6 +178,12 @@ final class CreneauController extends AbstractController
             $em->persist($creneau);
             $em->persist($appointment);
             $em->flush();
+
+            try {
+                $mailer->sendReservationNotificationToPsychologue($appointment);
+            } catch (\Exception $e) {
+                // Log error or ignore
+            }
 
             $this->addFlash('success', 'Votre créneau a été réservé avec succès ✓');
             return $this->redirectToRoute('app_patient_creneaux_index');

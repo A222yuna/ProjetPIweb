@@ -1,0 +1,60 @@
+{% extends 'base_psychologue.html.twig' %}
+
+{% block psychologue_title %}Ajouter un nouveau cabinet{% endblock %}
+
+{% block psychologue_body %}
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-5">
+                <div class="d-flex align-items-center mb-4">
+                    <a href="{{ path('app_psychologue_cabinets_index') }}" class="btn btn-sm btn-white border rounded-circle me-3">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </a>
+                    <h4 class="fw-bold mb-0">Déclarer un nouveau cabinet</h4>
+                </div>
+
+                <div class="alert alert-info border-0 rounded-4 p-4 mb-4 shadow-sm">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="fa-solid fa-info-circle fs-4"></i>
+                        <p class="mb-0 small fw-bold">Note : Après avoir déclaré votre cabinet, un administrateur devra le valider avant qu'il ne soit visible publiquement sur la plateforme.</p>
+                    </div>
+                </div>
+
+                {{ form_start(form) }}
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            {{ form_row(form.ville, {
+                                'label': 'Ville',
+                                'attr': {'placeholder': 'Ex: Paris', 'class': 'form-control rounded-pill p-3'}
+                            }) }}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form_row(form.horaires, {
+                                'label': 'Horaires d\'ouverture',
+                                'attr': {'placeholder': 'Ex: Lun-Ven 09:00-18:00', 'class': 'form-control rounded-pill p-3'}
+                            }) }}
+                        </div>
+                        <div class="col-12">
+                            {{ form_row(form.adresse, {
+                                'label': 'Adresse complète',
+                                'attr': {'placeholder': 'Ex: 123 Rue de la République', 'class': 'form-control rounded-pill p-3'}
+                            }) }}
+                        </div>
+                        <div class="col-12">
+                            {{ form_row(form.description, {
+                                'label': 'Description (facultatif)',
+                                'attr': {'placeholder': 'Présentez brièvement votre cabinet...', 'class': 'form-control rounded-4 p-3', 'rows': 4}
+                            }) }}
+                        </div>
+                    </div>
+
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary rounded-pill p-3 fw-bold shadow-sm">
+                            <i class="fa-solid fa-save me-2"></i> Enregistrer et lier le cabinet
+                        </button>
+                    </div>
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+{% endblock %}

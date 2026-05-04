@@ -6,27 +6,85 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
 {% endblock %}
 
-{% block body %}
-    <div class="container-fluid">
-        <div class="row">
-            <aside class="col-md-3 col-lg-2 min-vh-100 p-3" style="background:#7C6BA0;color:#F8F6FF">
-                <h5 class="mb-4">Back Office Admin</h5>
-                <ul class="nav flex-column gap-2">
-                    <li><a class="nav-link text-white" href="{{ path('app_admin_module_comptes') }}"><i class="fa-solid fa-users me-2"></i>Comptes</a></li>
-                    <li><a class="nav-link text-white" href="{{ path('app_admin_module_consultations') }}"><i class="fa-solid fa-calendar-check me-2"></i>Consultations</a></li>
-                    <li><a class="nav-link text-white" href="{{ path('app_admin_module_cabinets') }}"><i class="fa-solid fa-hospital me-2"></i>Cabinets</a></li>
-                    <li><a class="nav-link text-white" href="{{ path('app_admin_module_bienetre') }}"><i class="fa-solid fa-heart me-2"></i>Bien-etre</a></li>
-                    <li><a class="nav-link text-white" href="{{ path('app_admin_module_messages') }}"><i class="fa-solid fa-envelope me-2"></i>Messages</a></li>
-                    <li><a class="nav-link text-white" href="{{ path('app_admin_module_forum') }}"><i class="fa-solid fa-comments me-2"></i>Forum</a></li>
-                </ul>
-            </aside>
-            <section class="col-md-9 col-lg-10 p-0" style="background:#F8F6FF">
-                <div class="d-flex justify-content-between align-items-center px-4 py-3 border-bottom bg-white">
-                    <div><strong>{{ app.user ? app.user.prenom ~ ' ' ~ app.user.nom : 'Invite' }}</strong> - {{ app.user ? app.user.role : 'Anonyme' }}</div>
-                    <a href="{{ path('app_logout') }}" class="btn btn-sm btn-outline-secondary">Logout</a>
+{% block javascripts %}
+    {{ parent() }}
+{% endblock %}
+
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block body_container %}
+    <div class="container-fluid p-0">
+        <div class="row g-0">
+            <!-- Sidebar -->
+            <aside class="col-auto col-md-3 col-lg-2 min-vh-100 d-flex flex-column p-3 text-white sticky-top shadow" style="background: #2c3e50;">
+                <div class="d-flex align-items-center mb-4 px-2">
+                    <span class="fs-4 fw-bold text-uppercase letter-spacing-1">Admin Panel</span>
                 </div>
-                <div class="p-4">{% block admin_body %}{% endblock %}</div>
-            </section>
+                <hr class="mb-4 opacity-25">
+                <ul class="nav nav-pills flex-column mb-auto gap-2">
+                    <li class="nav-item">
+                        <a href="{{ path('app_admin_dashboard') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') == 'app_admin_dashboard' ? 'active bg-primary' : '' }}">
+                            <i class="fa-solid fa-gauge-high"></i>
+                            <span class="d-none d-md-inline">Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ path('app_admin_users_index') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') starts with 'app_admin_users' ? 'active bg-primary' : '' }}">
+                            <i class="fa-solid fa-users"></i>
+                            <span class="d-none d-md-inline">Utilisateurs</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ path('app_admin_appointments_index') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') starts with 'app_admin_appointments' ? 'active bg-primary' : '' }}">
+                            <i class="fa-solid fa-calendar-check"></i>
+                            <span class="d-none d-md-inline">Rendez-vous</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ path('app_admin_cabinets_index') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') starts with 'app_admin_cabinets' ? 'active bg-primary' : '' }}">
+                            <i class="fa-solid fa-hospital"></i>
+                            <span class="d-none d-md-inline">Cabinets</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ path('app_admin_statistics') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') == 'app_admin_statistics' ? 'active bg-primary' : '' }}">
+                            <i class="fa-solid fa-chart-pie"></i>
+                            <span class="d-none d-md-inline">Statistiques</span>
+                        </a>
+                    </li>
+                    <!-- Add more admin routes as needed -->
+                </ul>
+                <hr class="opacity-25 mt-4">
+                <div class="dropdown p-2 mt-auto">
+                    <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                            {{ app.user.prenom|first }}{{ app.user.nom|first }}
+                        </div>
+                        <strong class="d-none d-md-inline">{{ app.user.prenom }}</strong>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
+                        <li><a class="dropdown-item" href="{{ path('app_account_profile') }}">Mon Profil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ path('app_logout') }}">Déconnexion</a></li>
+                    </ul>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="col ps-md-2 pt-2">
+                <div class="bg-light min-vh-100 p-4 rounded-3 shadow-sm">
+                    <!-- Top Bar in Content -->
+                    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                        <h2 class="h4 mb-0 fw-bold">{% block admin_title %}Administration{% endblock %}</h2>
+                        <div class="text-muted small">
+                            {{ "now"|date("d F Y") }}
+                        </div>
+                    </div>
+
+                    {% block admin_body %}{% endblock %}
+                </div>
+            </main>
         </div>
     </div>
 {% endblock %}

@@ -1,0 +1,8 @@
+# Branding des PDF "gestion utilisateurs" (fiche compte admin).
+# Logo : chemin relatif au dossier public/ (ex. "images/cabinet-logo.png"). Laisser null pour masquer.
+parameters:
+    user_management.pdf.brand_title: 'Cabinet de psychologie'
+    user_management.pdf.primary_color: '#1e4d8b'
+    user_management.pdf.accent_color: '#153a6b'
+    user_management.pdf.header_background: '#e8eef7'
+    user_management.pdf.logo_public_path: null

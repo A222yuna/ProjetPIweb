@@ -1,0 +1,60 @@
+{% extends 'base_patient.html.twig' %}
+
+{% block patient_title %}Découvrir nos Programmes Bien-être{% endblock %}
+
+{% block patient_body %}
+    <!-- Search and Filter Bar -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+        <form method="GET" action="{{ path('app_patient_programmes_index') }}" class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group rounded-pill overflow-hidden border">
+                    <span class="input-group-text border-0 bg-white ps-3">
+                        <i class="fa-solid fa-magnifying-glass text-muted"></i>
+                    </span>
+                    <input type="text" name="q" value="{{ search }}" class="form-control border-0 p-2" placeholder="Rechercher par nom ou objectif...">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select name="difficulty" class="form-select rounded-pill border p-2" onchange="this.form.submit()">
+                    <option value="">Toutes les difficultés</option>
+                    <option value="Facile" {{ current_difficulty == 'Facile' ? 'selected' : '' }}>Facile</option>
+                    <option value="Intermédiaire" {{ current_difficulty == 'Intermédiaire' ? 'selected' : '' }}>Intermédiaire</option>
+                    <option value="Difficile" {{ current_difficulty == 'Difficile' ? 'selected' : '' }}>Difficile</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-grid">
+                <button type="submit" class="btn btn-primary rounded-pill fw-bold">Filtrer</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="row g-4 mb-4">
+        {% for programme in programmes %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+                    <div class="card-body p-4 d-flex flex-column h-100">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="fw-bold mb-0 text-primary">{{ programme.nom }}</h5>
+                            <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill">
+                                {{ programme.niveauDifficulte ?: 'Tous niveaux' }}
+                            </span>
+                        </div>
+                        <p class="text-muted small mb-3 flex-grow-1">{{ programme.objectif|slice(0, 100) }}...</p>
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <span class="small text-muted"><i class="fa-solid fa-clock me-1 text-primary"></i> {{ programme.duree }} jours</span>
+                            <span class="small text-muted"><i class="fa-solid fa-user-md me-1 text-primary"></i> Par Dr. {{ programme.psychologue.prenom }} {{ programme.psychologue.nom }}</span>
+                        </div>
+                        <a href="{{ path('app_patient_programmes_show', {id: programme.id}) }}" class="btn btn-primary rounded-pill w-100">
+                            En savoir plus
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <i class="fa-solid fa-leaf text-muted fs-1 mb-3"></i>
+                <p class="text-muted">Aucun programme n'est disponible pour le moment.</p>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

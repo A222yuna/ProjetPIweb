@@ -52,11 +52,11 @@ final class DisponibiliteType extends AbstractType
                 ],
             ])
             ->add('heureDebut', TimeType::class, [
-                'input' => 'datetime',
+                'input' => 'datetime_immutable',
                 'constraints' => [new NotBlank(message: "L'heure de début est obligatoire")],
             ])
             ->add('heureFin', TimeType::class, [
-                'input' => 'datetime',
+                'input' => 'datetime_immutable',
                 'constraints' => [new NotBlank(message: "L'heure de fin est obligatoire")],
             ])
             ->add('dureeConsultation', IntegerType::class, [

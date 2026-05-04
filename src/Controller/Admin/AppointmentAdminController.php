@@ -3,6 +3,7 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Appointment;
+use App\Service\NotificationMailer;
 use App\Repository\AppointmentRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -52,7 +53,8 @@ final class AppointmentAdminController extends AbstractController
         int $id,
         Request $request,
         AppointmentRepository $appointments,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
+        NotificationMailer $mailer
     ): Response {
         $appointment = $appointments->find($id);
         if (!$appointment) {
@@ -78,6 +80,13 @@ final class AppointmentAdminController extends AbstractController
             }
 
             $em->flush();
+
+            try {
+                $mailer->sendStatusChangeNotificationToPatient($appointment);
+            } catch (\Exception $e) {
+                // Log error or ignore
+            }
+
             $this->addFlash('success', 'Statut mis à jour.');
         } else {
             $this->addFlash('error', 'Statut invalide.');

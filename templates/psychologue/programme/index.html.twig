@@ -1,0 +1,43 @@
+{% extends 'base_psychologue.html.twig' %}
+
+{% block psychologue_title %}Mes Programmes Bien-être{% endblock %}
+
+{% block psychologue_body %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold mb-0">Tous vos programmes</h3>
+        <a href="{{ path('app_psychologue_programmes_new') }}" class="btn btn-primary rounded-pill d-flex align-items-center gap-2">
+            <i class="fa-solid fa-plus-circle"></i> Nouveau Programme
+        </a>
+    </div>
+
+    <div class="row g-4">
+        {% for programme in programmes %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+                    <div class="card-body p-4 d-flex flex-column h-100">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="fw-bold mb-0">{{ programme.nom }}</h5>
+                            <span class="badge {% if programme.statut == 'Publié' %}bg-success{% else %}bg-secondary{% endif %} rounded-pill">
+                                {{ programme.statut ?: 'Brouillon' }}
+                            </span>
+                        </div>
+                        <p class="text-muted small mb-3 flex-grow-1">{{ programme.objectif|slice(0, 100) }}...</p>
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <span class="small text-muted"><i class="fa-solid fa-clock me-1"></i> {{ programme.duree }} jours</span>
+                            <span class="small text-muted"><i class="fa-solid fa-signal me-1"></i> {{ programme.niveauDifficulte ?: 'N/A' }}</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="{{ path('app_psychologue_programmes_show', {id: programme.id}) }}" class="btn btn-sm btn-outline-primary rounded-pill flex-grow-1">Voir</a>
+                            <a href="{{ path('app_psychologue_programmes_edit', {id: programme.id}) }}" class="btn btn-sm btn-outline-secondary rounded-pill">Éditer</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <i class="fa-solid fa-leaf text-muted fs-1 mb-3"></i>
+                <p class="text-muted">Vous n'avez pas encore créé de programme.</p>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

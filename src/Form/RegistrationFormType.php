@@ -28,6 +28,11 @@ final class RegistrationFormType extends AbstractType
                     'Psychologue' => 'Psychologue',
                 ],
             ])
+            ->add('presentation', \Symfony\Component\Form\Extension\Core\Type\TextareaType::class, [
+                'required' => false,
+                'label' => 'Présentation professionnelle (uniquement pour les psychologues)',
+                'attr' => ['rows' => 5, 'placeholder' => 'Décrivez votre expérience, vos spécialités et votre approche...']
+            ])
             ->add('plainPassword', PasswordType::class, [
                 'mapped' => false,
                 'constraints' => [new NotBlank(), new Length(min: 8, max: 255)],

@@ -1,0 +1,99 @@
+{% extends 'base_admin.html.twig' %}
+
+{% block title %}Admin - Historique des connexions{% endblock %}
+
+{% block admin_title %}Historique des connexions{% endblock %}
+
+{% block admin_body %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h4 mb-0">Historique des connexions</h1>
+        <a href="{{ path('app_admin_users_index') }}" class="btn btn-outline-secondary rounded-pill">
+            <i class="fa-solid fa-arrow-left me-2"></i>Retour
+        </a>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+        <form method="get" action="{{ path('app_admin_users_connections') }}" class="row g-3 align-items-end">
+            <div class="col-md-6">
+                <label class="form-label fw-bold small text-muted text-uppercase ls-1" for="q-search">Rechercher</label>
+                <div class="input-group rounded-pill overflow-hidden border">
+                    <span class="input-group-text border-0 bg-white ps-3">
+                        <i class="fa-solid fa-magnifying-glass text-muted"></i>
+                    </span>
+                    <input type="text" id="q-search" name="q" value="{{ search_term }}" class="form-control border-0 p-2" placeholder="Nom, prénom ou email...">
+                </div>
+            </div>
+            <div class="col-md-2 d-grid">
+                <button type="submit" class="btn btn-primary rounded-pill fw-bold p-2 shadow-sm">
+                    <i class="fa-solid fa-filter me-1"></i> Filtrer
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Connections Table -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle border-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="border-0 rounded-start">Utilisateur</th>
+                        <th class="border-0">Rôle</th>
+                        <th class="border-0">Email</th>
+                        <th class="border-0">Dernière connexion</th>
+                        <th class="border-0 rounded-end">Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for u in users %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold">{{ u.prenom }} {{ u.nom }}</div>
+                            <div class="small text-muted">Inscrit le {{ u.dateInscription ? u.dateInscription|date('d/m/Y') : '-' }}</div>
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill {% if u.role == 'Admin' %}bg-dark{% elseif u.role == 'Psychologue' %}bg-primary{% else %}bg-info text-dark{% endif %}">
+                                {{ u.role }}
+                            </span>
+                        </td>
+                        <td>{{ u.email }}</td>
+                        <td>
+                            {% if u.derniereConnexion %}
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa-solid fa-clock text-muted"></i>
+                                    <span>{{ u.derniereConnexion|date('d/m/Y') }}</span>
+                                    <span class="badge bg-light text-dark">{{ u.derniereConnexion|date('H:i') }}</span>
+                                </div>
+                            {% else %}
+                                <span class="text-muted"><i class="fa-solid fa-minus"></i> Jamais connecté</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.estActif %}
+                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3">Actif</span>
+                            {% else %}
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-3">Inactif</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5" class="text-center py-5 text-muted">Aucun utilisateur trouvé.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if total_pages > 1 %}
+        <nav class="mt-4">
+            <ul class="pagination pagination-sm justify-content-center gap-2 border-0">
+                {% for p in 1..total_pages %}
+                    <li class="page-item {{ p == page ? 'active' : '' }}">
+                        <a class="page-link rounded-pill" href="{{ path('app_admin_users_connections', {page: p, q: search_term}) }}">{{ p }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </nav>
+    {% endif %}
+{% endblock %}

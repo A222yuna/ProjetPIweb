@@ -52,6 +52,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(name: 'statut_validation', length: 20, options: ['default' => 'approuve'])]
     private string $statutValidation = 'approuve';
 
+    #[ORM\Column(name: 'failed_attempts', options: ['default' => 0])]
+    private int $failedAttempts = 0;
+
+    #[ORM\Column(name: 'locked_at', type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $lockedAt = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $presentation = null;
+
     /** @var Collection<int, Post> */
     #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'auteur')]
     private Collection $posts;
@@ -194,6 +203,61 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setStatutValidation(string $statutValidation): static
     {
         $this->statutValidation = $statutValidation;
+
+        return $this;
+    }
+
+    public function getFailedAttempts(): int
+    {
+        return $this->failedAttempts;
+    }
+
+    public function setFailedAttempts(int $failedAttempts): static
+    {
+        $this->failedAttempts = $failedAttempts;
+
+        return $this;
+    }
+
+    public function incrementFailedAttempts(): static
+    {
+        $this->failedAttempts++;
+
+        return $this;
+    }
+
+    public function resetFailedAttempts(): static
+    {
+        $this->failedAttempts = 0;
+
+        return $this;
+    }
+
+    public function getLockedAt(): ?\DateTimeInterface
+    {
+        return $this->lockedAt;
+    }
+
+    public function setLockedAt(?\DateTimeInterface $lockedAt): static
+    {
+        $this->lockedAt = $lockedAt;
+
+        return $this;
+    }
+
+    public function isLocked(): bool
+    {
+        return $this->lockedAt !== null;
+    }
+
+    public function getPresentation(): ?string
+    {
+        return $this->presentation;
+    }
+
+    public function setPresentation(?string $presentation): static
+    {
+        $this->presentation = $presentation;
 
         return $this;
     }

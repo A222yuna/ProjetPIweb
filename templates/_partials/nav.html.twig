@@ -11,6 +11,19 @@
         <a href="{{ path('app_tarifs') }}" class="{{ r == 'app_tarifs' ? 'is-active' : '' }}">Tarifs</a>
         <a href="{{ path('app_reservation') }}" class="nav-cta {{ r == 'app_reservation' ? 'is-active' : '' }}">Prendre RDV</a>
         <a href="{{ path('app_contact') }}" class="{{ r == 'app_contact' ? 'is-active' : '' }}">Contact</a>
-        <a href="{{ path('app_admin_dashboard') }}" class="nav-secondary {{ r == 'app_admin_dashboard' ? 'is-active' : '' }}">Admin</a>
+        
+        {% if app.user %}
+            {% if is_granted('ROLE_ADMIN') %}
+                <a href="{{ path('app_admin_dashboard') }}" class="nav-secondary {{ r starts with 'app_admin' ? 'is-active' : '' }}">Admin</a>
+            {% elseif is_granted('ROLE_PSYCHOLOGUE') %}
+                <a href="{{ path('app_psychologue_dashboard') }}" class="nav-secondary {{ r starts with 'app_psychologue' ? 'is-active' : '' }}">Espace Psy</a>
+            {% else %}
+                <a href="{{ path('app_patient_dashboard') }}" class="nav-secondary {{ r starts with 'app_patient' ? 'is-active' : '' }}">Mon Espace</a>
+            {% endif %}
+            <a href="{{ path('app_logout') }}" class="text-danger ms-2"><i class="fa-solid fa-power-off"></i></a>
+        {% else %}
+            <a href="{{ path('app_login') }}" class="ms-2">Connexion</a>
+            <a href="{{ path('app_register') }}" class="btn btn-sm btn-primary rounded-pill px-3 ms-2">S'inscrire</a>
+        {% endif %}
     </div>
 </nav>

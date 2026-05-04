@@ -35,6 +35,7 @@ final class CreneauType extends AbstractType
             ])
             ->add('dateCreneau', DateType::class, [
                 'widget' => 'single_text',
+                'input' => 'datetime_immutable',
                 'constraints' => [
                     new NotBlank(message: 'La date est obligatoire'),
                     new GreaterThanOrEqual(value: 'today', message: 'La date ne peut pas être dans le passé'),
@@ -42,6 +43,7 @@ final class CreneauType extends AbstractType
             ])
             ->add('heure', TimeType::class, [
                 'widget' => 'single_text',
+                'input' => 'datetime_immutable',
                 'constraints' => [new NotBlank(message: "L'heure est obligatoire")],
             ]);
     }

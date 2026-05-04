@@ -8,4 +8,13 @@
 #   bin/console debug:router
 
 controllers:
-    resource: routing.controllers
+    resource:
+        path: ../src/Controller/
+        namespace: App\Controller
+    type: attribute
+
+user_management_controllers:
+    resource:
+        path: ../src/UserManagement/Controller/
+        namespace: App\UserManagement\Controller
+    type: attribute
