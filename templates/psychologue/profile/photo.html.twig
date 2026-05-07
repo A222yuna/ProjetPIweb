@@ -1,0 +1,70 @@
+{% extends 'base_psychologue.html.twig' %}
+
+{% block title %}Photo de profil{% endblock %}
+{% block psychologue_title %}Photo de profil{% endblock %}
+
+{% block psychologue_body %}
+    <div class="card border-0 shadow-sm rounded-4 p-4">
+        <h4 class="fw-bold mb-3">Photo de profil</h4>
+        <p class="text-muted mb-4">Cette photo est utilisee uniquement pour verifier votre identite lors de la confirmation de rendez-vous.</p>
+
+        <div class="mb-4 text-center">
+            {% if photo_url %}
+                <img id="photo-preview" src="{{ photo_url }}" alt="Photo actuelle" class="rounded-circle border" style="width:200px;height:200px;object-fit:cover;">
+            {% else %}
+                <div id="photo-placeholder" class="rounded-circle border d-inline-flex align-items-center justify-content-center bg-light text-secondary" style="width:200px;height:200px;">
+                    <i class="fa-solid fa-user fa-4x"></i>
+                </div>
+                <img id="photo-preview" src="" alt="Apercu photo" class="rounded-circle border d-none" style="width:200px;height:200px;object-fit:cover;">
+            {% endif %}
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" action="{{ path('app_psychologue_profile_photo') }}" class="mb-3">
+            <div class="mb-3">
+                <label for="photo-input" class="form-label">Choisir une photo (JPG/PNG/WEBP, max 5MB)</label>
+                <input id="photo-input" type="file" name="photo" class="form-control" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Uploader</button>
+        </form>
+
+        {% if photo_url %}
+            <form method="POST" action="{{ path('app_psychologue_profile_photo_delete') }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete_profile_photo') }}">
+                <button type="submit" class="btn btn-outline-danger">Supprimer la photo</button>
+            </form>
+        {% endif %}
+    </div>
+
+    {# Preview script after DOM (javascripts block is in head). #}
+    <script>
+        (() => {
+            const input = document.getElementById('photo-input');
+            if (!input) {
+                return;
+            }
+
+            const preview = document.getElementById('photo-preview');
+            const placeholder = document.getElementById('photo-placeholder');
+
+            input.addEventListener('change', (event) => {
+                const file = event.target.files && event.target.files[0];
+                if (!file) {
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (!preview) {
+                        return;
+                    }
+                    preview.src = e.target.result;
+                    preview.classList.remove('d-none');
+                    if (placeholder) {
+                        placeholder.classList.add('d-none');
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        })();
+    </script>
+{% endblock %}

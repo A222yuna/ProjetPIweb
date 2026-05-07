@@ -1,0 +1,198 @@
+{% extends 'base_psychologue.html.twig' %}
+
+{% block title %}Verification d'identite{% endblock %}
+{% block psychologue_title %}Verification d'identite{% endblock %}
+
+{% block psychologue_body %}
+    <div class="card border-0 shadow-sm rounded-4 p-4">
+        <h4 class="fw-bold mb-3">Verification d'identite</h4>
+        <p class="mb-1"><strong>Patient :</strong> {{ appointment.patient ? appointment.patient.prenom ~ ' ' ~ appointment.patient.nom : '-' }}</p>
+        <p class="mb-4"><strong>Rendez-vous :</strong> {{ appointment.plan ? appointment.plan.dayOfWeek ~ ' - ' ~ appointment.plan.period : '-' }}</p>
+
+        {% if not has_photo %}
+            <div class="alert alert-warning">
+                Aucune photo de profil detectee. Vous pouvez confirmer sans verification faciale.
+            </div>
+            <form method="POST" action="{{ path('app_psychologue_appointments_confirm', {id: appointment.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token }}">
+                <input type="hidden" name="face_verified" value="true">
+                <button type="submit" class="btn btn-success">Confirmer sans verification</button>
+                <a href="{{ path('app_psychologue_appointments_index') }}" class="btn btn-outline-secondary ms-2">Annuler</a>
+            </form>
+        {% else %}
+            <img id="reference-photo" src="{{ photo_url }}" alt="Photo de reference" class="d-none">
+
+            <div class="position-relative mx-auto border rounded-3 overflow-hidden" style="max-width: 720px;">
+                <video id="webcam" autoplay muted playsinline style="width: 100%; display: block;"></video>
+                <canvas id="overlay" class="position-absolute top-0 start-0" style="width: 100%; height: 100%;"></canvas>
+            </div>
+
+            <div id="status-bar" class="alert alert-secondary mt-3 mb-3">
+                Chargement des modeles...
+            </div>
+
+            <button id="verify-btn" class="btn btn-primary" disabled>Verifier mon identite</button>
+
+            <form id="confirm-form" method="POST" action="{{ path('app_psychologue_appointments_confirm', {id: appointment.id}) }}" class="d-none">
+                <input type="hidden" name="_token" value="{{ csrf_token }}">
+                <input type="hidden" name="face_verified" value="true">
+            </form>
+
+            <a href="{{ path('app_psychologue_appointments_index') }}" class="btn btn-outline-secondary ms-2">Annuler</a>
+
+            {# Face scripts run here so DOM exists (javascripts block is in head in base layout). #}
+            <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js"></script>
+            <script>
+                (() => {
+                    const statusBar = document.getElementById('status-bar');
+                    const webcam = document.getElementById('webcam');
+                    const overlay = document.getElementById('overlay');
+                    const verifyBtn = document.getElementById('verify-btn');
+                    const referencePhoto = document.getElementById('reference-photo');
+                    const confirmForm = document.getElementById('confirm-form');
+                    if (!statusBar || !webcam || !overlay || !verifyBtn || !referencePhoto || !confirmForm) {
+                        return;
+                    }
+                    const ctx = overlay.getContext('2d');
+                    let stream = null;
+                    let referenceDescriptor = null;
+                    let drawingInterval = null;
+
+                    const setStatus = (text, type = 'secondary') => {
+                        statusBar.className = `alert alert-${type} mt-3 mb-3`;
+                        statusBar.textContent = text;
+                    };
+
+                    const resizeOverlay = () => {
+                        overlay.width = webcam.videoWidth || webcam.clientWidth;
+                        overlay.height = webcam.videoHeight || webcam.clientHeight;
+                    };
+
+                    const euclideanDistance = (a, b) => {
+                        let sum = 0;
+                        for (let i = 0; i < a.length; i++) {
+                            const d = a[i] - b[i];
+                            sum += d * d;
+                        }
+                        return Math.sqrt(sum);
+                    };
+
+                    const loadModels = async () => {
+                        await Promise.all([
+                            faceapi.nets.tinyFaceDetector.loadFromUri('/models/'),
+                            faceapi.nets.faceLandmark68Net.loadFromUri('/models/'),
+                            faceapi.nets.faceRecognitionNet.loadFromUri('/models/')
+                        ]);
+                    };
+
+                    const startWebcam = async () => {
+                        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                        webcam.srcObject = stream;
+                        await new Promise((resolve) => {
+                            webcam.onloadedmetadata = () => resolve();
+                        });
+                        resizeOverlay();
+                    };
+
+                    const waitReferenceImage = () => new Promise((resolve, reject) => {
+                        if (referencePhoto.complete && referencePhoto.naturalWidth > 0) {
+                            resolve();
+                            return;
+                        }
+                        referencePhoto.onload = () => resolve();
+                        referencePhoto.onerror = () => reject(new Error('Impossible de charger la photo de profil.'));
+                    });
+
+                    const loadReferenceDescriptor = async () => {
+                        await waitReferenceImage();
+                        const detection = await faceapi
+                            .detectSingleFace(referencePhoto, new faceapi.TinyFaceDetectorOptions())
+                            .withFaceLandmarks()
+                            .withFaceDescriptor();
+
+                        if (!detection) {
+                            throw new Error('Face non detectee dans la photo de profil.');
+                        }
+
+                        referenceDescriptor = detection.descriptor;
+                    };
+
+                    const drawLoop = async () => {
+                        if (!webcam.videoWidth || !webcam.videoHeight) {
+                            return;
+                        }
+
+                        const detection = await faceapi.detectSingleFace(webcam, new faceapi.TinyFaceDetectorOptions());
+                        ctx.clearRect(0, 0, overlay.width, overlay.height);
+                        if (detection) {
+                            ctx.strokeStyle = '#00ff88';
+                            ctx.lineWidth = 2;
+                            ctx.strokeRect(detection.box.x, detection.box.y, detection.box.width, detection.box.height);
+                        }
+                    };
+
+                    const init = async () => {
+                        try {
+                            setStatus('Chargement des modeles en cours...', 'info');
+                            await loadModels();
+                            setStatus('Demarrage de la webcam...', 'info');
+                            await startWebcam();
+                            setStatus('Analyse de votre photo de reference...', 'info');
+                            await loadReferenceDescriptor();
+                            verifyBtn.disabled = false;
+                            setStatus('Modeles charges. Cliquez sur "Verifier mon identite".', 'secondary');
+
+                            drawingInterval = setInterval(() => {
+                                drawLoop().catch(() => {});
+                            }, 200);
+                        } catch (e) {
+                            setStatus(e.message || 'Erreur lors de l initialisation.', 'danger');
+                        }
+                    };
+
+                    verifyBtn.addEventListener('click', async () => {
+                        verifyBtn.disabled = true;
+                        setStatus('Verification en cours...', 'warning');
+
+                        try {
+                            const detection = await faceapi
+                                .detectSingleFace(webcam, new faceapi.TinyFaceDetectorOptions())
+                                .withFaceLandmarks()
+                                .withFaceDescriptor();
+
+                            if (!detection) {
+                                setStatus('Aucun visage detecte sur la webcam.', 'danger');
+                                verifyBtn.disabled = false;
+                                return;
+                            }
+
+                            const distance = euclideanDistance(referenceDescriptor, detection.descriptor);
+                            if (distance < 0.55) {
+                                setStatus('Identite verifiee. Confirmation en cours...', 'success');
+                                setTimeout(() => confirmForm.submit(), 1500);
+                            } else {
+                                setStatus('Visage non reconnu.', 'danger');
+                                verifyBtn.disabled = false;
+                            }
+                        } catch (e) {
+                            setStatus(e.message || 'Erreur pendant la verification.', 'danger');
+                            verifyBtn.disabled = false;
+                        }
+                    });
+
+                    window.addEventListener('resize', resizeOverlay);
+                    window.addEventListener('beforeunload', () => {
+                        if (drawingInterval) {
+                            clearInterval(drawingInterval);
+                        }
+                        if (stream) {
+                            stream.getTracks().forEach((track) => track.stop());
+                        }
+                    });
+
+                    init();
+                })();
+            </script>
+        {% endif %}
+    </div>
+{% endblock %}

@@ -83,12 +83,17 @@
                         <td class="text-end">
                             {% if a.status == 'SCHEDULED' %}
                                 <div class="d-flex gap-1 justify-content-end">
-                                    <form method="post" action="{{ path('app_psychologue_appointments_confirm', { id: a.id }) }}" style="display:inline" onsubmit="return confirm('Confirmer ce rendez-vous ?')">
+                                    {% if app.user.photoProfil %}
+                                      <a href="{{ path('app_psychologue_face_verify', {appointmentId: a.id}) }}" class="btn btn-success btn-sm">
+                                        🔒 Vérifier & Confirmer
+                                      </a>
+                                    {% else %}
+                                      <form method="POST" action="{{ path('app_psychologue_appointments_confirm', {id: a.id}) }}" style="display:inline;">
                                         <input type="hidden" name="_token" value="{{ csrf_token('confirm_appointment_' ~ a.id) }}">
-                                        <button class="btn btn-sm btn-success rounded-pill px-3 shadow-sm" type="submit">
-                                            ✅ Confirmer
-                                        </button>
-                                    </form>
+                                        <input type="hidden" name="face_verified" value="true">
+                                        <button type="submit" class="btn btn-success btn-sm">✅ Confirmer</button>
+                                      </form>
+                                    {% endif %}
                                 </div>
                             {% elseif a.status == 'CONFIRMED' %}
                                 <span class="text-muted small">En attente de paiement</span>

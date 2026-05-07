@@ -115,6 +115,11 @@ final class PsychologueAppointmentController extends AbstractController
             return $this->redirectToRoute('app_psychologue_appointments_index');
         }
 
+        $faceVerified = $request->request->getBoolean('face_verified', false);
+        if ($user->getPhotoProfil() && !$faceVerified) {
+            return $this->redirectToRoute('app_psychologue_face_verify', ['appointmentId' => $id]);
+        }
+
         if ($appointment->getStatus() !== Appointment::STATUS_SCHEDULED) {
             $this->addFlash('warning', 'Seuls les rendez-vous SCHEDULED peuvent être confirmés.');
             return $this->redirectToRoute('app_psychologue_appointments_index');

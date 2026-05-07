@@ -52,6 +52,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(name: 'statut_validation', length: 20, options: ['default' => 'approuve'])]
     private string $statutValidation = 'approuve';
 
+    #[ORM\Column(name: 'photo_profil', length: 255, nullable: true)]
+    private ?string $photoProfil = null;
+
     /** @var Collection<int, Post> */
     #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'auteur')]
     private Collection $posts;
@@ -194,6 +197,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setStatutValidation(string $statutValidation): static
     {
         $this->statutValidation = $statutValidation;
+
+        return $this;
+    }
+
+    public function getPhotoProfil(): ?string
+    {
+        return $this->photoProfil;
+    }
+
+    public function setPhotoProfil(?string $photoProfil): static
+    {
+        $this->photoProfil = $photoProfil;
 
         return $this;
     }

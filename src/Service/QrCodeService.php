@@ -9,7 +9,7 @@ use Endroid\QrCode\QrCode;
 use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\SvgWriter;
 
-final class QrCodeService
+class QrCodeService
 {
     public function __construct(
         private \App\Repository\PsyCabinetRepository $psyCabinetRepo
