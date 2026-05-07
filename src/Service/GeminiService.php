@@ -21,8 +21,7 @@ class GeminiService
             return "Erreur : La clé API n'est pas configurée dans le fichier .env.";
         }
 
-        // Utilisation de la version la plus récente du modèle gemini-1.5-flash sur v1
-        $url = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=" . $this->apiKey;
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" . $this->apiKey;
 
         $prompt = "Tu es un assistant expert en recrutement de psychologues.
         Analyse la présentation suivante et fournis un rapport structuré en français (Points forts, Ton, Recommandation : approuver ou rejeter) :

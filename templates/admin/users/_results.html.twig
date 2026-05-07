@@ -100,13 +100,13 @@
                                         Rapport IA (Validation)
                                     </button>
                                 </li>
+                                {% endif %}
                                 <li>
                                     <a class="dropdown-item d-flex align-items-center gap-2" href="{{ path('app_admin_users_account_pdf', { id: u.id }) }}" target="_blank" rel="noopener">
                                         <i class="fa-solid fa-file-pdf text-danger"></i>
                                         Fiche PDF (compte)
                                     </a>
                                 </li>
-                                {% endif %}
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form method="post" action="{{ path('app_admin_users_delete', { id: u.id }) }}">
