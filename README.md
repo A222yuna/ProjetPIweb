@@ -9,4 +9,4 @@ symfony server:start --allow-all-ip
 start test:
 php bin/console doctrine:database:create --env=test
 php bin/console doctrine:schema:update --force --env=test
-vendor/bin/phpunit tests/MessageSystemTest.php
+vendor/bin/phpunit tests/MessageAndChatTest.php
