@@ -82,7 +82,7 @@ class MessageAndChatTest extends KernelTestCase
     public function testProfanityFilter(): void
     {
         $message = new Message();
-        $message->setContenuMessage("This is shit and fuck you asshole");
+        $message->setContenuMessage("This is shit and fuck you haha asshole");
         $message->handleProfanityFilter();
 
         $filtered = $message->getContenuMessage();
