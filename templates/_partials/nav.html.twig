@@ -11,6 +11,10 @@
                 <a href="{{ path('app_tarifs') }}" class="{{ r == 'app_tarifs' ? 'is-active' : '' }}">Tarifs</a>
         <a href="{{ path('app_reservation') }}" class="nav-cta {{ r == 'app_reservation' ? 'is-active' : '' }}">Prendre RDV</a>
         <a href="{{ path('app_contact') }}" class="{{ r == 'app_contact' ? 'is-active' : '' }}">Contact</a>
+    <a href="{{ path('app_chat_inbox', {'userId': app.user ? app.user.id : 1}) }}" 
+   class="{{ app.request.attributes.get('_route') == 'app_chat_inbox' ? 'is-active' : '' }}">
+   Discussion
+</a>
                 <a href="{{ path('app_admin_dashboard') }}" class="nav-secondary {{ r == 'app_admin_dashboard' ? 'is-active' : '' }}">Admin</a>
         {% if app.user %}
             {% set unread = forum_unread_count(app.user) %}

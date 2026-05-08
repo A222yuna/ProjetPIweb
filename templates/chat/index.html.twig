@@ -1,0 +1,268 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="wrap py-4">
+    {# Page Header #}
+    <div class="dash-header mb-4">
+        <div>
+            <h1 class="brand-name mb-1">Inbox</h1>
+            <p class="muted mb-0">Manage your active consultations and secure messages.</p>
+        </div>
+        <div class="dash-header-actions">
+            <a href="{{ path('app_chat_new_search', {'userId': currentUser.id}) }}" class="btn btn-primary">
+                New Conversation
+            </a>
+        </div>
+    </div>
+
+    {# Stats Overview #}
+    {% if conversations|length > 0 %}
+    <div class="stats-row mb-4">
+        <div class="stat-item">
+            <span class="stat-number">{{ conversations|length }}</span>
+            <span class="stat-label">Total</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number active">{{ conversations|filter(c => c.statutConversation == 'active')|length }}</span>
+            <span class="stat-label">Active</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number inactive">{{ conversations|filter(c => c.statutConversation != 'active')|length }}</span>
+            <span class="stat-label">Inactive</span>
+        </div>
+    </div>
+    {% endif %}
+
+    {# Conversations List #}
+    <div class="conversations-list">
+        {% for conversation in conversations %}
+            <div class="conversation-item">
+                {# Main content - clickable to open chat #}
+                <a href="{{ path('app_chat_view', {'userId': currentUser.id, 'id': conversation.id}) }}" class="conversation-main">
+                    <div class="conversation-info">
+                        <h3 class="conversation-name">
+                            Conversation #{{ '%03d'|format(conversation.id) }}
+                        </h3>
+                        <div class="conversation-details">
+                            <span class="detail-text">End-to-end encrypted</span>
+                            <span class="detail-separator"></span>
+                            <span class="detail-text">
+                                {% if conversation.lastMessageAt is defined %}
+                                    {{ conversation.lastMessageAt|date('M d, Y') }}
+                                {% else %}
+                                    {{ conversation.createdAt|default('')|date('M d, Y') }}
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="conversation-status-badge {{ conversation.statutConversation == 'active' ? 'active' : 'inactive' }}">
+                        {{ conversation.statutConversation|default('inactive')|capitalize }}
+                    </div>
+                </a>
+                
+                {# Actions - separate from main link #}
+                <div class="conversation-actions">
+                    <a href="{{ path('app_chat_toggle_status', {'userId': currentUser.id, 'id': conversation.id}) }}" class="action-btn">
+                        {{ conversation.statutConversation == 'active' ? 'Deactivate' : 'Activate' }}
+                    </a>
+                    <a href="{{ path('app_chat_delete', {'userId': currentUser.id, 'id': conversation.id}) }}" 
+                       class="action-btn delete-btn" 
+                       onclick="return confirm('Delete this conversation?')">
+                        Delete
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p class="muted mb-3">No conversations yet</p>
+                <a href="{{ path('app_chat_new_search', {'userId': currentUser.id}) }}" class="btn btn-primary">
+                    Start a conversation
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    /* Stats Row */
+    .stats-row {
+        display: flex;
+        gap: 1.5rem;
+    }
+    
+    .stat-item {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+    }
+    
+    .stat-number {
+        font-family: var(--font-serif);
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text);
+        line-height: 1;
+    }
+    
+    .stat-number.active {
+        color: #1b7a43;
+    }
+    
+    .stat-number.inactive {
+        color: var(--muted);
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 500;
+    }
+    
+    /* Conversations List */
+    .conversations-list {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .conversation-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--border);
+        transition: all 0.2s ease;
+    }
+    
+    .conversation-item:hover {
+        padding-left: 1rem;
+        padding-right: 1rem;
+        margin-left: -1rem;
+        margin-right: -1rem;
+        background: var(--accent-soft);
+        border-radius: var(--radius-sm);
+        border-bottom-color: transparent;
+    }
+    
+    /* Main content - clickable */
+    .conversation-main {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex: 1;
+        text-decoration: none;
+        color: inherit;
+        min-width: 0;
+    }
+    
+    .conversation-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .conversation-name {
+        font-family: var(--font-serif);
+        font-size: 1.05rem;
+        font-weight: 600;
+        margin: 0 0 0.3rem;
+        color: var(--text);
+    }
+    
+    .conversation-details {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .detail-text {
+        font-size: 0.8rem;
+        color: var(--muted);
+    }
+    
+    .detail-separator {
+        width: 3px;
+        height: 3px;
+        background: var(--border);
+        border-radius: 50%;
+    }
+    
+    /* Status Badge */
+    .conversation-status-badge {
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    
+    .conversation-status-badge.active {
+        background: #e7f5ed;
+        color: #1b7a43;
+    }
+    
+    .conversation-status-badge.inactive {
+        background: #f1f3f5;
+        color: #6c757d;
+    }
+    
+    /* Actions */
+    .conversation-actions {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-left: 1.5rem;
+        flex-shrink: 0;
+    }
+    
+    .action-btn {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--muted);
+        text-decoration: none;
+        padding: 0.3rem 0;
+        border-bottom: 1px solid transparent;
+        transition: all 0.15s ease;
+    }
+    
+    .action-btn:hover {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+    }
+    
+    .delete-btn:hover {
+        color: #c53030;
+        border-bottom-color: #c53030;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1.5rem;
+        border: 1px dashed var(--border);
+        border-radius: var(--radius);
+    }
+    
+    /* Responsive */
+    @media (max-width: 640px) {
+        .conversation-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        
+        .conversation-main {
+            width: 100%;
+        }
+        
+        .conversation-actions {
+            margin-left: 0;
+            width: 100%;
+            justify-content: flex-end;
+        }
+    }
+</style>
+{% endblock %}

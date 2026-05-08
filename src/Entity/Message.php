@@ -8,6 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: MessageRepository::class)]
 #[ORM\Table(name: 'message')]
+#[ORM\HasLifecycleCallbacks]
 class Message
 {
     #[ORM\Id]
@@ -41,10 +42,31 @@ class Message
     #[ORM\ManyToOne(inversedBy: 'messages')]
     #[ORM\JoinColumn(name: 'id_conversation', referencedColumnName: 'id_conversation', nullable: false, onDelete: 'CASCADE')]
     private ?Conversation $conversation = null;
+    #[ORM\PrePersist]
+    #[ORM\PreUpdate]
+    public function handleProfanityFilter(): void
+    {
+        // Define your list of bad words
+        $forbiddenWords = ['fuck', 'asshole', 'bitch', 'shit'];
 
+        if ($this->contenuMessage === null) {
+            return;
+        }
+
+        $filteredText = $this->contenuMessage;
+
+        foreach ($forbiddenWords as $word) {
+            // preg_quote handles special characters in words
+            // the 'i' flag makes it case-insensitive
+            $pattern = '/' . preg_quote($word, '/') . '/i';
+            $filteredText = preg_replace($pattern, '****', $filteredText);
+        }
+
+        $this->contenuMessage = $filteredText;
+    }
     public function __construct()
     {
-        $this->dateMessage = new \DateTimeImmutable();
+        $this->dateMessage = new  \DateTime();
     }
 
     public function getId(): ?int
