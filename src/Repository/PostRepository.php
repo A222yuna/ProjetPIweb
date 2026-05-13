@@ -30,6 +30,19 @@ class PostRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /** @return Post[] */
+    public function findPopular(int $limit = 5): array
+    {
+        return $this->createQueryBuilder('p')
+            ->leftJoin('p.auteur', 'u')->addSelect('u')
+            ->andWhere('p.isHidden = 0')
+            ->orderBy('p.nbViews', 'DESC')
+            ->addOrderBy('p.nbLikes', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
     public function findOneWithComments(int $id, bool $includeHidden = false): ?Post
     {
         $qb = $this->createQueryBuilder('p')
@@ -84,18 +97,23 @@ class PostRepository extends ServiceEntityRepository
     /**
      * @return array{items: Post[], total:int}
      */
-    public function searchConsultationsPaginated(?string $query, ?string $categorie, int $page, int $perPage = 6, ?string $sortBy = 'recent', bool $includeHidden = false): array
+    public function searchConsultationsPaginated(?string $query, ?string $categorie, int $page, int $perPage = 6, ?string $sortBy = 'recent', bool $includeHidden = false, string $visibilityFilter = 'all'): array
     {
         $page = max(1, $page);
         $offset = ($page - 1) * $perPage;
 
-        // Base query without sorting
         $baseQb = $this->createQueryBuilder('p')
             ->leftJoin('p.auteur', 'u')->addSelect('u');
 
+        // Visibility filter
         if (!$includeHidden) {
             $baseQb->andWhere('p.isHidden = 0');
+        } elseif ($visibilityFilter === 'hidden') {
+            $baseQb->andWhere('p.isHidden = 1');
+        } elseif ($visibilityFilter === 'visible') {
+            $baseQb->andWhere('p.isHidden = 0');
         }
+        // 'all' + includeHidden = no filter
 
         if ($query !== null && $query !== '') {
             $baseQb->andWhere($baseQb->expr()->orX(

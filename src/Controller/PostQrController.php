@@ -12,19 +12,12 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Security\Core\Exception\AccessDeniedException;
-use App\Entity\User;
 
 final class PostQrController extends AbstractController
 {
     #[Route('/consultation/{id}/qr', name: 'app_post_qr', requirements: ['id' => '\d+'], methods: ['GET'])]
     public function qr(int $id, PostRepository $posts): Response
     {
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            throw new AccessDeniedException('Connexion requise.');
-        }
-
         $post = $posts->find($id);
         if (!$post || $post->isHidden()) {
             throw $this->createNotFoundException('Publication introuvable.');

@@ -23,8 +23,8 @@ final class ForumReportController extends AbstractController
         if (!$user instanceof \App\Entity\User) {
             throw new AccessDeniedException('Vous devez être connecté.');
         }
-        if (!\in_array($user->getRole(), ['Patient', 'Psychologue', 'Admin'], true)) {
-            throw new AccessDeniedException('Accès interdit.');
+        if (!\in_array($user->getRole(), ['Patient', 'Psychologue'], true)) {
+            throw new AccessDeniedException('Les administrateurs ne peuvent pas soumettre de signalement.');
         }
 
         return $user;

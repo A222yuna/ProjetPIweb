@@ -1052,9 +1052,31 @@
             .qr-modal h3 { margin: 0 0 1rem; font-family: var(--font-serif); font-size: 1.2rem; }
             .qr-modal img { max-width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); }
             .qr-modal-close { margin-top: 1rem; }
+            /* Force QR SVG colors — prevent dark theme inversion */
+            .qr-modal svg { display:block; background:#fff; }
+            .qr-modal svg rect, .qr-modal svg path { color-scheme: light; }
+            /* Page loader */
+            #page-loader {
+                position: fixed; inset: 0; z-index: 9999;
+                display: flex; align-items: center; justify-content: center;
+                background: rgba(28, 40, 36, 0.45);
+                backdrop-filter: blur(3px);
+                pointer-events: none; opacity: 0;
+                transition: opacity 0.2s;
+            }
+            #page-loader.is-loading { opacity: 1; pointer-events: all; }
+            .loader-bar {
+                width: 56px; height: 56px; border-radius: 50%;
+                border: 4px solid rgba(255,255,255,0.2);
+                border-top-color: var(--accent);
+                animation: loader-spin 0.75s linear infinite;
+                background: transparent;
+            }
+            @keyframes loader-spin {
+                to { transform: rotate(360deg); }
+            }
             /* Anonymous toggle in forms */
-            .anon-toggle {
-                display: flex; align-items: flex-start; gap: 0.6rem;
+            .anon-toggle {                display: flex; align-items: flex-start; gap: 0.6rem;
                 padding: 0.85rem 1rem; background: var(--bg-pattern);
                 border-radius: var(--radius-sm); border: 1px solid var(--border);
                 margin: 1rem 0;
@@ -1407,5 +1429,45 @@
         <main class="wrap">
             {% block body %}{% endblock %}
         </main>
+
+        {# Global page loader #}
+        <div id="page-loader" aria-hidden="true">
+            <div style="background:var(--surface);border-radius:var(--radius);padding:1.75rem 2rem;display:flex;flex-direction:column;align-items:center;gap:0.85rem;box-shadow:0 8px 40px rgba(28,40,36,0.18);">
+                <div class="loader-bar"></div>
+                <span style="font-size:0.875rem;color:var(--muted);font-weight:500">Chargement…</span>
+            </div>
+        </div>
+
+        <script>
+        (function () {
+            var loader = document.getElementById('page-loader');
+            if (!loader) return;
+
+            function showLoader() { loader.classList.add('is-loading'); }
+            function hideLoader() { loader.classList.remove('is-loading'); }
+
+            // Show on regular link navigation (not buttons/forms/anchors)
+            document.addEventListener('click', function (e) {
+                var a = e.target.closest('a[href]');
+                if (!a) return;
+                var href = a.getAttribute('href');
+                if (!href || href.startsWith('#') || href.startsWith('javascript') || a.target === '_blank') return;
+                if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+                showLoader();
+            });
+
+            // Show on form submit
+            document.addEventListener('submit', function () { showLoader(); });
+
+            // Hide when page is fully loaded or on turbo navigation
+            window.addEventListener('pageshow', hideLoader);
+            document.addEventListener('turbo:load', hideLoader);
+            document.addEventListener('turbo:render', hideLoader);
+
+            // Pulse animation for async fetch operations — expose globally
+            window.loaderShow = showLoader;
+            window.loaderHide = hideLoader;
+        }());
+        </script>
             </body>
 </html>

@@ -105,7 +105,6 @@
                                             <input type="hidden" name="_token" value="{{ csrf_token('resolve_report_' ~ report.id) }}">
                                             <button class="btn btn-sm btn-outline-secondary" name="action" value="dismissed">Dismiss</button>
                                             <button class="btn btn-sm btn-outline-warning" name="action" value="hidden">Hide</button>
-                                            <button class="btn btn-sm btn-outline-success" name="action" value="unhidden">Unhide</button>
                                             <button class="btn btn-sm btn-outline-danger" name="action" value="deleted">Delete</button>
                                         </form>
                                     {% endif %}

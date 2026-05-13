@@ -20,21 +20,48 @@ final class ForumAdminController extends AbstractController
     #[Route('', name: 'app_admin_module_forum', methods: ['GET'])]
     public function listPosts(Request $request, PostRepository $posts): Response
     {
-        $q = $request->query->getString('q');
-        $cat = $request->query->getString('categorie');
-        $sort = $request->query->getString('sort', 'recent');
-        $page = max(1, $request->query->getInt('page', 1));
+        $q      = $request->query->getString('q');
+        $cat    = $request->query->getString('categorie');
+        $sort   = $request->query->getString('sort', 'recent');
+        $filter = $request->query->getString('filter', 'all'); // 'all' | 'hidden' | 'visible'
+        $page   = max(1, $request->query->getInt('page', 1));
 
-        $result = $posts->searchConsultationsPaginated($q, $cat, $page, 15, $sort, true);
+        // includeHidden always true so admin sees everything; we filter in-query via $filter
+        $result = $posts->searchConsultationsPaginated($q, $cat, $page, 15, $sort, true, $filter);
 
         return $this->render('admin/forum/posts.html.twig', [
-            'posts' => $result['items'],
-            'q' => $q,
-            'cat' => $cat,
-            'sort' => $sort,
-            'page' => $page,
+            'posts'       => $result['items'],
+            'q'           => $q,
+            'cat'         => $cat,
+            'sort'        => $sort,
+            'filter'      => $filter,
+            'page'        => $page,
             'total_pages' => (int) ceil($result['total'] / 15),
+            'total'       => $result['total'],
         ]);
+    }
+
+    #[Route('/post/{id}/toggle-visibility', name: 'app_admin_forum_post_toggle_visibility', methods: ['POST'])]
+    public function togglePostVisibility(int $id, Request $request, PostRepository $posts, EntityManagerInterface $em): Response
+    {
+        $post = $posts->find($id);
+        if (!$post) {
+            throw $this->createNotFoundException();
+        }
+
+        if ($this->isCsrfTokenValid('toggle_visibility_' . $post->getId(), (string) $request->request->get('_token'))) {
+            $admin = $this->getUser();
+            if ($post->isHidden()) {
+                $post->setIsHidden(false)->setHiddenAt(null)->setHiddenBy(null);
+                $this->addFlash('success', 'Publication rendue visible.');
+            } else {
+                $post->setIsHidden(true)->setHiddenAt(new \DateTime())->setHiddenBy($admin instanceof \App\Entity\User ? $admin : null);
+                $this->addFlash('success', 'Publication masquée.');
+            }
+            $em->flush();
+        }
+
+        return $this->redirect($request->headers->get('referer') ?? $this->generateUrl('app_admin_module_forum'));
     }
 
     #[Route('/comments', name: 'app_admin_forum_comments', methods: ['GET'])]
@@ -129,7 +156,7 @@ final class ForumAdminController extends AbstractController
         }
 
         $action = $request->request->getString('action', ForumReport::ACTION_DISMISSED);
-        $now = new \DateTimeImmutable();
+        $now = new \DateTime();
         $admin = $this->getUser();
         if (!$admin instanceof \App\Entity\User) {
             throw $this->createAccessDeniedException();

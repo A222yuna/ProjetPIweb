@@ -4,15 +4,19 @@ namespace App\Controller;
 
 use App\Entity\ForumNotification;
 use App\Entity\Post;
+use App\Entity\PostReaction;
 use App\Entity\Commentaire;
+use App\Service\GeminiSummarizer;
 use App\Form\CommentaireType;
 use App\Form\PostConsultationFormType;
 use App\Repository\CommentaireRepository;
 use App\Repository\PostRepository;
+use App\Repository\PostReactionRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -163,6 +167,7 @@ final class ConsultationController extends AbstractController
             'category_suggestions' => $categorySuggestions,
             'page' => $page,
             'total_pages' => $totalPages,
+            'popular_posts' => $posts->findPopular(5),
         ]);
     }
 
@@ -172,6 +177,7 @@ final class ConsultationController extends AbstractController
         Request $request,
         PostRepository $posts,
         CommentaireRepository $commentaires,
+        PostReactionRepository $reactions,
         EntityManagerInterface $em,
     ): Response
     {
@@ -180,6 +186,20 @@ final class ConsultationController extends AbstractController
         if (!$post) {
             throw $this->createNotFoundException('Publication introuvable.');
         }
+
+        // Increment view count (once per session per post)
+        $session = $request->getSession();
+        $viewedPosts = $session->get('viewed_posts', []);
+        if (!in_array($id, $viewedPosts)) {
+            $post->incrementViews();
+            $viewedPosts[] = $id;
+            $session->set('viewed_posts', $viewedPosts);
+            $em->flush();
+        }
+
+        // Reactions
+        $reactionCounts = $reactions->countByEmoji($post);
+        $userReaction = $reactions->findByPostAndUser($post, $user);
 
         $comment = new Commentaire();
         $comment->setPost($post);
@@ -226,6 +246,9 @@ final class ConsultationController extends AbstractController
             'commentForm' => $form,
             'commentFormOpen' => $form->isSubmitted() && !$form->isValid(),
             'replyTarget' => $comment->getParent(),
+            'reactionCounts' => $reactionCounts,
+            'userReaction' => $userReaction?->getEmoji(),
+            'popular_posts' => $posts->findPopular(5),
         ]);
     }
 
@@ -271,6 +294,41 @@ final class ConsultationController extends AbstractController
         }
 
         return $this->redirectToRoute('app_post_show', ['id' => $id]);
+    }
+
+    #[Route('/consultation/{id}/summary', name: 'app_post_summary', methods: ['POST'])]
+    public function summarizePost(
+        int $id,
+        Request $request,
+        PostRepository $posts,
+        GeminiSummarizer $geminiSummarizer,
+    ): JsonResponse {
+        $this->requireForumRole();
+        $post = $posts->find($id);
+
+        if (!$post) {
+            return $this->json(['message' => 'Publication introuvable.'], Response::HTTP_NOT_FOUND);
+        }
+
+        $token = $request->request->getString('_token');
+        if (!$this->isCsrfTokenValid('post_summary_' . $post->getId(), $token)) {
+            return $this->json(['message' => 'Requete invalide (CSRF).'], Response::HTTP_FORBIDDEN);
+        }
+
+        try {
+            $summary = $geminiSummarizer->summarizePost(
+                (string) $post->getTitre(),
+                (string) $post->getContenu()
+            );
+        } catch (\RuntimeException $e) {
+            return $this->json(['message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+        } catch (\Throwable $e) {
+            return $this->json(['message' => 'Erreur Gemini. Reessayez dans quelques instants.'], Response::HTTP_BAD_GATEWAY);
+        }
+
+        return $this->json([
+            'summary' => $summary,
+        ]);
     }
 
     #[Route('/consultation/{id}/edit', name: 'app_post_edit', methods: ['GET', 'POST'])]
@@ -449,6 +507,51 @@ final class ConsultationController extends AbstractController
         }
 
         return $this->redirectToRoute('app_post_show', ['id' => $postId]);
+    }
+
+    #[Route('/consultation/{id}/react', name: 'app_post_react', methods: ['POST'])]
+    public function react(
+        int $id,
+        Request $request,
+        PostRepository $posts,
+        PostReactionRepository $reactions,
+        EntityManagerInterface $em,
+    ): JsonResponse {
+        $user = $this->requireForumRole();
+        $post = $posts->find($id);
+        if (!$post) {
+            return $this->json(['error' => 'Post not found'], 404);
+        }
+
+        $emoji = $request->request->getString('emoji');
+        if (!in_array($emoji, PostReaction::EMOJIS, true)) {
+            return $this->json(['error' => 'Invalid emoji'], 400);
+        }
+
+        $existing = $reactions->findByPostAndUser($post, $user);
+
+        if ($existing) {
+            if ($existing->getEmoji() === $emoji) {
+                // Same emoji — remove reaction (toggle off)
+                $em->remove($existing);
+                $activeEmoji = null;
+            } else {
+                // Different emoji — switch
+                $existing->setEmoji($emoji);
+                $activeEmoji = $emoji;
+            }
+        } else {
+            $reaction = (new PostReaction())->setPost($post)->setUser($user)->setEmoji($emoji);
+            $em->persist($reaction);
+            $activeEmoji = $emoji;
+        }
+
+        $em->flush();
+
+        return $this->json([
+            'counts' => $reactions->countByEmoji($post),
+            'userReaction' => $activeEmoji,
+        ]);
     }
 
     #[Route('/mentions-legales', name: 'app_mentions_legales')]

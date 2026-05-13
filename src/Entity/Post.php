@@ -47,6 +47,9 @@ class Post
     #[ORM\Column(name: 'nb_likes', options: ['default' => 0])]
     private int $nbLikes = 0;
 
+    #[ORM\Column(name: 'nb_views', options: ['default' => 0])]
+    private int $nbViews = 0;
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $date = null;
 
@@ -142,17 +145,11 @@ class Post
         return $this;
     }
 
-    public function getNbLikes(): int
-    {
-        return $this->nbLikes;
-    }
-
-    public function setNbLikes(int $nbLikes): static
-    {
-        $this->nbLikes = $nbLikes;
-
-        return $this;
-    }
+    public function getNbLikes(): int { return $this->nbLikes; }
+    public function setNbLikes(int $nbLikes): static { $this->nbLikes = $nbLikes; return $this; }
+    public function getNbViews(): int { return $this->nbViews; }
+    public function setNbViews(int $nbViews): static { $this->nbViews = $nbViews; return $this; }
+    public function incrementViews(): static { $this->nbViews++; return $this; }
 
     public function getImageUrl(): ?string
     {

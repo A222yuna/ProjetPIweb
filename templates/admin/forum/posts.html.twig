@@ -3,97 +3,221 @@
 {% block title %}Gestion du Forum — Publications{% endblock %}
 
 {% block admin_body %}
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Gestion du Forum : Publications</h1>
+<style>
+    .forum-admin-table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+    .forum-admin-table thead th {
+        padding: 0.75rem 1rem; font-weight: 600; font-size: 0.8125rem;
+        text-transform: uppercase; letter-spacing: 0.05em;
+        background: #f4f2f9; border-bottom: 2px solid #e0daea;
+        white-space: nowrap; color: #4a3f6b;
+    }
+    .forum-admin-table tbody td { padding: 0.9rem 1rem; border-bottom: 1px solid #ede9f5; vertical-align: middle; }
+    .forum-admin-table tbody tr:last-child td { border-bottom: none; }
+    .forum-admin-table tbody tr:hover td { background: #faf8ff; }
+    .forum-admin-table tbody tr.is-hidden-row td { background: #fff8f0; opacity: 0.85; }
+    .forum-admin-table tbody tr.is-hidden-row:hover td { background: #fff3e6; opacity: 1; }
+
+    .col-date   { width: 110px; white-space: nowrap; color: #666; font-size: 0.85rem; }
+    .col-title  { min-width: 200px; }
+    .col-author { width: 180px; }
+    .col-cat    { width: 200px; }
+    .col-stats  { width: 90px; }
+    .col-status { width: 100px; }
+    .col-action { width: 180px; white-space: nowrap; }
+
+    .post-title-link { font-weight: 600; color: #5a3fa0; text-decoration: none; }
+    .post-title-link:hover { color: #3d2a7a; text-decoration: underline; }
+    .hidden-badge {
+        display: inline-flex; align-items: center; gap: 0.25rem;
+        padding: 0.2rem 0.55rem; border-radius: 999px; font-size: 0.72rem;
+        font-weight: 700; background: #fde8d0; color: #7a3a10;
+        text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .visible-badge {
+        display: inline-flex; align-items: center; gap: 0.25rem;
+        padding: 0.2rem 0.55rem; border-radius: 999px; font-size: 0.72rem;
+        font-weight: 700; background: #d0f0e8; color: #1a6b4a;
+        text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .badge-cat {
+        display: inline-block; padding: 0.25rem 0.6rem; border-radius: 999px;
+        font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em;
+        text-transform: uppercase; background: #ede9f5; color: #4a3f6b; white-space: nowrap;
+    }
+    .badge-role { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; background: #d0f0e8; color: #1a6b4a; margin-top: 0.2rem; }
+    .badge-role.psy   { background: #e0d8f5; color: #4a3f6b; }
+    .badge-role.admin { background: #fde8d0; color: #7a3a10; }
+    .stat-pill { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.875rem; }
+
+    .btn-action {
+        display: inline-flex; align-items: center; gap: 0.25rem;
+        padding: 0.3rem 0.65rem; border-radius: 6px; font-size: 0.8rem;
+        font-weight: 600; border: 1px solid; cursor: pointer; text-decoration: none;
+        transition: background 0.15s; white-space: nowrap; background: transparent;
+    }
+    .btn-unhide { border-color: #a8d5c2; color: #1a6b4a; }
+    .btn-unhide:hover { background: #d0f0e8; }
+    .btn-hide   { border-color: #f5c2c7; color: #842525; }
+    .btn-hide:hover { background: #fdeaea; }
+    .btn-delete { border-color: #f5c2c7; background: #fff5f5; color: #842525; }
+    .btn-delete:hover { background: #fdeaea; border-color: #e2b0b0; }
+
+    .admin-tabs { display: flex; gap: 0; margin-bottom: 1.5rem; border-bottom: 2px solid #e0daea; }
+    .admin-tab {
+        padding: 0.6rem 1.25rem; font-size: 0.9rem; font-weight: 600;
+        color: #7a6b9a; text-decoration: none; border-bottom: 2px solid transparent;
+        margin-bottom: -2px; transition: color 0.15s, border-color 0.15s;
+    }
+    .admin-tab:hover { color: #4a3f6b; }
+    .admin-tab.active { color: #5a3fa0; border-bottom-color: #5a3fa0; }
+    .admin-tab .tab-count {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px;
+        font-size: 0.7rem; font-weight: 700; background: #ede9f5; color: #4a3f6b; margin-left: 0.4rem;
+    }
+    .admin-tab.active .tab-count { background: #5a3fa0; color: #fff; }
+
+    .admin-search-bar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; padding: 1.25rem 1.5rem; background: #fff; border: 1px solid #e0daea; border-radius: 10px; margin-bottom: 1.5rem; }
+    .admin-search-bar input, .admin-search-bar select { padding: 0.5rem 0.85rem; border: 1px solid #d0cce0; border-radius: 7px; font-size: 0.9375rem; background: #faf8ff; color: #1c2824; min-width: 180px; }
+    .admin-search-bar input:focus, .admin-search-bar select:focus { outline: 2px solid #7C6BA0; border-color: #7C6BA0; }
+    .btn-filter { padding: 0.5rem 1.25rem; border-radius: 7px; font-size: 0.9375rem; font-weight: 600; background: #7C6BA0; color: #fff; border: none; cursor: pointer; transition: background 0.15s; }
+    .btn-filter:hover { background: #5a3fa0; }
+    .btn-reset { color: #7C6BA0; font-size: 0.9rem; text-decoration: none; }
+    .btn-reset:hover { text-decoration: underline; }
+
+    .table-card { background: #fff; border: 1px solid #e0daea; border-radius: 10px; overflow: hidden; }
+    .table-scroll { overflow-x: auto; }
+    .pagination-row { display: flex; gap: 0.35rem; justify-content: center; padding: 1rem; border-top: 1px solid #e0daea; }
+    .page-btn { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 7px; font-size: 0.875rem; font-weight: 600; border: 1px solid #d0cce0; background: #faf8ff; color: #4a3f6b; text-decoration: none; transition: background 0.15s; }
+    .page-btn:hover, .page-btn.active { background: #7C6BA0; border-color: #7C6BA0; color: #fff; }
+</style>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 style="font-size:1.75rem;font-weight:700;margin:0">📋 Publications du forum</h1>
+        <span class="badge-cat" style="font-size:0.85rem;padding:0.4rem 0.9rem">{{ total }} résultat(s)</span>
     </div>
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <form method="get" class="row g-3">
-                <div class="col-md-5">
-                    <input type="text" name="q" value="{{ q }}" placeholder="Rechercher par titre ou contenu..." class="form-control">
-                </div>
-                <div class="col-md-3">
-                    <select name="sort" class="form-select">
-                        <option value="recent" {{ sort == 'recent' ? 'selected' : '' }}>Plus récents</option>
-                        <option value="likes" {{ sort == 'likes' ? 'selected' : '' }}>Plus aimés</option>
-                        <option value="comments" {{ sort == 'comments' ? 'selected' : '' }}>Plus commentés</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <button type="submit" class="btn btn-primary">Filtrer</button>
-                    {% if q or sort != 'recent' %}
-                        <a href="{{ path('app_admin_module_forum') }}" class="btn btn-link">Réinitialiser</a>
-                    {% endif %}
-                </div>
-            </form>
-        </div>
+    {# Tabs #}
+    <div class="admin-tabs">
+        <a href="{{ path('app_admin_module_forum', {q: q, sort: sort, filter: 'all'}) }}"
+           class="admin-tab {{ filter == 'all' ? 'active' : '' }}">
+            Toutes
+        </a>
+        <a href="{{ path('app_admin_module_forum', {q: q, sort: sort, filter: 'visible'}) }}"
+           class="admin-tab {{ filter == 'visible' ? 'active' : '' }}">
+            ✅ Visibles
+        </a>
+        <a href="{{ path('app_admin_module_forum', {q: q, sort: sort, filter: 'hidden'}) }}"
+           class="admin-tab {{ filter == 'hidden' ? 'active' : '' }}">
+            🚫 Masquées
+            {% set hidden_count = posts|filter(p => p.isHidden)|length %}
+            {% if filter != 'hidden' and hidden_count > 0 %}
+                <span class="tab-count">{{ hidden_count }}</span>
+            {% endif %}
+        </a>
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Date</th>
-                            <th>Titre</th>
-                            <th>Auteur</th>
-                            <th>Catégorie</th>
-                            <th>Stats</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for post in posts %}
-                            <tr>
-                                <td>{{ post.date|date('d/m/Y H:i') }}</td>
-                                <td>
-                                    <a href="{{ path('app_post_show', {id: post.id}) }}" target="_blank" class="text-decoration-none">
-                                        {{ post.titre|length > 50 ? post.titre|slice(0, 50) ~ '...' : post.titre }}
-                                    </a>
-                                </td>
-                                <td>
-                                    {% if post.auteur %}
-                                        {{ post.auteur.prenom }} {{ post.auteur.nom }}
-                                        <span class="badge bg-info text-dark">{{ post.auteurRole }}</span>
-                                    {% else %}
-                                        <span class="text-muted italic">Anonyme</span>
-                                    {% endif %}
-                                </td>
-                                <td><span class="badge bg-secondary">{{ post.categorie }}</span></td>
-                                <td>
-                                    <span title="Likes" class="me-2">❤️ {{ post.nbLikes }}</span>
-                                    <span title="Commentaires">💬 {{ post.commentaires|length }}</span>
-                                </td>
-                                <td>
-                                    <form method="post" action="{{ path('app_admin_forum_post_delete', {id: post.id}) }}" onsubmit="return confirm('Supprimer définitivement cette publication et tous ses commentaires ?');" class="d-inline">
+    <form method="get" class="admin-search-bar">
+        <input type="hidden" name="filter" value="{{ filter }}">
+        <input type="text" name="q" value="{{ q }}" placeholder="Rechercher par titre ou contenu…">
+        <select name="sort">
+            <option value="recent"   {{ sort == 'recent'   ? 'selected' : '' }}>Plus récents</option>
+            <option value="likes"    {{ sort == 'likes'    ? 'selected' : '' }}>Plus aimés</option>
+            <option value="comments" {{ sort == 'comments' ? 'selected' : '' }}>Plus commentés</option>
+        </select>
+        <button type="submit" class="btn-filter">Filtrer</button>
+        {% if q or sort != 'recent' %}
+            <a href="{{ path('app_admin_module_forum', {filter: filter}) }}" class="btn-reset">Réinitialiser</a>
+        {% endif %}
+    </form>
+
+    <div class="table-card">
+        <div class="table-scroll">
+            <table class="forum-admin-table">
+                <thead>
+                    <tr>
+                        <th class="col-date">Date</th>
+                        <th class="col-title">Titre</th>
+                        <th class="col-author">Auteur</th>
+                        <th class="col-cat">Catégorie</th>
+                        <th class="col-stats">Stats</th>
+                        <th class="col-status">Statut</th>
+                        <th class="col-action">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for post in posts %}
+                        <tr class="{{ post.isHidden ? 'is-hidden-row' : '' }}">
+                            <td class="col-date">
+                                {{ post.date|date('d/m/Y') }}<br>
+                                <span style="color:#999;font-size:0.8rem">{{ post.date|date('H:i') }}</span>
+                            </td>
+                            <td class="col-title">
+                                <a href="{{ path('app_post_show', {id: post.id}) }}" target="_blank" class="post-title-link">
+                                    {{ post.titre|length > 55 ? post.titre|slice(0, 55) ~ '…' : post.titre }}
+                                </a>
+                                {% if post.isAnonymous %}<br><span style="font-size:0.78rem;color:#999">👤 Anonyme</span>{% endif %}
+                                {% if post.isHidden %}
+                                    <br><span style="font-size:0.78rem;color:#b05a10">
+                                        Masqué le {{ post.hiddenAt ? post.hiddenAt|date('d/m/Y') : '?' }}
+                                        {% if post.hiddenBy %} par {{ post.hiddenBy.prenom }}{% endif %}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="col-author">
+                                {% if post.auteur %}
+                                    <span style="font-weight:500">{{ post.auteur.prenom }} {{ post.auteur.nom }}</span><br>
+                                    <span class="badge-role {% if post.auteurRole == 'Psychologue' %}psy{% elseif post.auteurRole == 'Admin' %}admin{% endif %}">
+                                        {{ post.auteurRole }}
+                                    </span>
+                                {% else %}
+                                    <span style="color:#999">Anonyme</span>
+                                {% endif %}
+                            </td>
+                            <td class="col-cat"><span class="badge-cat">{{ post.categorie }}</span></td>
+                            <td class="col-stats">
+                                <div class="stat-pill">❤️ {{ post.nbLikes }}</div>
+                                <div class="stat-pill">💬 {{ post.commentaires|length }}</div>
+                            </td>
+                            <td class="col-status">
+                                {% if post.isHidden %}
+                                    <span class="hidden-badge">🚫 Masqué</span>
+                                {% else %}
+                                    <span class="visible-badge">✅ Visible</span>
+                                {% endif %}
+                            </td>
+                            <td class="col-action">
+                                <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+                                    {# Delete #}
+                                    <form method="post" action="{{ path('app_admin_forum_post_delete', {id: post.id}) }}"
+                                          onsubmit="return confirm('Supprimer définitivement cette publication ?');" style="display:contents">
                                         <input type="hidden" name="_token" value="{{ csrf_token('delete_post_' ~ post.id) }}">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Supprimer</button>
+                                        <button type="submit" class="btn-action btn-delete">🗑️ Supprimer</button>
                                     </form>
-                                </td>
-                            </tr>
-                        {% else %}
-                            <tr>
-                                <td colspan="6" class="text-center py-4 text-muted">Aucune publication trouvée.</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="7" style="text-align:center;padding:2.5rem;color:#999">
+                                {% if filter == 'hidden' %}
+                                    Aucune publication masquée. 🎉
+                                {% else %}
+                                    Aucune publication trouvée.
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        
+
         {% if total_pages > 1 %}
-            <div class="card-footer bg-white">
-                <nav aria-label="Pagination">
-                    <ul class="pagination pagination-sm mb-0 justify-content-center">
-                        {% for p in 1..total_pages %}
-                            <li class="page-item {{ p == page ? 'active' : '' }}">
-                                <a class="page-link" href="{{ path('app_admin_module_forum', {page: p, q: q, sort: sort}) }}">{{ p }}</a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </nav>
+            <div class="pagination-row">
+                {% for p in 1..total_pages %}
+                    <a class="page-btn {% if p == page %}active{% endif %}"
+                       href="{{ path('app_admin_module_forum', {page: p, q: q, sort: sort, filter: filter}) }}">{{ p }}</a>
+                {% endfor %}
             </div>
         {% endif %}
     </div>

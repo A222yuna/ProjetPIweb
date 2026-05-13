@@ -22,7 +22,9 @@
         {% if level < 4 %}
             <a href="{{ path('app_post_show', { id: comment.post.id, reply_to: comment.id }) }}" class="comment-action-btn">↩ Répondre</a>
         {% endif %}
-        <a href="{{ path('app_comment_report', { id: comment.id }) }}" class="comment-action-btn">🚩 Signaler</a>
+        {% if not is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('app_comment_report', { id: comment.id }) }}" class="comment-action-btn">🚩 Signaler</a>
+        {% endif %}
         {% if app.user and comment.auteur and app.user.id == comment.auteur.id %}
             <a href="{{ path('app_comment_edit', { id: comment.id }) }}" class="comment-action-btn" style="margin-left:auto">✏️ Modifier</a>
             <form method="post" action="{{ path('app_comment_delete', {id: comment.id}) }}"
