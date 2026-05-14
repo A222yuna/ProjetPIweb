@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes favoris — Forum{% endblock %}
+
+{% block body %}
+    <p class="muted back-link"><a href="{{ path('app_consultation') }}">← Retour au forum</a></p>
+
+    <h1>Mes publications enregistrées</h1>
+    <p class="muted">Retrouvez ici les posts que vous avez sauvegardés.</p>
+
+    {% if saved is empty %}
+        <div class="card empty-state">
+            <p class="muted" style="margin:0 0 1rem">Aucun favori pour le moment.</p>
+            <a href="{{ path('app_consultation') }}" class="btn btn-outline">Explorer le forum</a>
+        </div>
+    {% else %}
+        <div class="post-grid">
+            {% for post in saved %}
+                <article class="post-card">
+                    <div class="post-card-body">
+                        <h2><a href="{{ path('app_post_show', { id: post.id }) }}">{{ post.titre }}</a></h2>
+                        <p class="post-card-meta">
+                            {{ post.categorie }} · {{ post.auteurRole }}
+                            {% if post.auteur %} · {{ post.auteur.prenom }} {{ post.auteur.nom }}{% endif %}
+                        </p>
+                        <p class="post-card-snippet">{{ post.contenu|length > 220 ? post.contenu|slice(0, 220) ~ '…' : post.contenu }}</p>
+                        <div class="post-card-footer">
+                            <span>{{ post.date|date('d/m/Y H:i') }}</span>
+                            <span>{{ post.nbLikes }} j'aime</span>
+                        </div>
+                        <div class="post-card-actions" style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+                            <a href="{{ path('app_post_show', { id: post.id }) }}" class="btn btn-outline btn-sm">👁️ Voir</a>
+                            <form method="post" action="{{ path('app_post_save_toggle', { id: post.id }) }}" style="display:inline-block">
+                                <input type="hidden" name="_token" value="{{ csrf_token('save_post_' ~ post.id) }}">
+                                <button type="submit" class="btn btn-outline btn-sm">★ Retirer</button>
+                            </form>
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}
+

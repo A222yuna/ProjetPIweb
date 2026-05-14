@@ -1,83 +1,290 @@
 {% extends 'base.html.twig' %}
 
 {% block body_attr %} class="layout-consultation"{% endblock %}
-
-{% block title %}Consultations &amp; publications — Cabinet de psychologie{% endblock %}
+{% block title %}Forum — Cabinet de psychologie{% endblock %}
 
 {% block body %}
-    {% set cover_images = [
-        'https://images.unsplash.com/photo-1573497019940-1c28c88b0f9e?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1516307365426-bea591f05011?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1499202184017-35f4930cdf80?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80',
-    ] %}
+<style>
+    .forum-hero {
+        background: linear-gradient(135deg, var(--surface) 0%, var(--accent-soft) 100%);
+        border: 1px solid var(--border); border-radius: var(--radius);
+        padding: 2rem 2rem 1.75rem; margin-bottom: 2rem; box-shadow: var(--shadow);
+        display: flex; gap: 2rem; align-items: center; flex-wrap: wrap;
+    }
+    .forum-hero-text { flex: 1; min-width: 240px; }
+    .forum-hero-text h1 { margin: 0 0 0.5rem; }
+    .forum-hero-text p { margin: 0; max-width: 38rem; }
+    .forum-hero-img { flex-shrink: 0; width: 180px; height: 130px; object-fit: cover; border-radius: var(--radius-sm); opacity: 0.9; }
+    @media (max-width: 600px) { .forum-hero-img { display: none; } }
 
-    <div class="page-head-split">
-        <div>
-            <p class="page-eyebrow">Espace consultations</p>
-            <h1>Rechercher &amp; publier</h1>
-            <p class="page-lead muted" style="margin-bottom:0">
-                Publications liées à la table <code>post</code> : colonnes <code>titre</code>, <code>contenu</code>, <code>categorie</code>,
-                <code>auteur_id_user</code>, <code>auteur_role</code>, <code>nb_likes</code>, <code>date</code>.
-                La recherche porte sur le titre et le contenu ; la publication ouvre une fenêtre (popup) avec le formulaire Symfony.
-            </p>
+    .forum-toolbar {
+        display: flex; flex-wrap: wrap; gap: 0.75rem;
+        align-items: flex-end; margin-bottom: 1.75rem;
+    }
+    .forum-toolbar form { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: flex-end; flex: 1; }
+    .forum-field { display: flex; flex-direction: column; gap: 0.25rem; }
+    .forum-field label { font-size: 0.8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .forum-field input, .forum-field select {
+        padding: 0.5rem 0.75rem; border: 1px solid var(--border);
+        border-radius: var(--radius-sm); font-family: inherit; font-size: 0.9375rem;
+        background: var(--surface); color: var(--text); min-width: 140px;
+    }
+    .forum-field input:focus, .forum-field select:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+    .forum-toolbar-actions { display: flex; gap: 0.5rem; align-items: flex-end; }
+
+    .post-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.25rem;
+    }
+    .post-card {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius); box-shadow: var(--shadow);
+        overflow: hidden; display: flex; flex-direction: column;
+        transition: box-shadow 0.18s, border-color 0.18s;
+        cursor: pointer;
+    }
+    .post-card:hover { box-shadow: 0 8px 28px rgba(42,111,91,0.12); border-color: rgba(42,111,91,0.3); }
+    .post-card-cover {
+        width: 100%; height: 160px; object-fit: cover; display: block;
+        background: var(--accent-soft);
+    }
+    .post-card-cover-placeholder {
+        width: 100%; height: 120px;
+        background: linear-gradient(135deg, var(--accent-soft) 0%, #d4e9e2 100%);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2rem; color: var(--accent);
+    }
+    .post-card-body { padding: 1.1rem 1.25rem; flex: 1; display: flex; flex-direction: column; }
+    .post-card-tags { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+    .post-card-tag {
+        font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
+        text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 999px;
+        background: var(--accent-soft); color: var(--accent);
+    }
+    .post-card-tag.muted { background: var(--bg-pattern); color: var(--muted); }
+    .post-card-body h2 { font-size: 1.05rem; margin: 0 0 0.4rem; line-height: 1.3; }
+    .post-card-body h2 a { color: var(--text); font-weight: 600; }
+    .post-card-body h2 a:hover { color: var(--accent); }
+    .post-card-author { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem; }
+    .post-card-snippet { font-size: 0.9rem; color: var(--muted); line-height: 1.55; flex: 1; margin-bottom: 0.85rem; }
+    .post-card-footer-row {
+        display: flex; align-items: center; justify-content: space-between;
+        font-size: 0.8125rem; color: var(--muted);
+        padding-top: 0.75rem; border-top: 1px solid var(--border);
+        margin-bottom: 0.75rem;
+    }
+    .post-card-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+    .card-action-btn {
+        display: inline-flex; align-items: center; gap: 0.25rem;
+        padding: 0.35rem 0.7rem; border-radius: 999px; font-size: 0.8125rem;
+        font-weight: 500; border: 1px solid var(--border); background: var(--surface);
+        color: var(--text); text-decoration: none; cursor: pointer;
+        transition: background 0.15s, border-color 0.15s, color 0.15s;
+        white-space: nowrap;
+    }
+    .card-action-btn:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+    .card-action-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .card-action-btn.primary:hover { background: var(--accent-hover); }
+    .card-action-btn.danger:hover { background: #fdeaea; border-color: #e2b0b0; color: #842525; }
+
+    .pagination { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; margin-top: 2rem; justify-content: center; }
+    .page-btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 36px; height: 36px; border-radius: 50%; font-size: 0.9rem;
+        font-weight: 600; border: 1px solid var(--border); background: var(--surface);
+        color: var(--text); text-decoration: none; transition: background 0.15s, border-color 0.15s;
+    }
+    .page-btn:hover, .page-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* Popular strip on index */
+    .popular-strip { margin-bottom: 1.75rem; }
+    .popular-strip-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 0.65rem; }
+    .popular-strip-list { display: flex; gap: 0.65rem; flex-wrap: wrap; }
+    .popular-strip-item {
+        display: inline-flex; align-items: center; gap: 0.4rem;
+        padding: 0.4rem 0.85rem; border-radius: 999px;
+        border: 1px solid var(--border); background: var(--surface);
+        font-size: 0.8125rem; font-weight: 500; color: var(--text);
+        text-decoration: none; transition: background 0.15s, border-color 0.15s;
+        white-space: nowrap;
+    }
+    .popular-strip-item:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+    .popular-strip-item .pop-rank { font-size: 0.7rem; font-weight: 700; color: var(--accent); }
+    .skeleton-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem; }
+    .skeleton-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    .skeleton-cover { height: 120px; background: linear-gradient(90deg, var(--bg-pattern) 25%, var(--border) 50%, var(--bg-pattern) 75%); background-size: 200% 100%; animation: shimmer 1.4s ease infinite; }
+    .skeleton-body { padding: 1.1rem 1.25rem; }
+    .skeleton-line { height: 12px; border-radius: 6px; margin-bottom: 0.6rem; background: linear-gradient(90deg, var(--bg-pattern) 25%, var(--border) 50%, var(--bg-pattern) 75%); background-size: 200% 100%; animation: shimmer 1.4s ease infinite; }
+    .skeleton-line.short { width: 40%; }
+    .skeleton-line.medium { width: 70%; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* Back to top */
+    #back-to-top {
+        position: fixed; bottom: 2rem; right: 2rem; z-index: 100;
+        width: 44px; height: 44px; border-radius: 50%;
+        background: var(--accent); color: #fff; border: none; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.1rem; box-shadow: 0 4px 16px rgba(42,111,91,0.35);
+        opacity: 0; transform: translateY(12px);
+        transition: opacity 0.25s, transform 0.25s;
+        pointer-events: none;
+    }
+    #back-to-top.visible { opacity: 1; transform: translateY(0); pointer-events: all; }
+    #back-to-top:hover { background: var(--accent-hover); }
+</style>
+
+    <div class="forum-hero">
+        <div class="forum-hero-text">
+            <p class="page-eyebrow">Espace forum</p>
+            <h1>Forum &amp; échanges</h1>
+            <p class="muted">Partagez vos expériences, posez vos questions et interagissez avec la communauté en toute bienveillance.</p>
         </div>
-        <figure>
-            <img src="https://images.unsplash.com/photo-1573497019940-1c28c88b0f9e?auto=format&fit=crop&w=900&q=80" width="900" height="675" alt="Espace de consultation apaisant" loading="eager" fetchpriority="high">
-        </figure>
+        <img class="forum-hero-img"
+             src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=400&q=75"
+             alt="" aria-hidden="true">
     </div>
 
-    <div class="toolbar-consult">
-        <form class="search-form-consult" method="get" action="{{ path('app_consultation') }}" role="search">
-            <div class="field-inline">
+    <div class="forum-toolbar">
+        <form method="get" action="{{ path('app_consultation') }}" role="search">
+            <div class="forum-field">
                 <label for="q">Recherche</label>
-                <input id="q" type="search" name="q" value="{{ q }}" placeholder="Mots dans le titre ou le texte…" autocomplete="off">
+                <input id="q" type="search" name="q" value="{{ q }}" placeholder="Mots clés…" autocomplete="off">
             </div>
-            <div class="field-inline">
+            <div class="forum-field">
                 <label for="filtre-cat">Catégorie</label>
-                <select id="filtre-cat" name="categorie" aria-label="Filtrer par catégorie">
+                <select id="filtre-cat" name="categorie">
                     <option value="">Toutes</option>
                     {% for c in category_suggestions %}
                         <option value="{{ c }}" {% if filter_categorie == c %}selected{% endif %}>{{ c }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary">Filtrer</button>
-            {% if q or filter_categorie %}
-                <a href="{{ path('app_consultation') }}" class="btn btn-outline">Réinitialiser</a>
+            <div class="forum-field">
+                <label for="sort">Trier par</label>
+                <select id="sort" name="sort">
+                    <option value="recent" {% if sort_by == 'recent' %}selected{% endif %}>Plus récents</option>
+                    <option value="likes" {% if sort_by == 'likes' %}selected{% endif %}>Plus aimés</option>
+                    <option value="comments" {% if sort_by == 'comments' %}selected{% endif %}>Plus commentés</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Filtrer</button>
+            {% if q or filter_categorie or sort_by != 'recent' %}
+                <a href="{{ path('app_consultation') }}" class="btn btn-outline btn-sm">Réinitialiser</a>
             {% endif %}
         </form>
-        <button type="button" class="btn btn-primary" data-open-modal="new-post-dialog">Nouvelle publication</button>
+        <div class="forum-toolbar-actions">
+            {% if app.user %}
+                <a href="{{ path('app_saved_posts') }}" class="btn btn-outline btn-sm">★ Favoris</a>
+            {% endif %}
+            <a href="{{ path('app_post_new') }}" class="btn btn-primary btn-sm">+ Nouvelle publication</a>
+        </div>
     </div>
 
-    <datalist id="consultation-categories">
-        {% for c in category_suggestions %}
-            <option value="{{ c }}"></option>
-        {% endfor %}
-    </datalist>
+    {% set cover_images = [
+        'https://images.unsplash.com/photo-1573497019940-1c28c88b0f9e?auto=format&fit=crop&w=600&q=75',
+        'https://images.unsplash.com/photo-1516307365426-bea591f05011?auto=format&fit=crop&w=600&q=75',
+        'https://images.unsplash.com/photo-1499202184017-35f4930cdf80?auto=format&fit=crop&w=600&q=75',
+        'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=600&q=75',
+        'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=75',
+    ] %}
+
+    {% if popular_posts is not empty %}
+        <div class="popular-strip">
+            <div class="popular-strip-title">🔥 Publications populaires</div>
+            <div class="popular-strip-list">
+                {% for p in popular_posts %}
+                    <a href="{{ path('app_post_show', { id: p.id }) }}" class="popular-strip-item">
+                        <span class="pop-rank">#{{ loop.index }}</span>
+                        {{ p.titre|length > 40 ? p.titre|slice(0,40) ~ '…' : p.titre }}
+                        <span style="color:var(--muted)">· 👁️ {{ p.nbViews }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
 
     {% if posts is empty %}
-        <div class="card empty-state" style="margin-top:0">
+        <div class="card empty-state">
             <p class="muted" style="margin:0 0 1rem">Aucune publication ne correspond à votre recherche.</p>
-            <button type="button" class="btn btn-outline" data-open-modal="new-post-dialog">Publier le premier message</button>
+            <a href="{{ path('app_post_new') }}" class="btn btn-outline">Publier le premier message</a>
         </div>
     {% else %}
-        <div class="post-grid">
+        {# Skeleton shown instantly, hidden once JS runs #}
+        <div class="skeleton-grid" id="skeleton-grid">
+            {% for i in 1..6 %}
+                <div class="skeleton-card">
+                    <div class="skeleton-cover"></div>
+                    <div class="skeleton-body">
+                        <div class="skeleton-line short"></div>
+                        <div class="skeleton-line medium"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line short"></div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="post-grid" id="real-grid" style="display:none">
             {% for post in posts %}
-                {% set cover = cover_images[loop.index0 % cover_images|length] %}
-                <article class="post-card">
-                    <div class="post-card-visual" style="background-image: url('{{ cover }}');" role="img" aria-label=""></div>
+                {% set cover = post.imageUrl
+                    ? (post.imageUrl starts with '/uploads/' ? asset(post.imageUrl) : post.imageUrl)
+                    : cover_images[loop.index0 % cover_images|length] %}
+                <article class="post-card" data-card-link="{{ path('app_post_show', { id: post.id }) }}">
+                    {% if post.imageUrl %}
+                        <img class="post-card-cover" src="{{ cover }}" alt="{{ post.titre }}" loading="lazy">
+                    {% else %}
+                        <div class="post-card-cover-placeholder" aria-hidden="true">💬</div>
+                    {% endif %}
                     <div class="post-card-body">
+                        <div class="post-card-tags">
+                            <span class="post-card-tag">{{ post.categorie }}</span>
+                            <span class="post-card-tag muted">{{ post.auteurRole }}</span>
+                        </div>
                         <h2><a href="{{ path('app_post_show', { id: post.id }) }}">{{ post.titre }}</a></h2>
-                        <p class="post-card-meta">
-                            {{ post.categorie }} · {{ post.auteurRole }}
-                            {% if post.auteur %} · {{ post.auteur.prenom }} {{ post.auteur.nom }}{% endif %}
+                        <p class="post-card-author">
+                            Par
+                            {% if post.isAnonymous %}Anonyme
+                            {% elseif post.auteur %}{{ post.auteur.prenom }} {{ post.auteur.nom }}
+                            {% else %}Anonyme{% endif %}
                         </p>
-                        <p class="post-card-snippet">{{ post.contenu|length > 220 ? post.contenu|slice(0, 220) ~ '…' : post.contenu }}</p>
-                        <div class="post-card-footer">
-                            <span>{{ post.date|date('d/m/Y H:i') }}</span>
-                            <span>{{ post.nbLikes }} j’aime</span>
+                        <p class="post-card-snippet">{{ post.contenu|length > 200 ? post.contenu|slice(0,200) ~ '…' : post.contenu }}</p>
+                        <div class="post-card-footer-row">
+                            <span>{{ post.date|date('d/m/Y') }}</span>
+                            <span style="display:flex;gap:0.75rem">
+                                <span>❤️ <span id="post-card-{{ post.id }}" class="likes-count">{{ post.nbLikes }}</span></span>
+                                <span>💬 {{ post.commentaires|length }}</span>
+                                <span>👁️ {{ post.nbViews }}</span>
+                            </span>
+                        </div>
+                        <div class="post-card-actions">
+                            <a href="{{ path('app_post_show', { id: post.id }) }}#comment-form" class="card-action-btn" title="Commenter">💬</a>
+                            <button type="button" class="card-action-btn like-btn"
+                                    data-like-url="{{ path('app_post_like', { id: post.id }) }}"
+                                    data-likes-counter="post-card-{{ post.id }}"
+                                    title="J'aime">❤️</button>
+                            {% if app.user %}
+                                <form method="post" action="{{ path('app_post_save_toggle', { id: post.id }) }}" style="display:contents">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('save_post_' ~ post.id) }}">
+                                    <button type="submit" class="card-action-btn" title="Enregistrer">
+                                        {{ app.user.savedPosts is defined and (post in app.user.savedPosts) ? '🔖' : '🔖' }}
+                                    </button>
+                                </form>
+                            {% endif %}
+                            {% if app.user and post.auteur and app.user.id == post.auteur.id %}
+                                <a href="{{ path('app_post_edit', { id: post.id }) }}" class="card-action-btn" style="margin-left:auto" title="Modifier">✏️</a>
+                                <form method="post" action="{{ path('app_post_delete', {id: post.id}) }}"
+                                      onsubmit="return confirm('Supprimer cette publication ?');" style="display:contents">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ post.id) }}">
+                                    <button type="submit" class="card-action-btn danger" title="Supprimer">🗑️</button>
+                                </form>
+                            {% elseif is_granted('ROLE_ADMIN') %}
+                                <form method="post" action="{{ path('app_admin_forum_post_delete', {id: post.id}) }}"
+                                      onsubmit="return confirm('Supprimer cette publication ?');" style="display:contents; margin-left:auto">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_post_' ~ post.id) }}">
+                                    <button type="submit" class="card-action-btn danger" style="margin-left:auto" title="Supprimer (Admin)">🗑️</button>
+                                </form>
+                            {% endif %}
                         </div>
                     </div>
                 </article>
@@ -85,42 +292,42 @@
         </div>
     {% endif %}
 
-    <dialog id="new-post-dialog" class="modal-dialog" {% if show_post_modal %}open{% endif %}>
-        <div class="modal-dialog-inner">
-            <div class="modal-head">
-                <h2 id="new-post-title">Nouvelle publication</h2>
-                <button type="button" class="modal-close" data-close-modal="new-post-dialog" aria-label="Fermer">×</button>
-            </div>
-            <p class="muted" style="font-size:0.9rem;margin-top:-0.5rem;margin-bottom:1rem">
-                Donnees enregistrees en base : l auteur est automatiquement l utilisateur connecte.
-            </p>
-            {% set post_action_params = {} %}
-            {% if q is not empty %}{% set post_action_params = post_action_params|merge({ q: q }) %}{% endif %}
-            {% if filter_categorie is not empty %}{% set post_action_params = post_action_params|merge({ categorie: filter_categorie }) %}{% endif %}
-            {{ form_start(form, {
-                action: path('app_consultation', post_action_params),
-                attr: { class: 'stack-form', id: 'consultation-post-form', 'aria-labelledby': 'new-post-title' }
-            }) }}
-                {{ form_errors(form) }}
-                {{ form_row(form.titre) }}
-                {{ form_row(form.categorie) }}
-                {{ form_row(form.contenu) }}
-                <div class="stack-form-actions">
-                    <button type="submit" class="btn btn-primary">Enregistrer</button>
-                    <button type="button" class="btn btn-outline" data-close-modal="new-post-dialog">Annuler</button>
-                </div>
-            {{ form_end(form) }}
-        </div>
-    </dialog>
-
     {% if total_pages > 1 %}
-        <div class="card" style="margin-top:1rem">
-            <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
-                {% for p in 1..total_pages %}
-                    <a class="btn {{ p == page ? 'btn-primary' : 'btn-outline' }} btn-sm"
-                       href="{{ path('app_consultation', { page: p, q: q, categorie: filter_categorie }) }}">{{ p }}</a>
-                {% endfor %}
-            </div>
+        <div class="pagination">
+            {% for p in 1..total_pages %}
+                <a class="page-btn {% if p == page %}active{% endif %}"
+                   href="{{ path('app_consultation', { page: p, q: q, categorie: filter_categorie, sort: sort_by }) }}">{{ p }}</a>
+            {% endfor %}
         </div>
     {% endif %}
+
+<script>
+// Reveal real grid, hide skeleton
+(function() {
+    var skeleton = document.getElementById('skeleton-grid');
+    var grid = document.getElementById('real-grid');
+    if (skeleton && grid) { skeleton.style.display = 'none'; grid.style.display = ''; }
+})();
+
+// Card click
+document.querySelectorAll('[data-card-link]').forEach(function(card) {
+    card.addEventListener('click', function(e) {
+        if (e.target.closest('a,button,form')) return;
+        window.location.href = card.dataset.cardLink;
+    });
+});
+
+// Back to top
+(function() {
+    var btn = document.getElementById('back-to-top');
+    if (!btn) return;
+    window.addEventListener('scroll', function() {
+        btn.classList.toggle('visible', window.scrollY > 400);
+    });
+    btn.addEventListener('click', function() { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+})();
+</script>
+
+<button id="back-to-top" aria-label="Retour en haut">↑</button>
+
 {% endblock %}

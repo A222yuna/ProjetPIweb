@@ -1,0 +1,161 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle publication — Forum{% endblock %}
+
+{% block body %}
+<style>
+    .post-form-wrap { max-width: 760px; margin: 0 auto; }
+
+    /* Image upload zone */
+    .upload-zone {
+        border: 2px dashed var(--border); border-radius: var(--radius);
+        padding: 1.5rem 1.25rem; text-align: center; cursor: pointer;
+        transition: border-color 0.2s, background 0.2s;
+        background: var(--surface); position: relative;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+        border-color: var(--accent); background: var(--accent-soft);
+    }
+    .upload-zone input[type=file] {
+        position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .upload-zone-icon { font-size: 2rem; line-height: 1; margin-bottom: 0.5rem; }
+    .upload-zone-label { font-weight: 600; font-size: 0.9375rem; color: var(--text); }
+    .upload-zone-hint { font-size: 0.8125rem; color: var(--muted); margin-top: 0.25rem; }
+    .upload-zone-preview {
+        display: none; margin-top: 0.75rem;
+        border-radius: var(--radius-sm); overflow: hidden;
+        max-height: 180px; width: 100%; object-fit: cover;
+    }
+    .upload-zone-filename {
+        display: none; margin-top: 0.5rem;
+        font-size: 0.875rem; color: var(--accent); font-weight: 500;
+    }
+
+    /* Anonymous toggle — toggle-switch style */
+    .anon-switch-row {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 1rem; padding: 1rem 1.25rem;
+        border: 1px solid var(--border); border-radius: var(--radius);
+        background: var(--surface); cursor: pointer;
+        transition: border-color 0.2s, background 0.2s;
+    }
+    .anon-switch-row:has(input:checked) {
+        border-color: var(--accent); background: var(--accent-soft);
+    }
+    .anon-switch-row input[type=checkbox] { display: none; }
+    .anon-switch-text { flex: 1; }
+    .anon-switch-text strong { display: block; font-size: 0.9375rem; }
+    .anon-switch-text span { font-size: 0.8125rem; color: var(--muted); }
+    .anon-switch-pill {
+        width: 44px; height: 24px; border-radius: 999px;
+        background: var(--border); position: relative; flex-shrink: 0;
+        transition: background 0.2s;
+    }
+    .anon-switch-pill::after {
+        content: ''; position: absolute; top: 3px; left: 3px;
+        width: 18px; height: 18px; border-radius: 50%;
+        background: #fff; transition: transform 0.2s;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .anon-switch-row:has(input:checked) .anon-switch-pill {
+        background: var(--accent);
+    }
+    .anon-switch-row:has(input:checked) .anon-switch-pill::after {
+        transform: translateX(20px);
+    }
+</style>
+
+    <p class="muted back-link"><a href="{{ path('app_consultation') }}">← Retour au forum</a></p>
+
+    <div class="post-form-wrap">
+        <div class="card">
+            <h1 style="margin:0 0 0.35rem">Nouvelle publication</h1>
+            <p class="muted" style="margin:0 0 1.75rem">Partagez vos questions ou expériences avec la communauté.</p>
+
+            {{ form_start(form, { attr: { class: 'stack-form', enctype: 'multipart/form-data', novalidate: 'novalidate' } }) }}
+                {{ form_row(form.titre) }}
+                {{ form_row(form.categorie) }}
+
+                {# Hidden URL field — kept for controller compatibility #}
+                {{ form_widget(form.imageUrl, { attr: { style: 'display:none', tabindex: '-1' } }) }}
+
+                {# Custom file upload zone #}
+                <div style="margin-bottom:1.25rem">
+                    <label style="display:block;font-size:0.875rem;font-weight:600;margin-bottom:0.5rem">
+                        Image de couverture <span class="muted" style="font-weight:400">(optionnel)</span>
+                    </label>
+                    <div class="upload-zone" id="upload-zone">
+                        {{ form_widget(form.imageFile, { attr: { id: 'post-image-input', accept: 'image/jpeg,image/png,image/webp' } }) }}
+                        <div class="upload-zone-icon">🖼️</div>
+                        <div class="upload-zone-label">Cliquez ou glissez une image ici</div>
+                        <div class="upload-zone-hint">JPG, PNG ou WebP · max 1 Mo</div>
+                        <img id="upload-preview" class="upload-zone-preview" src="" alt="Aperçu">
+                        <div id="upload-filename" class="upload-zone-filename"></div>
+                    </div>
+                    {{ form_errors(form.imageFile) }}
+                </div>
+
+                <div class="emoji-btn-wrapper">
+                    {{ form_label(form.contenu) }}
+                    <button type="button" class="emoji-trigger-btn" data-emoji-picker data-emoji-target="{{ form.contenu.vars.id }}">
+                        😊 <span>Emojis</span>
+                    </button>
+                </div>
+                {{ form_widget(form.contenu) }}
+                {{ form_errors(form.contenu) }}
+
+                {# Anonymous toggle switch #}
+                <div style="margin:1.25rem 0">
+                    <label class="anon-switch-row" for="{{ form.isAnonymous.vars.id }}">
+                        {{ form_widget(form.isAnonymous) }}
+                        <div class="anon-switch-text">
+                            <strong>👤 Publier anonymement</strong>
+                            <span>Votre nom ne sera pas affiché. L'administration peut toujours voir votre identité.</span>
+                        </div>
+                        <div class="anon-switch-pill"></div>
+                    </label>
+                </div>
+
+                <div class="stack-form-actions">
+                    <button type="submit" class="btn btn-primary">✉️ Publier sur le forum</button>
+                    <a href="{{ path('app_consultation') }}" class="btn btn-outline">Annuler</a>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+<script>
+(function () {
+    var zone = document.getElementById('upload-zone');
+    var input = document.getElementById('post-image-input');
+    var preview = document.getElementById('upload-preview');
+    var filename = document.getElementById('upload-filename');
+    if (!zone || !input) return;
+
+    function showPreview(file) {
+        if (!file) return;
+        filename.textContent = file.name;
+        filename.style.display = 'block';
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    input.addEventListener('change', function () {
+        if (input.files && input.files[0]) showPreview(input.files[0]);
+    });
+
+    zone.addEventListener('dragover', function (e) { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', function () { zone.classList.remove('drag-over'); });
+    zone.addEventListener('drop', function (e) {
+        e.preventDefault(); zone.classList.remove('drag-over');
+        var file = e.dataTransfer.files[0];
+        if (file) { input.files = e.dataTransfer.files; showPreview(file); }
+    });
+}());
+</script>
+{% endblock %}

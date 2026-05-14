@@ -2,34 +2,86 @@
 
 namespace App\Controller;
 
+use App\Entity\ForumNotification;
 use App\Entity\Post;
+use App\Entity\PostReaction;
 use App\Entity\Commentaire;
+use App\Service\GeminiSummarizer;
 use App\Form\CommentaireType;
 use App\Form\PostConsultationFormType;
 use App\Repository\CommentaireRepository;
 use App\Repository\PostRepository;
+use App\Repository\PostReactionRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use App\Entity\User;
+use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class ConsultationController extends AbstractController
 {
+    public function __construct(
+        private readonly HttpClientInterface $httpClient,
+    ) {
+    }
+
+    private function filterBadWords(?string $text): string
+    {
+        if (!$text) return '';
+
+        try {
+            $response = $this->httpClient->request('GET', 'https://www.purgomalum.com/service/json', [
+                'query' => ['text' => $text]
+            ]);
+            $data = $response->toArray();
+            return $data['result'] ?? $text;
+        } catch (\Exception $e) {
+            // Fallback to original text if API fails
+            return $text;
+        }
+    }
+
     private function requireForumRole(): User
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
             throw new AccessDeniedException('Connexion requise.');
         }
-        if (!\in_array($user->getRole(), ['Patient', 'Psychologue'], true)) {
-            throw new AccessDeniedException('Acces reserve aux patients et psychologues.');
+        if (!\in_array($user->getRole(), ['Patient', 'Psychologue', 'Admin'], true)) {
+            throw new AccessDeniedException('Acces reserve aux patients, psychologues et administrateurs.');
         }
 
         return $user;
+    }
+
+    private function handleFileUpload(Post $post, $form, SluggerInterface $slugger): void
+    {
+        /** @var UploadedFile $imageFile */
+        $imageFile = $form->get('imageFile')->getData();
+
+        if ($imageFile) {
+            $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = $slugger->slug($originalFilename);
+            $newFilename = $safeFilename . '-' . uniqid() . '.' . $imageFile->guessExtension();
+
+            try {
+                $imageFile->move(
+                    $this->getParameter('kernel.project_dir') . '/public/uploads/posts',
+                    $newFilename
+                );
+                $post->setImageUrl('/uploads/posts/' . $newFilename);
+            } catch (FileException $e) {
+                $this->addFlash('error', 'Erreur lors de l\'envoi de l\'image.');
+            }
+        }
     }
 
     #[Route('/posts', name: 'app_post_index')]
@@ -44,18 +96,14 @@ final class ConsultationController extends AbstractController
         return $this->redirectToRoute('app_post_show', ['id' => $id], Response::HTTP_MOVED_PERMANENTLY);
     }
 
-    #[Route('/consultation', name: 'app_consultation', methods: ['GET', 'POST'])]
-    public function index(
+    #[Route('/consultation/new', name: 'app_post_new', methods: ['GET', 'POST'])]
+    public function new(
         Request $request,
-        PostRepository $posts,
         EntityManagerInterface $em,
+        SluggerInterface $slugger,
     ): Response {
         $user = $this->requireForumRole();
-        $q = $request->query->getString('q');
-        $filterCategorie = $request->query->getString('categorie');
-        $page = max(1, $request->query->getInt('page', 1));
-
-        $categorySuggestions = $posts->findDistinctCategories();
+        $categorySuggestions = PostConsultationFormType::getCategoryChoices();
 
         $post = new Post();
         $post->setAuteur($user);
@@ -67,42 +115,59 @@ final class ConsultationController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $this->handleFileUpload($post, $form, $slugger);
+            
+            $post->setTitre($this->filterBadWords($post->getTitre()));
+            $post->setContenu($this->filterBadWords($post->getContenu()));
+            
             $post->setAuteur($user);
             $post->setAuteurRole($user->getRole());
             $post->setNbLikes(0);
-            $post->setDate(new \DateTimeImmutable());
+            $post->setDate(new \DateTime());
             $em->persist($post);
             $em->flush();
-            $this->addFlash('success', 'Votre publication a été enregistrée.');
+            $this->addFlash('success', 'Votre publication a été enregistrée sur le forum.');
 
-            $redirectParams = [];
-            if ($q !== '') {
-                $redirectParams['q'] = $q;
-            }
-            if ($filterCategorie !== '') {
-                $redirectParams['categorie'] = $filterCategorie;
-            }
-
-            return $this->redirectToRoute('app_consultation', $redirectParams);
+            return $this->redirectToRoute('app_consultation');
         }
+
+        return $this->render('consultation/new.html.twig', [
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/consultation', name: 'app_consultation', methods: ['GET'])]
+    public function index(
+        Request $request,
+        PostRepository $posts,
+    ): Response {
+        $this->requireForumRole();
+        $q = $request->query->getString('q');
+        $filterCategorie = $request->query->getString('categorie');
+        $sortBy = $request->query->getString('sort', 'recent');
+        $page = max(1, $request->query->getInt('page', 1));
+
+        $categorySuggestions = PostConsultationFormType::getCategoryChoices();
 
         $result = $posts->searchConsultationsPaginated(
             $q !== '' ? $q : null,
             $filterCategorie !== '' ? $filterCategorie : null,
             $page,
-            6
+            6,
+            $sortBy,
+            false
         );
         $totalPages = max(1, (int) ceil($result['total'] / 6));
 
         return $this->render('consultation/index.html.twig', [
             'posts' => $result['items'],
-            'form' => $form,
             'q' => $q,
             'filter_categorie' => $filterCategorie,
+            'sort_by' => $sortBy,
             'category_suggestions' => $categorySuggestions,
-            'show_post_modal' => $form->isSubmitted() && !$form->isValid(),
             'page' => $page,
             'total_pages' => $totalPages,
+            'popular_posts' => $posts->findPopular(5),
         ]);
     }
 
@@ -112,14 +177,29 @@ final class ConsultationController extends AbstractController
         Request $request,
         PostRepository $posts,
         CommentaireRepository $commentaires,
+        PostReactionRepository $reactions,
         EntityManagerInterface $em,
     ): Response
     {
         $user = $this->requireForumRole();
-        $post = $posts->findOneWithComments($id);
+        $post = $posts->findOneWithComments($id, $this->isGranted('ROLE_ADMIN'));
         if (!$post) {
             throw $this->createNotFoundException('Publication introuvable.');
         }
+
+        // Increment view count (once per session per post)
+        $session = $request->getSession();
+        $viewedPosts = $session->get('viewed_posts', []);
+        if (!in_array($id, $viewedPosts)) {
+            $post->incrementViews();
+            $viewedPosts[] = $id;
+            $session->set('viewed_posts', $viewedPosts);
+            $em->flush();
+        }
+
+        // Reactions
+        $reactionCounts = $reactions->countByEmoji($post);
+        $userReaction = $reactions->findByPostAndUser($post, $user);
 
         $comment = new Commentaire();
         $comment->setPost($post);
@@ -138,11 +218,23 @@ final class ConsultationController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $comment->setContenu($this->filterBadWords($comment->getContenu()));
             $comment->setAuteur($user);
             $comment->setAuteurRole($user->getRole());
             $comment->setNbLikes(0);
-            $comment->setDate(new \DateTimeImmutable());
+            $comment->setDate(new \DateTime());
             $em->persist($comment);
+
+            // Notify the post author if they are not the commenter
+            $postAuthor = $post->getAuteur();
+            if ($postAuthor instanceof User && $postAuthor->getId() !== $user->getId()) {
+                $notif = (new ForumNotification())
+                    ->setRecipient($postAuthor)
+                    ->setPost($post)
+                    ->setComment($comment);
+                $em->persist($notif);
+            }
+
             $em->flush();
             $this->addFlash('success', 'Votre commentaire a bien été ajouté.');
 
@@ -154,6 +246,311 @@ final class ConsultationController extends AbstractController
             'commentForm' => $form,
             'commentFormOpen' => $form->isSubmitted() && !$form->isValid(),
             'replyTarget' => $comment->getParent(),
+            'reactionCounts' => $reactionCounts,
+            'userReaction' => $userReaction?->getEmoji(),
+            'popular_posts' => $posts->findPopular(5),
+        ]);
+    }
+
+    #[Route('/consultation/{id}/like', name: 'app_post_like', methods: ['GET', 'POST'])]
+    public function likePost(int $id, Request $request, PostRepository $posts, EntityManagerInterface $em): Response
+    {
+        $this->requireForumRole();
+        $post = $posts->find($id);
+        $liked = false;
+
+        if ($post) {
+            $session = $request->getSession();
+            $likedPosts = $session->get('liked_posts', []);
+
+            if (!in_array($id, $likedPosts)) {
+                // Add like
+                $post->setNbLikes($post->getNbLikes() + 1);
+                $likedPosts[] = $id;
+                $liked = true;
+            } else {
+                // Remove like (toggle off)
+                $post->setNbLikes(max(0, $post->getNbLikes() - 1));
+                $likedPosts = array_filter($likedPosts, fn($postId) => $postId !== $id);
+                $liked = false;
+            }
+
+            $session->set('liked_posts', $likedPosts);
+            $em->flush();
+        }
+
+        // Return JSON for AJAX requests
+        if ($request->isXmlHttpRequest()) {
+            return new Response(json_encode([
+                'liked' => $liked,
+                'nbLikes' => $post?->getNbLikes() ?? 0,
+            ]), 200, ['Content-Type' => 'application/json']);
+        }
+
+        // Fallback to redirect for non-AJAX
+        $referer = $request->headers->get('referer');
+        if ($referer !== null) {
+            return $this->redirect($referer);
+        }
+
+        return $this->redirectToRoute('app_post_show', ['id' => $id]);
+    }
+
+    #[Route('/consultation/{id}/summary', name: 'app_post_summary', methods: ['POST'])]
+    public function summarizePost(
+        int $id,
+        Request $request,
+        PostRepository $posts,
+        GeminiSummarizer $geminiSummarizer,
+    ): JsonResponse {
+        $this->requireForumRole();
+        $post = $posts->find($id);
+
+        if (!$post) {
+            return $this->json(['message' => 'Publication introuvable.'], Response::HTTP_NOT_FOUND);
+        }
+
+        $token = $request->request->getString('_token');
+        if (!$this->isCsrfTokenValid('post_summary_' . $post->getId(), $token)) {
+            return $this->json(['message' => 'Requete invalide (CSRF).'], Response::HTTP_FORBIDDEN);
+        }
+
+        try {
+            $summary = $geminiSummarizer->summarizePost(
+                (string) $post->getTitre(),
+                (string) $post->getContenu()
+            );
+        } catch (\RuntimeException $e) {
+            return $this->json(['message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+        } catch (\Throwable $e) {
+            return $this->json(['message' => 'Erreur Gemini. Reessayez dans quelques instants.'], Response::HTTP_BAD_GATEWAY);
+        }
+
+        return $this->json([
+            'summary' => $summary,
+        ]);
+    }
+
+    #[Route('/consultation/{id}/edit', name: 'app_post_edit', methods: ['GET', 'POST'])]
+    public function edit(
+        int $id,
+        Request $request,
+        PostRepository $posts,
+        EntityManagerInterface $em,
+        SluggerInterface $slugger,
+    ): Response {
+        $user = $this->requireForumRole();
+        $post = $posts->find($id);
+
+        if (!$post) {
+            throw $this->createNotFoundException('Publication introuvable.');
+        }
+
+        if ($post->getAuteur()?->getId() !== $user->getId()) {
+            throw new AccessDeniedException('Vous n\'êtes pas l\'auteur de cette publication.');
+        }
+
+        $categorySuggestions = PostConsultationFormType::getCategoryChoices();
+        $form = $this->createForm(PostConsultationFormType::class, $post, [
+            'category_choices' => $categorySuggestions,
+        ]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->handleFileUpload($post, $form, $slugger);
+            
+            $post->setTitre($this->filterBadWords($post->getTitre()));
+            $post->setContenu($this->filterBadWords($post->getContenu()));
+            
+            $em->flush();
+            $this->addFlash('success', 'Votre publication a été modifiée.');
+
+            return $this->redirectToRoute('app_post_show', ['id' => $post->getId()]);
+        }
+
+        return $this->render('consultation/edit.html.twig', [
+            'post' => $post,
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/consultation/{id}/delete', name: 'app_post_delete', methods: ['POST'])]
+    public function delete(
+        int $id,
+        Request $request,
+        PostRepository $posts,
+        EntityManagerInterface $em
+    ): RedirectResponse {
+        $user = $this->requireForumRole();
+        $post = $posts->find($id);
+
+        if (!$post) {
+            throw $this->createNotFoundException('Publication introuvable.');
+        }
+
+        if ($post->getAuteur()?->getId() !== $user->getId()) {
+            throw new AccessDeniedException('Vous n\'êtes pas l\'auteur de cette publication.');
+        }
+
+        if ($this->isCsrfTokenValid('delete' . $post->getId(), $request->request->get('_token'))) {
+            $em->remove($post);
+            $em->flush();
+            $this->addFlash('success', 'Votre publication a été supprimée.');
+        }
+
+        return $this->redirectToRoute('app_consultation');
+    }
+
+    #[Route('/consultation/commentaire/{id}/like', name: 'app_comment_like', methods: ['GET', 'POST'])]
+    public function likeComment(int $id, Request $request, CommentaireRepository $commentaires, EntityManagerInterface $em): Response
+    {
+        $this->requireForumRole();
+        $comment = $commentaires->find($id);
+        $liked = false;
+
+        if ($comment) {
+            $session = $request->getSession();
+            $likedComments = $session->get('liked_comments', []);
+
+            if (!in_array($id, $likedComments)) {
+                // Add like
+                $comment->setNbLikes($comment->getNbLikes() + 1);
+                $likedComments[] = $id;
+                $liked = true;
+            } else {
+                // Remove like (toggle off)
+                $comment->setNbLikes(max(0, $comment->getNbLikes() - 1));
+                $likedComments = array_filter($likedComments, fn($commentId) => $commentId !== $id);
+                $liked = false;
+            }
+
+            $session->set('liked_comments', $likedComments);
+            $em->flush();
+        }
+
+        // Return JSON for AJAX requests
+        if ($request->isXmlHttpRequest()) {
+            return new Response(json_encode([
+                'liked' => $liked,
+                'nbLikes' => $comment?->getNbLikes() ?? 0,
+            ]), 200, ['Content-Type' => 'application/json']);
+        }
+
+        // Fallback to redirect for non-AJAX
+        $referer = $request->headers->get('referer');
+        if ($referer !== null) {
+            return $this->redirect($referer);
+        }
+
+        return $this->redirectToRoute('app_post_show', ['id' => $comment?->getPost()?->getId() ?? 0]);
+    }
+
+    #[Route('/consultation/commentaire/{id}/edit', name: 'app_comment_edit', methods: ['GET', 'POST'])]
+    public function editComment(
+        int $id,
+        Request $request,
+        CommentaireRepository $commentaires,
+        EntityManagerInterface $em
+    ): Response {
+        $user = $this->requireForumRole();
+        $comment = $commentaires->find($id);
+
+        if (!$comment) {
+            throw $this->createNotFoundException('Commentaire introuvable.');
+        }
+
+        if ($comment->getAuteur()?->getId() !== $user->getId()) {
+            throw new AccessDeniedException('Vous n\'êtes pas l\'auteur de ce commentaire.');
+        }
+
+        $form = $this->createForm(CommentaireType::class, $comment);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $comment->setContenu($this->filterBadWords($comment->getContenu()));
+            $em->flush();
+            $this->addFlash('success', 'Votre commentaire a été modifié.');
+
+            return $this->redirectToRoute('app_post_show', ['id' => $comment->getPost()?->getId()]);
+        }
+
+        return $this->render('post/comment_edit.html.twig', [
+            'comment' => $comment,
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/consultation/commentaire/{id}/delete', name: 'app_comment_delete', methods: ['POST'])]
+    public function deleteComment(
+        int $id,
+        Request $request,
+        CommentaireRepository $commentaires,
+        EntityManagerInterface $em
+    ): RedirectResponse {
+        $user = $this->requireForumRole();
+        $comment = $commentaires->find($id);
+
+        if (!$comment) {
+            throw $this->createNotFoundException('Commentaire introuvable.');
+        }
+
+        if ($comment->getAuteur()?->getId() !== $user->getId()) {
+            throw new AccessDeniedException('Vous n\'êtes pas l\'auteur de ce commentaire.');
+        }
+
+        $postId = $comment->getPost()?->getId();
+
+        if ($this->isCsrfTokenValid('delete' . $comment->getId(), $request->request->get('_token'))) {
+            $em->remove($comment);
+            $em->flush();
+            $this->addFlash('success', 'Votre commentaire a été supprimé.');
+        }
+
+        return $this->redirectToRoute('app_post_show', ['id' => $postId]);
+    }
+
+    #[Route('/consultation/{id}/react', name: 'app_post_react', methods: ['POST'])]
+    public function react(
+        int $id,
+        Request $request,
+        PostRepository $posts,
+        PostReactionRepository $reactions,
+        EntityManagerInterface $em,
+    ): JsonResponse {
+        $user = $this->requireForumRole();
+        $post = $posts->find($id);
+        if (!$post) {
+            return $this->json(['error' => 'Post not found'], 404);
+        }
+
+        $emoji = $request->request->getString('emoji');
+        if (!in_array($emoji, PostReaction::EMOJIS, true)) {
+            return $this->json(['error' => 'Invalid emoji'], 400);
+        }
+
+        $existing = $reactions->findByPostAndUser($post, $user);
+
+        if ($existing) {
+            if ($existing->getEmoji() === $emoji) {
+                // Same emoji — remove reaction (toggle off)
+                $em->remove($existing);
+                $activeEmoji = null;
+            } else {
+                // Different emoji — switch
+                $existing->setEmoji($emoji);
+                $activeEmoji = $emoji;
+            }
+        } else {
+            $reaction = (new PostReaction())->setPost($post)->setUser($user)->setEmoji($emoji);
+            $em->persist($reaction);
+            $activeEmoji = $emoji;
+        }
+
+        $em->flush();
+
+        return $this->json([
+            'counts' => $reactions->countByEmoji($post),
+            'userReaction' => $activeEmoji,
         ]);
     }
 

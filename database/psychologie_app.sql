@@ -181,6 +181,7 @@ CREATE TABLE `post` (
   `auteur_role` enum('Patient','Psychologue') NOT NULL,
   `titre` varchar(255) NOT NULL,
   `contenu` text NOT NULL,
+  `image_url` varchar(255) DEFAULT NULL,
   `categorie` varchar(100) NOT NULL,
   `nb_likes` int(11) DEFAULT 0,
   `date` datetime DEFAULT current_timestamp()

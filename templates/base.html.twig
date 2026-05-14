@@ -997,6 +997,92 @@
             .nav-links a.nav-external:hover {
                 background: var(--accent-soft);
             }
+            /* Notification bell */
+            .nav-bell {
+                position: relative;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0.45rem 0.65rem;
+                border-radius: 999px;
+                font-size: 1.1rem;
+                line-height: 1;
+                color: var(--text) !important;
+                text-decoration: none;
+            }
+            .nav-bell:hover { background: var(--accent-soft); }
+            .nav-bell-badge {
+                position: absolute;
+                top: 2px;
+                right: 2px;
+                min-width: 17px;
+                height: 17px;
+                padding: 0 4px;
+                border-radius: 999px;
+                background: #d32f2f;
+                color: #fff;
+                font-size: 0.65rem;
+                font-weight: 700;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                line-height: 1;
+                pointer-events: none;
+            }
+            /* QR modal */
+            .qr-modal-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(28,40,36,0.55);
+                z-index: 200;
+                align-items: center;
+                justify-content: center;
+            }
+            .qr-modal-overlay.is-open { display: flex; }
+            .qr-modal {
+                background: var(--surface);
+                border-radius: var(--radius);
+                padding: 1.75rem;
+                max-width: 360px;
+                width: 90%;
+                text-align: center;
+                box-shadow: 0 8px 40px rgba(28,40,36,0.18);
+            }
+            .qr-modal h3 { margin: 0 0 1rem; font-family: var(--font-serif); font-size: 1.2rem; }
+            .qr-modal img { max-width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+            .qr-modal-close { margin-top: 1rem; }
+            /* Force QR SVG colors — prevent dark theme inversion */
+            .qr-modal svg { display:block; background:#fff; }
+            .qr-modal svg rect, .qr-modal svg path { color-scheme: light; }
+            /* Page loader */
+            #page-loader {
+                position: fixed; inset: 0; z-index: 9999;
+                display: flex; align-items: center; justify-content: center;
+                background: rgba(28, 40, 36, 0.45);
+                backdrop-filter: blur(3px);
+                pointer-events: none; opacity: 0;
+                transition: opacity 0.2s;
+            }
+            #page-loader.is-loading { opacity: 1; pointer-events: all; }
+            .loader-bar {
+                width: 56px; height: 56px; border-radius: 50%;
+                border: 4px solid rgba(255,255,255,0.2);
+                border-top-color: var(--accent);
+                animation: loader-spin 0.75s linear infinite;
+                background: transparent;
+            }
+            @keyframes loader-spin {
+                to { transform: rotate(360deg); }
+            }
+            /* Anonymous toggle in forms */
+            .anon-toggle {                display: flex; align-items: flex-start; gap: 0.6rem;
+                padding: 0.85rem 1rem; background: var(--bg-pattern);
+                border-radius: var(--radius-sm); border: 1px solid var(--border);
+                margin: 1rem 0;
+            }
+            .anon-toggle input[type=checkbox] { margin-top: 0.2rem; flex-shrink: 0; accent-color: var(--accent); width: 16px; height: 16px; }
+            .anon-toggle label { font-weight: 600; font-size: 0.9375rem; cursor: pointer; margin: 0; }
             .home-split {
                 display: grid;
                 grid-template-columns: 1fr minmax(240px, 40%);
@@ -1022,8 +1108,88 @@
                 display: block;
                 min-height: 220px;
             }
+            .emoji-picker-dropdown {
+                position: fixed;
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                padding: 10px;
+                display: none;
+                grid-template-columns: repeat(5, 1fr);
+                gap: 5px;
+                z-index: 10000;
+                width: 260px;
+                max-height: 320px;
+                overflow-y: auto;
+                user-select: none;
+            }
+            .emoji-picker-dropdown::-webkit-scrollbar {
+                width: 6px;
+            }
+            .emoji-picker-dropdown::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 3px;
+            }
+            .emoji-picker-dropdown::-webkit-scrollbar-thumb {
+                background: #888;
+                border-radius: 3px;
+            }
+            .emoji-picker-dropdown::-webkit-scrollbar-thumb:hover {
+                background: #555;
+            }
+            .emoji-picker-dropdown span {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 40px;
+                width: 40px;
+                font-size: 1.5rem;
+                cursor: pointer;
+                border-radius: 6px;
+                transition: background 0.15s, transform 0.1s;
+            }
+            .emoji-picker-dropdown span:hover {
+                background: #f0f0f0;
+                transform: scale(1.1);
+            }
+            .emoji-picker-dropdown span:active {
+                transform: scale(0.95);
+            }
+            .emoji-btn-wrapper {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 5px;
+            }
+            .emoji-trigger-btn {
+                background: #f8f9fa;
+                border: 1px solid #dee2e6;
+                color: #495057;
+                padding: 6px 12px;
+                font-size: 0.85rem;
+                border-radius: 6px;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                transition: all 0.2s;
+                white-space: nowrap;
+            }
+            .emoji-trigger-btn:hover {
+                background: #e9ecef;
+                border-color: #adb5bd;
+                transform: translateY(-1px);
+            }
+            .emoji-trigger-btn:active {
+                transform: translateY(0);
+            }
         </style>
         {% block stylesheets %}
+            <link rel="stylesheet" href="{{ asset('assets/styles/app.css') }}">
+            <style>
+                                
+                            </style>
         {% endblock %}
 
         {% block javascripts %}
@@ -1036,6 +1202,201 @@
         <script src="https://cdn.jsdelivr.net/npm/idiomorph"></script>
         <script src="https://cdn.jsdelivr.net/npm/frankenphp-hot-reload/+esm" type="module"></script>
         {% endif %}
+
+        <script>
+            /**
+             * Pure Vanilla JS Emoji Picker
+             * Works without external libraries or complex build steps
+             * No external APIs needed - all emojis are hardcoded
+             */
+            function setupEmojiPicker() {
+                const triggers = document.querySelectorAll('[data-emoji-picker]');
+                if (triggers.length === 0) return;
+
+                // Create picker only once
+                let picker = document.getElementById('global-emoji-picker');
+                if (!picker) {
+                    picker = document.createElement('div');
+                    picker.id = 'global-emoji-picker';
+                    picker.className = 'emoji-picker-dropdown';
+                    
+                    // Comprehensive emoji list organized by category
+                    const emojis = [
+                        // Smileys & People (😊😂😍🤔😢😎)
+                        '😊', '😂', '😍', '🤔', '😢', '😎', '😍', '😏', '😄', '😁',
+                        '🥰', '😘', '😂', '😅', '😆', '😉', '🤩', '😲', '😮', '😲',
+                        // Hand gestures & hearts
+                        '👍', '👌', '🙏', '👏', '💪', '🤝', '✌️', '👋', '🖐️', '✋',
+                        // Hearts & love (❤️💜💙)
+                        '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '💔', '💕',
+                        // Symbols & elements (✨🔥⭐)
+                        '✨', '🔥', '⭐', '⚡', '💥', '✅', '❌', '❓', '❗', '💡',
+                        // Activities & celebrations (🎉🌈🎊)
+                        '🎉', '🎊', '🎈', '🎁', '🌈', '🎭', '🎪', '🎯', '🏆', '🥇',
+                        // Nature & animals
+                        '🌟', '🌸', '🌻', '🌹', '🌺', '🐶', '😸', '🐰', '🦋', '🐝',
+                        // Food & drinks
+                        '👌', '😋', '🍕', '🍔', '🍟', '🍗', '🍰', '🍩', '☕', '🍷',
+                        // Travel & places
+                        '🚀', '✈️', '🚁', '🏠', '🏖️', '⛱️', '🏔️', '🗻', '🌊', '🌴',
+                        // Weather & time
+                        '☀️', '☁️', '⛅', '🌤️', '⛈️', '🌙', '⭐', '🌟', '💫', '✨'
+                    ];
+                    
+                    emojis.forEach(emoji => {
+                        const span = document.createElement('span');
+                        span.textContent = emoji;
+                        span.title = emoji;
+                        span.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            const targetId = picker.getAttribute('data-target-id');
+                            const input = document.getElementById(targetId);
+                            if (input) {
+                                const start = input.selectionStart || 0;
+                                const end = input.selectionEnd || 0;
+                                const currentValue = input.value || '';
+                                input.value = currentValue.substring(0, start) + emoji + currentValue.substring(end);
+                                input.focus();
+                                const newPos = start + emoji.length;
+                                input.setSelectionRange(newPos, newPos);
+                                input.dispatchEvent(new Event('input', { bubbles: true }));
+                            }
+                            picker.style.display = 'none';
+                        });
+                        picker.appendChild(span);
+                    });
+                    document.body.appendChild(picker);
+                }
+
+                // Attach listeners using a unique data attribute to prevent duplicates
+                triggers.forEach(trigger => {
+                    // Only attach if not already attached
+                    if (!trigger.dataset.emojiPickerAttached) {
+                        trigger.dataset.emojiPickerAttached = 'true';
+                        
+                        trigger.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            const targetId = this.getAttribute('data-emoji-target');
+                            if (!targetId) {
+                                console.warn('Emoji trigger missing data-emoji-target');
+                                return;
+                            }
+                            
+                            const rect = this.getBoundingClientRect();
+                            
+                            // Toggle logic
+                            if (picker.style.display === 'grid' && picker.getAttribute('data-target-id') === targetId) {
+                                picker.style.display = 'none';
+                                return;
+                            }
+
+                            picker.setAttribute('data-target-id', targetId);
+                            picker.style.display = 'grid';
+                            
+                            // Smart positioning (fixed positioning, so don't add scroll offset)
+                            let top = rect.bottom + 5;
+                            let left = rect.left;
+
+                            // Check viewport overflow
+                            if (left + 260 > window.innerWidth) {
+                                left = rect.right - 260;
+                            }
+                            
+                            if (top + 300 > window.innerHeight) {
+                                top = rect.top - 310;
+                            }
+                            
+                            picker.style.top = top + 'px';
+                            picker.style.left = left + 'px';
+                        });
+                    }
+                });
+
+                // Global click to close (attach only once)
+                if (!window.emojiPickerCloseHandlerAttached) {
+                    window.emojiPickerCloseHandlerAttached = true;
+                    document.addEventListener('click', (e) => {
+                        if (picker && !picker.contains(e.target) && !e.target.hasAttribute('data-emoji-picker')) {
+                            picker.style.display = 'none';
+                        }
+                    });
+                }
+            }
+
+            /**
+             * AJAX Like Button Handler
+             * Handles post and comment like functionality without page reload
+             */
+            function setupLikeButtons() {
+                const likeButtons = document.querySelectorAll('.like-btn');
+                
+                likeButtons.forEach(btn => {
+                    // Only attach if not already attached
+                    if (!btn.dataset.likeAttached) {
+                        btn.dataset.likeAttached = 'true';
+                        
+                        btn.addEventListener('click', async function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            
+                            const url = this.getAttribute('data-like-url');
+                            const counterElementId = this.getAttribute('data-likes-counter');
+                            const counterElement = document.getElementById(counterElementId);
+                            
+                            if (!url || !counterElement) {
+                                console.warn('Like button missing data attributes');
+                                return;
+                            }
+                            
+                            try {
+                                const response = await fetch(url, {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                    }
+                                });
+                                
+                                if (!response.ok) {
+                                    console.error('Like request failed:', response.status);
+                                    return;
+                                }
+                                
+                                const data = await response.json();
+                                
+                                // Update the like count
+                                counterElement.textContent = data.nbLikes;
+                                
+                                // Change button appearance based on liked status
+                                if (data.liked) {
+                                    this.style.opacity = '1';
+                                    this.style.fontWeight = 'bold';
+                                } else {
+                                    this.style.opacity = '0.6';
+                                    this.style.fontWeight = 'normal';
+                                }
+                            } catch (error) {
+                                console.error('Error handling like:', error);
+                            }
+                        });
+                    }
+                });
+            }
+
+            
+            // Initialize all interactive elements
+            function initializeInteractiveElements() {
+                setupEmojiPicker();
+                setupLikeButtons();
+            }
+
+            // Re-run on every Turbo load and page changes
+            document.addEventListener('turbo:load', initializeInteractiveElements);
+            document.addEventListener('DOMContentLoaded', initializeInteractiveElements);
+        </script>
     </head>
     <body{% block body_attr %}{% endblock %}>
         <header class="site-header">
@@ -1047,7 +1408,7 @@
                 </button>
             </div>
         </header>
-        {% block flashes %}
+                {% block flashes %}
             {% set flash_success = app.flashes('success') %}
             {% set flash_error = app.flashes('error') %}
             {% set flash_warning = app.flashes('warning') %}
@@ -1068,13 +1429,45 @@
         <main class="wrap">
             {% block body %}{% endblock %}
         </main>
-        <footer class="site-footer">
-            <div class="wrap site-footer-inner">
-                <strong>Cabinet de psychologie</strong> — Espace d’information et de partage. Pour toute urgence, contactez les services d’urgence ou votre médecin traitant.
-                <div class="site-footer-links">
-                    <a href="{{ path('app_mentions_legales') }}">Mentions légales</a>
-                </div>
+
+        {# Global page loader #}
+        <div id="page-loader" aria-hidden="true">
+            <div style="background:var(--surface);border-radius:var(--radius);padding:1.75rem 2rem;display:flex;flex-direction:column;align-items:center;gap:0.85rem;box-shadow:0 8px 40px rgba(28,40,36,0.18);">
+                <div class="loader-bar"></div>
+                <span style="font-size:0.875rem;color:var(--muted);font-weight:500">Chargement…</span>
             </div>
-        </footer>
-    </body>
+        </div>
+
+        <script>
+        (function () {
+            var loader = document.getElementById('page-loader');
+            if (!loader) return;
+
+            function showLoader() { loader.classList.add('is-loading'); }
+            function hideLoader() { loader.classList.remove('is-loading'); }
+
+            // Show on regular link navigation (not buttons/forms/anchors)
+            document.addEventListener('click', function (e) {
+                var a = e.target.closest('a[href]');
+                if (!a) return;
+                var href = a.getAttribute('href');
+                if (!href || href.startsWith('#') || href.startsWith('javascript') || a.target === '_blank') return;
+                if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+                showLoader();
+            });
+
+            // Show on form submit
+            document.addEventListener('submit', function () { showLoader(); });
+
+            // Hide when page is fully loaded or on turbo navigation
+            window.addEventListener('pageshow', hideLoader);
+            document.addEventListener('turbo:load', hideLoader);
+            document.addEventListener('turbo:render', hideLoader);
+
+            // Pulse animation for async fetch operations — expose globally
+            window.loaderShow = showLoader;
+            window.loaderHide = hideLoader;
+        }());
+        </script>
+            </body>
 </html>

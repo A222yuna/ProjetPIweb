@@ -1,52 +1,358 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ post.titre }} — Cabinet de psychologie{% endblock %}
+{% block title %}{{ post.titre }} — Forum{% endblock %}
 
 {% block body %}
-    <p class="muted back-link"><a href="{{ path('app_consultation') }}">← Retour aux consultations</a></p>
+<style>
+    .post-detail { max-width: 780px; margin: 0 auto; }
+    .post-hero {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow);
+    }
+    .post-hero-cover {
+        width: 100%; height: 220px;
+        object-fit: cover;
+        display: block;
+        background: var(--accent-soft);
+    }
+    .post-hero-cover-placeholder {
+        width: 100%; height: 180px;
+        background: linear-gradient(135deg, var(--accent-soft) 0%, #d4e9e2 100%);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 2.5rem; color: var(--accent);
+    }
+    .post-hero-body { padding: 1.75rem 2rem 1.5rem; }
+    .post-meta-row {
+        display: flex; flex-wrap: wrap; gap: 0.5rem;
+        align-items: center; margin-bottom: 1rem;
+    }
+    .post-tag {
+        font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em;
+        text-transform: uppercase; background: var(--accent-soft);
+        color: var(--accent); padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+    }
+    .post-tag-muted {
+        background: var(--bg-pattern); color: var(--muted);
+    }
+    .post-hero-body h1 {
+        font-family: var(--font-serif);
+        font-size: clamp(1.5rem, 3.5vw, 2rem);
+        font-weight: 600; margin: 0 0 1.25rem; line-height: 1.25;
+    }
+    .post-body { white-space: pre-wrap; line-height: 1.75; font-size: 1.02rem; color: var(--text); }
+    .post-footer {
+        display: flex; flex-wrap: wrap; gap: 0.5rem;
+        align-items: center; padding: 1rem 1.5rem;
+        border-top: 1px solid var(--border);
+        background: #faf9f7;
+    }
+    .post-footer-left { display: contents; }
+    .post-footer-right { display: contents; }
+    .post-footer-divider {
+        width: 1px; height: 20px;
+        background: var(--border); flex-shrink: 0;
+        align-self: center;
+    }
+    .action-btn {
+        display: inline-flex; align-items: center; gap: 0.3rem;
+        padding: 0.45rem 0.9rem; border-radius: 999px;
+        font-size: 0.875rem; font-weight: 500; cursor: pointer;
+        border: 1px solid var(--border); background: var(--surface);
+        color: var(--text); text-decoration: none; white-space: nowrap;
+        transition: background 0.15s, border-color 0.15s, color 0.15s;
+        line-height: 1.4;
+    }
+    .action-btn:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+    .action-btn.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+    .action-btn.danger:hover { background: #fdeaea; border-color: #e2b0b0; color: #842525; }
+    .action-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .action-btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
+    .likes-pill { display: none; }
+    .ai-summary-card {
+        margin-top: 1rem;
+        padding: 0.9rem 1rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: #f8fbfa;
+    }
+    .ai-summary-card strong { display: block; margin-bottom: 0.45rem; }
+    .ai-summary-content { white-space: pre-wrap; line-height: 1.6; font-size: 0.95rem; }
+    .ai-summary-content.is-loading {
+        background: linear-gradient(90deg, #e8f0ec 25%, #d4e9e2 50%, #e8f0ec 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.4s ease infinite;
+        border-radius: 4px; color: transparent;
+        min-height: 2.5rem;
+    }
+    @keyframes shimmer {
+        0%   { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+    /* Comments */
+    .comments-section { max-width: 780px; margin: 0 auto; }
+    .comments-header {
+        display: flex; align-items: center; gap: 0.75rem; margin: 2rem 0 1rem;
+    }
+    .comments-header h2 { margin: 0; font-size: 1.15rem; }
+    .comment-thread { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    .comment-item {
+        padding: 1.1rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+    }
+    .comment-item:last-child { border-bottom: none; }
+    .comment-item.is-reply { background: #faf9f7; }
+    .comment-author-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem; }
+    .comment-avatar {
+        width: 32px; height: 32px; border-radius: 50%;
+        background: var(--accent-soft); color: var(--accent);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.8rem; font-weight: 700; flex-shrink: 0;
+    }
+    .comment-author-name { font-weight: 600; font-size: 0.9375rem; }
+    .comment-author-role { font-size: 0.8rem; color: var(--muted); }
+    .comment-date { font-size: 0.8rem; color: var(--muted); margin-left: auto; }
+    .comment-body { font-size: 0.9375rem; line-height: 1.65; color: var(--text); white-space: pre-wrap; margin-bottom: 0.6rem; }
+    .comment-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .comment-action-btn {
+        font-size: 0.8125rem; color: var(--muted); background: none; border: none;
+        cursor: pointer; padding: 0.2rem 0.4rem; border-radius: 4px;
+        text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem;
+        transition: color 0.15s, background 0.15s;
+    }
+    .comment-action-btn:hover { color: var(--accent); background: var(--accent-soft); }
+    .comment-action-btn.danger:hover { color: #842525; background: #fdeaea; }
+    /* Comment form */
+    .comment-form-card {
+        max-width: 780px; margin: 1.5rem auto 0;
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
+    }
+    .comment-form-header {
+        padding: 1rem 1.5rem 0;
+        font-family: var(--font-serif); font-size: 1.1rem; font-weight: 600;
+    }
+    .comment-form-body { padding: 1rem 1.5rem 1.5rem; }
+    .reply-banner {
+        background: var(--accent-soft); border-left: 3px solid var(--accent);
+        padding: 0.6rem 0.85rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        font-size: 0.9rem; margin-bottom: 0.85rem;
+        display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+    }
+    /* Anon toggle */
+    .anon-toggle {
+        display: flex; align-items: flex-start; gap: 0.6rem;
+        padding: 0.85rem 1rem; background: var(--bg-pattern);
+        border-radius: var(--radius-sm); border: 1px solid var(--border);
+        margin: 1rem 0;
+    }
+    .anon-toggle input[type=checkbox] { margin-top: 0.2rem; flex-shrink: 0; accent-color: var(--accent); width: 16px; height: 16px; }
+    .anon-toggle label { font-weight: 600; font-size: 0.9375rem; cursor: pointer; margin: 0; }
+</style>
 
-    <article class="card">
-        <h1>{{ post.titre }}</h1>
-        <p class="muted">
-            {{ post.categorie }} · {{ post.auteurRole }}
-            {% if post.auteur %} · {{ post.auteur.prenom }} {{ post.auteur.nom }}{% endif %}
-            · {{ post.date|date('d/m/Y H:i') }}
-        </p>
-        <div class="post-body">{{ post.contenu }}</div>
-        <p class="muted likes-line">{{ post.nbLikes }} j’aime</p>
+<div class="post-detail">
+    <p class="muted back-link"><a href="{{ path('app_consultation') }}">← Retour au forum</a></p>
+
+    <article class="post-hero">
+        {% if post.imageUrl %}
+            <img class="post-hero-cover"
+                 src="{{ post.imageUrl starts with '/uploads/' ? asset(post.imageUrl) : post.imageUrl }}"
+                 alt="{{ post.titre }}">
+        {% else %}
+            <div class="post-hero-cover-placeholder" aria-hidden="true">💬</div>
+        {% endif %}
+
+        <div class="post-hero-body">
+            <div class="post-meta-row">
+                <span class="post-tag">{{ post.categorie }}</span>
+                <span class="post-tag post-tag-muted">{{ post.auteurRole }}</span>
+                <span class="muted" style="font-size:0.85rem; margin-left:auto">
+                    👁️ {{ post.nbViews }} · {{ post.date|date('d/m/Y · H:i') }}
+                </span>
+            </div>
+            <h1>{{ post.titre }}</h1>
+            <p class="muted" style="margin:0 0 1.25rem; font-size:0.9rem">
+                Par
+                {% if post.isAnonymous %}
+                    <strong>Anonyme</strong>
+                {% elseif post.auteur %}
+                    <strong>{{ post.auteur.prenom }} {{ post.auteur.nom }}</strong>
+                {% else %}
+                    <strong>Anonyme</strong>
+                {% endif %}
+            </p>
+            <div class="post-body">{{ post.contenu }}</div>
+        </div>
+
+        <div class="post-footer">
+            <button type="button" class="action-btn like-btn"
+                    data-like-url="{{ path('app_post_like', { id: post.id }) }}"
+                    data-likes-counter="post-{{ post.id }}"
+                    title="J'aime">
+                ❤️ <span id="post-{{ post.id }}" class="likes-count">{{ post.nbLikes }}</span>
+            </button>
+            <a href="#comment-form" class="action-btn" title="Commenter">💬 Commenter</a>
+            <button type="button" class="action-btn" id="qr-open-btn"
+                    data-qr-title="{{ post.titre|e('html_attr') }}"
+                    title="Partager via QR">
+                📷 QR
+            </button>
+            <button type="button" class="action-btn" id="ai-summary-trigger"
+                    data-summary-url="{{ path('app_post_summary', { id: post.id }) }}"
+                    data-summary-token="{{ csrf_token('post_summary_' ~ post.id) }}"
+                    title="Résumer par IA">
+                🤖 Résumer
+            </button>
+            {% if app.user %}
+                <form method="post" action="{{ path('app_post_save_toggle', { id: post.id }) }}" style="display:contents">
+                    <input type="hidden" name="_token" value="{{ csrf_token('save_post_' ~ post.id) }}">
+                    <button type="submit" class="action-btn {% if app.user.savedPosts is defined and (post in app.user.savedPosts) %}active{% endif %}">
+                        🔖 {{ app.user.savedPosts is defined and (post in app.user.savedPosts) ? 'Enregistré' : 'Enregistrer' }}
+                    </button>
+                </form>
+            {% endif %}
+            {% if not is_granted('ROLE_ADMIN') %}
+                <a href="{{ path('app_post_report', { id: post.id }) }}" class="action-btn">🚩 Signaler</a>
+            {% endif %}
+            {% if app.user and post.auteur and app.user.id == post.auteur.id %}
+                <span class="post-footer-divider"></span>
+                <a href="{{ path('app_post_edit', { id: post.id }) }}" class="action-btn">✏️ Modifier</a>
+                <form method="post" action="{{ path('app_post_delete', {id: post.id}) }}"
+                      onsubmit="return confirm('Supprimer définitivement cette publication ?');" style="display:contents">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ post.id) }}">
+                    <button type="submit" class="action-btn danger">🗑️ Supprimer</button>
+                </form>
+            {% elseif is_granted('ROLE_ADMIN') %}
+                <span class="post-footer-divider"></span>
+                <form method="post" action="{{ path('app_admin_forum_post_delete', {id: post.id}) }}"
+                      onsubmit="return confirm('Supprimer définitivement cette publication ?');" style="display:contents">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete_post_' ~ post.id) }}">
+                    <button type="submit" class="action-btn danger">🗑️ Supprimer</button>
+                </form>
+            {% endif %}
+        </div>
     </article>
 
+    <div class="ai-summary-card" id="ai-summary-box" hidden>
+        <strong>Resume IA</strong>
+        <div class="ai-summary-content" id="ai-summary-content"></div>
+    </div>
+
+    {# Comments #}
     {% set comments = post.commentaires %}
     {% set topLevelComments = comments|filter(c => c.parent is null) %}
-    <h2>Commentaires ({{ comments|length }})</h2>
-    {% if comments is empty %}
-        <p class="muted">Pas encore de commentaire.</p>
-    {% else %}
-        <div class="card">
-            <ul class="plain">
+
+    <div class="comments-section">
+        <div class="comments-header">
+            <h2>Commentaires</h2>
+            <span class="post-tag post-tag-muted">{{ comments|length }}</span>
+        </div>
+
+        {% if comments is not empty %}
+            <div class="comment-thread">
                 {% for c in topLevelComments %}
                     {% include 'post/_comment_item.html.twig' with { comment: c, level: 0 } only %}
                 {% endfor %}
-            </ul>
-        </div>
-    {% endif %}
-
-    <div class="card">
-        <h2 style="margin-top:0">Ajouter un commentaire</h2>
-        {% if replyTarget %}
-            <p class="muted">
-                Réponse à
-                <strong>
-                    {% if replyTarget.auteur %}{{ replyTarget.auteur.prenom }} {{ replyTarget.auteur.nom }}{% else %}Anonyme{% endif %}
-                </strong>.
-                <a href="{{ path('app_post_show', { id: post.id }) }}">Annuler la réponse</a>
-            </p>
-        {% endif %}
-        {{ form_start(commentForm, { attr: { class: 'stack-form' } }) }}
-            {{ form_row(commentForm.contenu) }}
-            <div class="stack-form-actions">
-                <button type="submit" class="btn btn-primary">Publier</button>
             </div>
-        {{ form_end(commentForm) }}
+        {% else %}
+            <p class="muted" style="font-size:0.9375rem">Soyez le premier à commenter cette publication.</p>
+        {% endif %}
+
+        <div class="comment-form-card" id="comment-form">
+            <div class="comment-form-header">Ajouter un commentaire</div>
+            <div class="comment-form-body">
+                {% if replyTarget %}
+                    <div class="reply-banner">
+                        <span>Réponse à <strong>{% if replyTarget.auteur %}{{ replyTarget.auteur.prenom }} {{ replyTarget.auteur.nom }}{% else %}Anonyme{% endif %}</strong></span>
+                        <a href="{{ path('app_post_show', { id: post.id }) }}" style="font-size:0.85rem; color:var(--accent)">Annuler</a>
+                    </div>
+                {% endif %}
+                {{ form_start(commentForm, { attr: { class: 'stack-form', novalidate: 'novalidate' } }) }}
+                    <div class="emoji-btn-wrapper">
+                        {{ form_label(commentForm.contenu) }}
+                        <button type="button" class="emoji-trigger-btn" data-emoji-picker data-emoji-target="{{ commentForm.contenu.vars.id }}">
+                            😊 <span>Emojis</span>
+                        </button>
+                    </div>
+                    {{ form_widget(commentForm.contenu) }}
+                    {{ form_errors(commentForm.contenu) }}
+                    <div class="stack-form-actions" style="margin-top:0.85rem">
+                        <button type="submit" class="btn btn-primary">Publier</button>
+                    </div>
+                {{ form_end(commentForm) }}
+            </div>
+        </div>
     </div>
+
+    {# QR modal — SVG rendered inline at page load, zero dependencies #}
+    <div class="qr-modal-overlay" id="qr-modal-overlay" role="dialog" aria-modal="true" aria-label="Partager via QR code">
+        <div class="qr-modal">
+            <h3>Partager : {{ post.titre|length > 50 ? post.titre|slice(0,50) ~ '…' : post.titre }}</h3>
+            <div style="background:#ffffff;border-radius:8px;padding:12px;display:inline-block;line-height:0;">
+                {# qr_code_result returns a ResultInterface; getString() gives raw SVG #}
+                {% set qr = qr_code_result(url('app_post_show', { id: post.id })) %}
+                <div style="width:300px;height:300px;background:#fff;">
+                    {{ qr.getString()|raw }}
+                </div>
+            </div>
+            <p class="muted" style="font-size:0.875rem;margin:0.75rem 0 0">Scannez ce code pour accéder à la publication.</p>
+            <button type="button" class="btn btn-outline btn-sm" id="qr-modal-close">Fermer</button>
+        </div>
+    </div>
+    <script>
+    (function () {
+        var btn = document.getElementById('qr-open-btn');
+        var overlay = document.getElementById('qr-modal-overlay');
+        if (btn && overlay) {
+            btn.addEventListener('click', function () { overlay.classList.add('is-open'); });
+        }
+        function closeQr() { if (overlay) overlay.classList.remove('is-open'); }
+        document.addEventListener('click', function (e) {
+            if (e.target.id === 'qr-modal-close' || e.target.id === 'qr-modal-overlay') closeQr();
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeQr();
+        });
+
+        // Back to top
+        var btt = document.getElementById('back-to-top');
+        if (btt) {
+            window.addEventListener('scroll', function() { btt.classList.toggle('visible', window.scrollY > 400); });
+            btt.addEventListener('click', function() { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+        }
+
+        // AI summary
+        var trigger = document.getElementById('ai-summary-trigger');        var box = document.getElementById('ai-summary-box');
+        var content = document.getElementById('ai-summary-content');
+        if (trigger && box && content) {
+            trigger.addEventListener('click', function () {
+                var url = trigger.dataset.summaryUrl;
+                var token = trigger.dataset.summaryToken;
+                if (!url || !token) return;
+                trigger.disabled = true;
+                trigger.textContent = '⏳ Génération…';
+                content.textContent = '\u00a0';
+                content.classList.add('is-loading');
+                box.hidden = false;
+                if (window.loaderShow) window.loaderShow();
+                fetch(url, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ _token: token }),
+                })
+                .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.message || 'Erreur.'); return d; }); })
+                .then(function (d) { content.classList.remove('is-loading'); content.textContent = d.summary || 'Aucun résumé généré.'; })
+                .catch(function (e) { content.classList.remove('is-loading'); content.textContent = e.message || 'Erreur.'; })
+                .finally(function () { trigger.disabled = false; trigger.textContent = '🤖 Résumer'; if (window.loaderHide) window.loaderHide(); });
+            });
+        }
+    }());
+    </script>
+</div>
+<button id="back-to-top" aria-label="Retour en haut">↑</button>
 {% endblock %}

@@ -4,17 +4,40 @@ namespace App\Form;
 
 use App\Entity\Post;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
 final class PostConsultationFormType extends AbstractType
 {
+    private const CATEGORY_CHOICES = [
+        'Vie Émotionnelle et Bien-être' => 'Vie Émotionnelle et Bien-être',
+        'Relations et Liens Sociaux' => 'Relations et Liens Sociaux',
+        'Troubles et Santé Mentale' => 'Troubles et Santé Mentale',
+        'Monde du Travail et Études' => 'Monde du Travail et Études',
+        'Espace Débats et Société' => 'Espace Débats et Société',
+    ];
+
+    public static function getCategoryChoices(): array
+    {
+        return self::CATEGORY_CHOICES;
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $choices = $options['category_choices'] ?: self::CATEGORY_CHOICES;
+
+        if (array_values($choices) === $choices) {
+            $choices = array_combine($choices, $choices);
+        }
+
         $builder
             ->add('titre', TextType::class, [
                 'label' => 'Titre',
@@ -37,19 +60,44 @@ final class PostConsultationFormType extends AbstractType
                     'placeholder' => 'Décrivez votre question ou partagez votre expérience…',
                 ],
             ])
-            ->add('categorie', TextType::class, [
+            ->add('categorie', ChoiceType::class, [
                 'label' => 'Catégorie',
+                'choices' => $choices,
+                'placeholder' => 'Choisir une catégorie',
                 'constraints' => [
                     new NotBlank(message: 'La catégorie est obligatoire.'),
-                    new Length(max: 100),
                 ],
+                'help' => 'Sélectionnez une catégorie disponible.',
+            ])
+            ->add('imageUrl', TextType::class, [
+                'label' => 'Image (Lien externe)',
+                'required' => false,
                 'attr' => [
-                    'maxlength' => 100,
-                    'class' => 'input-categorie',
-                    'list' => 'consultation-categories',
-                    'placeholder' => 'Ex. Discussion Générale, Anxiété, Thérapie de couple…',
+                    'placeholder' => 'https://exemple.com/image.jpg',
                 ],
-                'help' => 'Colonne categorie (varchar 100). Les valeurs déjà en base sont proposées dans la liste.',
+                'help' => 'Collez ici l\'adresse directe d\'une image.',
+            ])
+            ->add('imageFile', FileType::class, [
+                'label' => 'Ou : Télécharger une image (Fichier)',
+                'mapped' => false,
+                'required' => false,
+                'constraints' => [
+                    new File([
+                        'maxSize' => '1024k',
+                        'mimeTypes' => [
+                            'image/jpeg',
+                            'image/png',
+                            'image/webp',
+                        ],
+                        'mimeTypesMessage' => 'Veuillez télécharger une image valide (JPG, PNG ou WEBP).',
+                    ])
+                ],
+                'help' => 'Taille max 1Mo. Le format WebP est recommandé pour plus de rapidité.',
+            ])
+            ->add('isAnonymous', CheckboxType::class, [
+                'label' => 'Publier anonymement',
+                'required' => false,
+                'help' => 'Votre nom ne sera pas affiché publiquement. L\'administration peut toujours voir votre identité.',
             ]);
     }
 

@@ -1,0 +1,109 @@
+{% extends 'base_admin.html.twig' %}
+
+{% block title %}Gestion du Forum — Commentaires{% endblock %}
+
+{% block admin_body %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Gestion du Forum : Commentaires</h1>
+        <div>
+            <a href="{{ path('app_admin_module_forum') }}" class="btn btn-outline-primary">Voir les publications</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-5">
+                    <input type="text" name="q" value="{{ q }}" placeholder="Rechercher par contenu..." class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <select name="sort" class="form-select">
+                        <option value="recent" {{ sort == 'recent' ? 'selected' : '' }}>Plus récents</option>
+                        <option value="likes" {{ sort == 'likes' ? 'selected' : '' }}>Plus aimés</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary">Filtrer</button>
+                    {% if q or sort != 'recent' %}
+                        <a href="{{ path('app_admin_forum_comments') }}" class="btn btn-link">Réinitialiser</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Commentaire</th>
+                            <th>Post Parent</th>
+                            <th>Auteur</th>
+                            <th>Stats</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for comment in comments %}
+                            <tr>
+                                <td>{{ comment.date|date('d/m/Y H:i') }}</td>
+                                <td>
+                                    <div class="small">
+                                        {{ comment.contenu|length > 100 ? comment.contenu|slice(0, 100) ~ '...' : comment.contenu }}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if comment.post %}
+                                        <a href="{{ path('app_post_show', {id: comment.post.id}) }}" target="_blank" class="small text-decoration-none">
+                                            {{ comment.post.titre|length > 30 ? comment.post.titre|slice(0, 30) ~ '...' : comment.post.titre }}
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted small italic">Post supprimé</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if comment.auteur %}
+                                        <span class="small">{{ comment.auteur.prenom }} {{ comment.auteur.nom }}</span>
+                                        <span class="badge bg-info text-dark" style="font-size: 0.7rem;">{{ comment.auteurRole }}</span>
+                                    {% else %}
+                                        <span class="text-muted small italic">Anonyme</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span title="Likes" class="small">❤️ {{ comment.nbLikes }}</span>
+                                </td>
+                                <td>
+                                    <form method="post" action="{{ path('app_admin_forum_comment_delete', {id: comment.id}) }}" onsubmit="return confirm('Supprimer ce commentaire ?');" class="d-inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete_comment_' ~ comment.id) }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Supprimer</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">Aucun commentaire trouvé.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if total_pages > 1 %}
+            <div class="card-footer bg-white">
+                <nav aria-label="Pagination">
+                    <ul class="pagination pagination-sm mb-0 justify-content-center">
+                        {% for p in 1..total_pages %}
+                            <li class="page-item {{ p == page ? 'active' : '' }}">
+                                <a class="page-link" href="{{ path('app_admin_forum_comments', {page: p, q: q, sort: sort}) }}">{{ p }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

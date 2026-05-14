@@ -56,9 +56,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'auteur')]
     private Collection $posts;
 
+    /** @var Collection<int, Post> */
+    #[ORM\ManyToMany(targetEntity: Post::class)]
+    #[ORM\JoinTable(name: 'user_saved_post')]
+    #[ORM\JoinColumn(name: 'id_user', referencedColumnName: 'id_user', onDelete: 'CASCADE')]
+    #[ORM\InverseJoinColumn(name: 'id_post', referencedColumnName: 'id_post', onDelete: 'CASCADE')]
+    private Collection $savedPosts;
+
     public function __construct()
     {
         $this->posts = new ArrayCollection();
+        $this->savedPosts = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -202,6 +210,31 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getPosts(): Collection
     {
         return $this->posts;
+    }
+
+    /** @return Collection<int, Post> */
+    public function getSavedPosts(): Collection
+    {
+        return $this->savedPosts;
+    }
+
+    public function hasSavedPost(Post $post): bool
+    {
+        return $this->savedPosts->contains($post);
+    }
+
+    public function addSavedPost(Post $post): static
+    {
+        if (!$this->savedPosts->contains($post)) {
+            $this->savedPosts->add($post);
+        }
+        return $this;
+    }
+
+    public function removeSavedPost(Post $post): static
+    {
+        $this->savedPosts->removeElement($post);
+        return $this;
     }
 
     public function getUserIdentifier(): string

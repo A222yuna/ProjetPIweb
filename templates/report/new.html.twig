@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ title }} — Forum{% endblock %}
+
+{% block body %}
+    <p class="muted back-link">
+        <a href="{{ back_url }}">← Retour</a>
+    </p>
+
+    <div class="card">
+        <h1 style="margin-top:0">{{ title }}</h1>
+        <p class="muted" style="margin-top:-.25rem">
+            Votre signalement sera visible uniquement par l’administrateur. Merci de rester factuel.
+        </p>
+
+        {{ form_start(form, { attr: { class: 'stack-form', novalidate: 'novalidate' } }) }}
+            {{ form_row(form.reason) }}
+            {{ form_row(form.details) }}
+
+            <div class="stack-form-actions">
+                <button type="submit" class="btn btn-primary">Envoyer le signalement</button>
+                <a class="btn btn-outline" href="{{ back_url }}">Annuler</a>
+            </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}
+
