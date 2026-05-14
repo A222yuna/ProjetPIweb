@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle publication — Forum{% endblock %}
+
+{% block body %}
+    <p class="muted back-link">
+        <a href="{{ path('app_consultation') }}">← Retour au forum</a>
+    </p>
+
+    <div class="card" style="max-width: 800px; margin: 0 auto;">
+        <h1>Créer une nouvelle publication</h1>
+        <p class="muted" style="margin-bottom: 2rem;">
+            Partagez vos questions ou vos expériences avec la communauté.
+        </p>
+        
+        {{ form_start(form, { attr: { class: 'stack-form' } }) }}
+            {{ form_row(form.titre) }}
+            {{ form_row(form.categorie) }}
+            {{ form_row(form.contenu) }}
+            
+            <div class="stack-form-actions">
+                <button type="submit" class="btn btn-primary">Publier sur le forum</button>
+                <a href="{{ path('app_consultation') }}" class="btn btn-outline">Annuler</a>
+            </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

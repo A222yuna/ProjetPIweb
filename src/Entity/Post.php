@@ -127,6 +127,13 @@ class Post
         return $this;
     }
 
+    public function isLikedByUser(User $user): bool
+    {
+        // Comme nous n'avons pas la table de jointure, on renvoie false par défaut
+        // Cela évitera l'erreur SQL
+        return false;
+    }
+
     public function getDate(): ?\DateTimeInterface
     {
         return $this->date;

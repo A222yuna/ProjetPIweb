@@ -14,8 +14,27 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 
 final class PostConsultationFormType extends AbstractType
 {
+    private const CATEGORY_CHOICES = [
+        'Vie Émotionnelle et Bien-être' => 'Vie Émotionnelle et Bien-être',
+        'Relations et Liens Sociaux' => 'Relations et Liens Sociaux',
+        'Troubles et Santé Mentale' => 'Troubles et Santé Mentale',
+        'Monde du Travail et Études' => 'Monde du Travail et Études',
+        'Espace Débats et Société' => 'Espace Débats et Société',
+    ];
+
+    public static function getCategoryChoices(): array
+    {
+        return self::CATEGORY_CHOICES;
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $choices = $options['category_choices'] ?: self::CATEGORY_CHOICES;
+
+        if (array_values($choices) === $choices) {
+            $choices = array_combine($choices, $choices);
+        }
+
         $builder
             ->add('titre', TextType::class, [
                 'label' => 'Titre',
@@ -40,19 +59,12 @@ final class PostConsultationFormType extends AbstractType
             ])
             ->add('categorie', ChoiceType::class, [
                 'label' => 'Catégorie',
-                'choices' => [
-                    'Vie Émotionnelle et Bien-être' => 'Vie Émotionnelle et Bien-être',
-                    'Relations et Liens Sociaux' => 'Relations et Liens Sociaux',
-                    'Troubles et Santé Mentale' => 'Troubles et Santé Mentale',
-                    'Monde du Travail et Études' => 'Monde du Travail et Études',
-                    'Espace Débats et Société' => 'Espace Débats et Société',
-                    'Fonctionnement de l\'Esprit' => 'Fonctionnement de l\'Esprit',
-                ],
+                'choices' => $choices,
                 'placeholder' => 'Choisir une catégorie',
                 'constraints' => [
                     new NotBlank(message: 'La catégorie est obligatoire.'),
                 ],
-                'help' => 'Sélectionnez parmi les 6 catégories disponibles.',
+                'help' => 'Sélectionnez une catégorie disponible.',
             ]);
     }
 
