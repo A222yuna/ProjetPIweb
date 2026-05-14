@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Face Recognition</title>
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --surface: #161616;
+    --border: #2a2a2a;
+    --border-hover: #444;
+    --text: #f0f0f0;
+    --muted: #888;
+    --green: #1D9E75;
+    --green-dim: #0f6e56;
+    --red: #D85A30;
+    --blue: #378ADD;
+    --radius: 10px;
+    --font: 'Courier New', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+
+  header { padding: 2rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; }
+  .logo { width: 36px; height: 36px; border: 1.5px solid var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  header h1 { font-size: 18px; font-weight: normal; letter-spacing: 2px; text-transform: uppercase; }
+  header span { font-size: 12px; color: var(--muted); margin-left: auto; }
+
+  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 0; min-height: calc(100vh - 80px); }
+
+  .panel { padding: 2rem; border-right: 1px solid var(--border); }
+  .panel:last-child { border-right: none; }
+
+  .panel-title { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+
+  .tabs { display: flex; gap: 0; margin-bottom: 1.5rem; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .tab { flex: 1; padding: 8px; background: transparent; border: none; color: var(--muted); cursor: pointer; font-family: var(--font); font-size: 12px; letter-spacing: 1px; transition: all 0.15s; }
+  .tab.active { background: var(--surface); color: var(--text); }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  .drop-zone { border: 1px dashed var(--border); border-radius: var(--radius); padding: 2rem 1rem; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 1rem; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; position: relative; overflow: hidden; }
+  .drop-zone:hover, .drop-zone.drag { border-color: var(--green); background: rgba(29,158,117,0.04); }
+  .drop-zone img { max-width: 100%; max-height: 180px; object-fit: contain; border-radius: 6px; display: none; }
+  .drop-zone .hint { font-size: 12px; color: var(--muted); }
+  .drop-zone .icon { font-size: 32px; }
+
+  .form-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  input[type=text] { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; color: var(--text); font-family: var(--font); font-size: 13px; outline: none; transition: border-color 0.15s; }
+  input[type=text]:focus { border-color: var(--green); }
+  input[type=text]::placeholder { color: var(--muted); }
+
+  button.btn { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text); font-family: var(--font); font-size: 13px; cursor: pointer; transition: all 0.15s; letter-spacing: 1px; }
+  button.btn:hover:not(:disabled) { border-color: var(--green); color: var(--green); }
+  button.btn.primary { background: var(--green); border-color: var(--green); color: #fff; }
+  button.btn.primary:hover:not(:disabled) { background: var(--green-dim); color: #fff; }
+  button.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  button.btn.danger:hover:not(:disabled) { border-color: var(--red); color: var(--red); }
+
+  .result-box { border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-top: 1rem; animation: fadeIn 0.3s ease; }
+  .result-box.match { border-color: var(--green); }
+  .result-box.fail  { border-color: var(--red); }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:none } }
+
+  .result-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .result-name { font-size: 26px; letter-spacing: 1px; margin-bottom: 4px; }
+  .result-sub { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+  .conf-track { height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 8px; }
+  .conf-fill { height: 3px; border-radius: 2px; background: var(--green); transition: width 0.8s ease; }
+  .conf-fill.low { background: var(--red); }
+  .conf-val { font-size: 12px; color: var(--muted); }
+
+  .top-list { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 12px; }
+  .top-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 12px; color: var(--muted); }
+  .top-item .tname { color: var(--text); }
+  .top-item .tdist { font-size: 11px; }
+
+  .db-list { list-style: none; }
+  .db-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .db-item:last-child { border-bottom: none; }
+  .avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); }
+  .av-init { width: 42px; height: 42px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--muted); flex-shrink: 0; }
+  .db-info { flex: 1; }
+  .db-name { font-size: 14px; }
+  .db-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .chip { font-size: 10px; background: rgba(29,158,117,0.15); color: var(--green); padding: 2px 8px; border-radius: 20px; }
+  .del-btn { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 18px; transition: color 0.15s; }
+  .del-btn:hover { color: var(--red); }
+  .empty { text-align: center; padding: 3rem 1rem; color: var(--muted); font-size: 13px; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #fff3; border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg) } }
+  .tip { font-size: 11px; color: var(--muted); text-align: center; margin-top: 8px; line-height: 1.6; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 3px 10px; border-radius: 20px; }
+  .badge.ok  { background: rgba(29,158,117,0.15); color: var(--green); }
+  .badge.err { background: rgba(216,90,48,0.15); color: var(--red); }
+
+  @media (max-width: 700px) { .layout { grid-template-columns: 1fr; } .panel { border-right: none; border-bottom: 1px solid var(--border); } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">◉</div>
+  <h1>FaceID</h1>
+  <span id="model-badge">Model: Facenet</span>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT: Register / Identify -->
+  <div class="panel">
+    <div class="panel-title">Recognition</div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchMode('register')">Register</button>
+      <button class="tab"        onclick="switchMode('identify')">Identify</button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="mode-register">
+      <div class="drop-zone" id="dz-reg"
+           onclick="document.getElementById('fi-reg').click()"
+           ondragover="dzDrag(event,'dz-reg')"
+           ondragleave="dzOff('dz-reg')"
+           ondrop="dzDrop(event,'dz-reg','reg')">
+        <div class="icon" id="reg-icon">📷</div>
+        <div class="hint" id="reg-hint">Click or drag your photo here</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px" id="reg-hint2">Use a clear, frontal face photo</div>
+        <img id="reg-preview" alt="preview">
+      </div>
+      <input type="file" id="fi-reg" accept="image/*" style="display:none" onchange="loadPreview(event,'reg')">
+      <div class="form-row">
+        <input type="text" id="reg-name"  placeholder="Your name *" />
+        <input type="text" id="reg-label" placeholder="Role / label" />
+      </div>
+      <button class="btn primary" id="btn-reg" onclick="doRegister()" disabled>Register Face</button>
+      <p class="tip">Photos are stored locally on your machine.<br>Add multiple photos of yourself to improve accuracy.</p>
+      <div id="reg-result"></div>
+    </div>
+
+    <!-- IDENTIFY -->
+    <div id="mode-identify" style="display:none">
+      <div class="drop-zone" id="dz-id"
+           onclick="document.getElementById('fi-id').click()"
+           ondragover="dzDrag(event,'dz-id')"
+           ondragleave="dzOff('dz-id')"
+           ondrop="dzDrop(event,'dz-id','id')">
+        <div class="icon" id="id-icon">🔍</div>
+        <div class="hint" id="id-hint">Upload a photo to identify</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px" id="id-hint2">Can be a different photo than the one you registered</div>
+        <img id="id-preview" alt="preview">
+      </div>
+      <input type="file" id="fi-id" accept="image/*" style="display:none" onchange="loadPreview(event,'id')">
+      <button class="btn primary" id="btn-id" onclick="doIdentify()" disabled>Identify Face</button>
+      <div id="id-result"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Database -->
+  <div class="panel">
+    <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center">
+      <span>Registered Faces (<span id="db-count">0</span>)</span>
+      <button class="btn danger" style="width:auto;padding:4px 12px;font-size:11px" onclick="clearAll()">Clear all</button>
+    </div>
+    <ul class="db-list" id="db-list">
+      <li class="empty">No faces registered yet.<br>Register your first face on the left.</li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+let regFile = null, idFile = null;
+
+// ── drag/drop ──────────────────────────────────────────
+function dzDrag(e, id) { e.preventDefault(); document.getElementById(id).classList.add('drag'); }
+function dzOff(id)      { document.getElementById(id).classList.remove('drag'); }
+function dzDrop(e, zone, mode) {
+  e.preventDefault(); dzOff(zone);
+  const f = e.dataTransfer.files[0];
+  if (f) setFile(f, mode);
+}
+function loadPreview(e, mode) { setFile(e.target.files[0], mode); }
+
+function setFile(file, mode) {
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const img = document.getElementById(mode === 'reg' ? 'reg-preview' : 'id-preview');
+  img.src = url; img.style.display = 'block';
+  document.getElementById(mode === 'reg' ? 'reg-icon' : 'id-icon').style.display = 'none';
+  document.getElementById(mode === 'reg' ? 'reg-hint' : 'id-hint').style.display = 'none';
+  document.getElementById(mode === 'reg' ? 'reg-hint2' : 'id-hint2').style.display = 'none';
+  if (mode === 'reg') { regFile = file; document.getElementById('btn-reg').disabled = false; }
+  else { idFile = file; document.getElementById('btn-id').disabled = false; }
+}
+
+// ── tab switch ────────────────────────────────────────
+function switchMode(m) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['register','identify'][i]===m));
+  document.getElementById('mode-register').style.display = m==='register' ? '' : 'none';
+  document.getElementById('mode-identify').style.display = m==='identify' ? '' : 'none';
+}
+
+// ── register ──────────────────────────────────────────
+async function doRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  if (!name || !regFile) return;
+  const btn = document.getElementById('btn-reg');
+  btn.innerHTML = '<span class="spinner"></span>Processing…'; btn.disabled = true;
+
+  const fd = new FormData();
+  fd.append('name', name);
+  fd.append('label', document.getElementById('reg-label').value.trim());
+  fd.append('photo', regFile);
+
+  try {
+    const r = await fetch('/api/register', { method: 'POST', body: fd });
+    const d = await r.json();
+    const box = document.getElementById('reg-result');
+    if (d.success) {
+      box.innerHTML = `<div class="result-box match" style="padding:1rem">
+        <span class="badge ok">✓ Registered — ${name} (${d.total_photos} photo${d.total_photos>1?'s':''})</span>
+      </div>`;
+      loadDB();
+    } else {
+      box.innerHTML = `<div class="result-box fail" style="padding:1rem"><span class="badge err">✗ ${d.error}</span></div>`;
+    }
+  } catch(e) {
+    document.getElementById('reg-result').innerHTML = `<div class="result-box fail" style="padding:1rem"><span class="badge err">✗ Server error</span></div>`;
+  }
+  btn.innerHTML = 'Register Face'; btn.disabled = false;
+}
+
+// ── identify ──────────────────────────────────────────
+async function doIdentify() {
+  if (!idFile) return;
+  const btn = document.getElementById('btn-id');
+  btn.innerHTML = '<span class="spinner"></span>Analysing…'; btn.disabled = true;
+  document.getElementById('id-result').innerHTML = '';
+
+  const fd = new FormData();
+  fd.append('photo', idFile);
+
+  try {
+    const r = await fetch('/api/identify', { method: 'POST', body: fd });
+    const d = await r.json();
+    showResult(d);
+  } catch(e) {
+    document.getElementById('id-result').innerHTML = `<div class="result-box fail" style="padding:1rem"><span class="badge err">✗ Server error</span></div>`;
+  }
+  btn.innerHTML = 'Identify Face'; btn.disabled = false;
+}
+
+function showResult(d) {
+  const box = document.getElementById('id-result');
+  if (d.error) { box.innerHTML = `<div class="result-box fail" style="padding:1rem"><span class="badge err">✗ ${d.error}</span></div>`; return; }
+
+  const topRows = (d.all_results||[]).map(r =>
+    `<div class="top-item"><span class="tname">${r.name}</span><span class="tdist">${(r.distance).toFixed(3)} dist · ${r.confidence}%</span></div>`
+  ).join('');
+
+  if (d.matched) {
+    const pct = Math.min(100, d.confidence);
+    box.innerHTML = `
+      <div class="result-box match">
+        <div class="result-label">Identified as</div>
+        <div class="result-name">${d.name}</div>
+        ${d.label ? `<div class="result-sub">${d.label}</div>` : ''}
+        <div class="conf-track"><div class="conf-fill" style="width:${pct}%"></div></div>
+        <div class="conf-val">Confidence: ${pct}% &nbsp;·&nbsp; Distance: ${d.distance}</div>
+        ${topRows ? `<div class="top-list"><div style="font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:6px">ALL MATCHES</div>${topRows}</div>` : ''}
+      </div>`;
+  } else {
+    const closest = d.closest;
+    box.innerHTML = `
+      <div class="result-box fail">
+        <div class="result-label">Not recognised</div>
+        <div class="result-name" style="font-size:18px;color:var(--muted)">Unknown person</div>
+        ${closest ? `<div class="result-sub">Closest: ${closest.name} (${closest.distance} dist)</div>` : ''}
+        <div class="conf-track"><div class="conf-fill low" style="width:${closest?Math.min(100,closest.confidence):0}%"></div></div>
+        <div class="conf-val">Below match threshold</div>
+        ${topRows ? `<div class="top-list"><div style="font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:6px">COMPARED AGAINST</div>${topRows}</div>` : ''}
+      </div>`;
+  }
+}
+
+// ── database ──────────────────────────────────────────
+async function loadDB() {
+  const r = await fetch('/api/faces');
+  const faces = await r.json();
+  document.getElementById('db-count').textContent = faces.length;
+  const list = document.getElementById('db-list');
+  if (!faces.length) { list.innerHTML = '<li class="empty">No faces registered yet.<br>Register your first face on the left.</li>'; return; }
+  list.innerHTML = faces.map(f => `
+    <li class="db-item">
+      <div class="av-init">${f.name[0].toUpperCase()}</div>
+      <div class="db-info">
+        <div class="db-name">${f.name}</div>
+        <div class="db-meta">${f.label || ''} ${f.label ? '·' : ''} <span class="chip">${f.count} photo${f.count>1?'s':''}</span></div>
+      </div>
+      <button class="del-btn" onclick="deleteFace('${f.name}')" title="Remove">✕</button>
+    </li>`).join('');
+}
+
+async function deleteFace(name) {
+  if (!confirm(`Remove "${name}" from the database?`)) return;
+  await fetch(`/api/delete/${encodeURIComponent(name)}`, { method: 'DELETE' });
+  loadDB();
+}
+
+async function clearAll() {
+  if (!confirm('Clear ALL registered faces?')) return;
+  await fetch('/api/clear', { method: 'DELETE' });
+  loadDB();
+}
+
+loadDB();
+</script>
+</body>
+</html>

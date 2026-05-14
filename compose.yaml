@@ -19,7 +19,33 @@ services:
       # - ./docker/db/data:/var/lib/postgresql/data:rw
 ###< doctrine/doctrine-bundle ###
 
+###> face-recognition ###
+  face_recognition:
+    build:
+      context: ./face_recognition_app/face_recognition_app/face_app
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - face_data:/app/known_faces
+      - face_uploads:/app/uploads
+    environment:
+      - TF_CPP_MIN_LOG_LEVEL=3
+      - TF_ENABLE_ONEDNN_OPTS=0
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/faces"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+###< face-recognition ###
+
 volumes:
 ###> doctrine/doctrine-bundle ###
   database_data:
 ###< doctrine/doctrine-bundle ###
+
+###> face-recognition ###
+  face_data:
+  face_uploads:
+###< face-recognition ###

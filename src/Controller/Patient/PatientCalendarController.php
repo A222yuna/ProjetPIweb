@@ -101,7 +101,7 @@ final class PatientCalendarController extends AbstractController
                 'color' => $color,
                 'extendedProps' => [
                     'status' => $status,
-                    'cabinet' => $dispo && $dispo->getCabinet() ? $dispo->getCabinet()->getNom() : 'N/A',
+                    'cabinet' => $dispo && $dispo->getCabinet() ? $dispo->getCabinet()->getVille() : 'N/A',
                     'adresse' => $dispo && $dispo->getCabinet() ? $dispo->getCabinet()->getAdresse() : 'N/A'
                 ]
             ];

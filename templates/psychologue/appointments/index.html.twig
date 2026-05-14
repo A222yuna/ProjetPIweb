@@ -84,7 +84,7 @@
                             {% if a.status == 'SCHEDULED' %}
                                 <div class="d-flex gap-1 justify-content-end">
                                     {% if app.user.photoProfil %}
-                                      <a href="{{ path('app_psychologue_face_verify', {appointmentId: a.id}) }}" class="btn btn-success btn-sm">
+                                      <a href="{{ path('app_psychologue_face_verify', {appointmentId: a.id}) }}" class="btn btn-success btn-sm" data-turbo="false">
                                         🔒 Vérifier & Confirmer
                                       </a>
                                     {% else %}

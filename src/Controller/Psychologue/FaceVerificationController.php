@@ -14,8 +14,11 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class FaceVerificationController extends AbstractController
 {
     #[Route('/psychologue/face-verification/{appointmentId}', name: 'app_psychologue_face_verify', methods: ['GET'])]
-    public function verify(int $appointmentId, AppointmentRepository $appointments, CsrfTokenManagerInterface $csrfTokenManager): Response
-    {
+    public function verify(
+        int $appointmentId,
+        AppointmentRepository $appointments,
+        CsrfTokenManagerInterface $csrfTokenManager
+    ): Response {
         $user = $this->getUser();
         \assert($user instanceof User);
 
@@ -32,9 +35,9 @@ final class FaceVerificationController extends AbstractController
 
         return $this->render('psychologue/face/verify.html.twig', [
             'appointment' => $appointment,
-            'has_photo' => (bool) $photoUrl,
-            'photo_url' => $photoUrl,
-            'csrf_token' => $csrfTokenManager->getToken('confirm_appointment_' . $appointment->getId())->getValue(),
+            'has_photo'   => (bool) $photoUrl,
+            'photo_url'   => $photoUrl,
+            'csrf_token'  => $csrfTokenManager->getToken('confirm_appointment_' . $appointment->getId())->getValue(),
         ]);
     }
 }

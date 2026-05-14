@@ -103,7 +103,7 @@ class StatisticsController extends AbstractController
         $appointments = $appointmentRepository->findForPsychologue($psyId);
         
         $psyCabinet = $psyCabinetRepo->findOneBy(['psychologue' => $user]);
-        $cabinetName = $psyCabinet?->getCabinet()?->getNom() ?? 'N/A';
+        $cabinetName = $psyCabinet?->getCabinet() ? $psyCabinet->getCabinet()->getVille() . ', ' . $psyCabinet->getCabinet()->getAdresse() : 'N/A';
 
         $spreadsheet = new Spreadsheet();
 

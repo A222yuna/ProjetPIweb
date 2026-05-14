@@ -83,6 +83,17 @@
                             <span class="d-none d-md-inline">{{ 'nav.forum'|trans }}</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="{{ path('app_psychologue_profile_photo') }}" class="nav-link d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') == 'app_psychologue_profile_photo' ? 'active bg-primary text-white' : (app.user.photoProfil is null ? 'text-warning fw-semibold' : 'text-white') }}">
+                            <i class="fa-solid fa-camera"></i>
+                            <span class="d-none d-md-inline">
+                                Photo de profil
+                                {% if app.user.photoProfil is null %}
+                                    <span class="badge bg-warning text-dark ms-1" style="font-size:0.65rem;">!</span>
+                                {% endif %}
+                            </span>
+                        </a>
+                    </li>
                 </ul>
                 <hr class="opacity-25 mt-4">
                 <div class="dropdown p-2 mt-auto">
@@ -141,6 +152,20 @@
                             </div>
                         </div>
                     </div>
+
+                    {# ── Photo de profil manquante ── #}
+                    {% if app.user and app.user.photoProfil is null and app.request.get('_route') != 'app_psychologue_profile_photo' %}
+                        <div class="alert alert-warning d-flex align-items-center gap-3 mb-4 rounded-3 shadow-sm" role="alert">
+                            <i class="fa-solid fa-triangle-exclamation fa-lg flex-shrink-0"></i>
+                            <div class="flex-grow-1">
+                                <strong>Photo de profil manquante.</strong>
+                                Elle est requise pour confirmer vos rendez-vous via la vérification faciale.
+                            </div>
+                            <a href="{{ path('app_psychologue_profile_photo') }}" class="btn btn-warning btn-sm fw-semibold text-nowrap">
+                                <i class="fa-solid fa-camera me-1"></i> Ajouter ma photo
+                            </a>
+                        </div>
+                    {% endif %}
 
                     {% block psychologue_body %}{% endblock %}
                 </div>

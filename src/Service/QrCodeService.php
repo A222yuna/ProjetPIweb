@@ -25,7 +25,7 @@ class QrCodeService
             'prenom' => $psy->getPrenom(),
             'email' => $psy->getEmail(),
             'telephone' => $psy->getTelephone(),
-            'cabinet' => $cabinet ? $cabinet->getNom() : 'N/A',
+            'cabinet' => $cabinet ? $cabinet->getVille() . ', ' . $cabinet->getAdresse() : 'N/A',
             'plateforme' => 'PsyConnect'
         ]);
 
