@@ -43,10 +43,12 @@
             {% for a in appointments %}
                 <li class="mb-2">
                     #{{ a.id }} - {{ a.patient ? a.patient.prenom ~ ' ' ~ a.patient.nom : 'Patient' }}
-                    {% if a.status == 'SCHEDULED' %}<span class="badge text-bg-primary">SCHEDULED</span>{% endif %}
+                    {% if a.status == 'SCHEDULED' or a.status == '' %}<span class="badge text-bg-warning">EN ATTENTE</span>{% endif %}
+                    {% if a.status == 'CONFIRMED' %}<span class="badge text-bg-info">CONFIRMÉ</span>{% endif %}
+                    {% if a.status == 'PAID' %}<span class="badge text-bg-primary">PAYÉ</span>{% endif %}
                     {% if a.status == 'COMPLETED' %}<span class="badge text-bg-success">COMPLETED</span>{% endif %}
                     {% if a.status == 'CANCELLED' %}<span class="badge text-bg-danger">CANCELLED</span>{% endif %}
-                    {% if a.status == 'SCHEDULED' %}
+                    {% if a.status in ['SCHEDULED', 'CONFIRMED', 'PAID', ''] %}
                         <form method="post" action="{{ path('app_psychologue_appointment_complete', { id: a.id }) }}" style="display:inline">
                             <input type="hidden" name="_token" value="{{ csrf_token('psy_appointment_' ~ a.id) }}">
                             <button type="submit" class="btn btn-sm btn-outline-success">Completer</button>

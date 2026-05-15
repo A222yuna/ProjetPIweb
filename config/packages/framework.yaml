@@ -9,6 +9,10 @@ framework:
         cookie_samesite: 'lax'
         storage_factory_id: 'session.storage.factory.native'
         save_path: '%kernel.project_dir%/var/sessions/%kernel.environment%'
+        gc_maxlifetime: 86400       # 24 hours in seconds
+        cookie_lifetime: 86400      # keep cookie alive 24 hours
+        gc_probability: 1
+        gc_divisor: 100
 
     #esi: true
     #fragments: true

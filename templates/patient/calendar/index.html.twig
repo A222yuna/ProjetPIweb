@@ -43,13 +43,20 @@
     <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h5 class="fw-bold mb-0">Mes rendez-vous à venir</h5>
-            <div class="d-flex gap-3">
-                <div class="legend-item"><div class="legend-color" style="background: #5B9BD5;"></div><span>Réservé</span></div>
-                <div class="legend-item"><div class="legend-color" style="background: #e74c3c;"></div><span>Annulé</span></div>
+            <div class="d-flex gap-3 flex-wrap">
+                <div class="legend-item"><div class="legend-color" style="background: #ffc107;"></div><span>Prévu</span></div>
+                <div class="legend-item"><div class="legend-color" style="background: #0dcaf0;"></div><span>Confirmé</span></div>
+                <div class="legend-item"><div class="legend-color" style="background: #0d6efd;"></div><span>Payé</span></div>
+                <div class="legend-item"><div class="legend-color" style="background: #198754;"></div><span>Terminé</span></div>
+                <div class="legend-item"><div class="legend-color" style="background: #dc3545;"></div><span>Annulé</span></div>
             </div>
         </div>
-        
-        <div id="calendar"></div>
+
+        <div id="calendar"
+             data-calendar="1"
+             data-calendar-events="{{ path('app_patient_calendar_events') }}"
+             data-view-url="{{ path('app_patient_rendezvous_index') }}">
+        </div>
     </div>
 
     <!-- Modal Détails -->
@@ -70,7 +77,7 @@
                             <p class="text-muted small mb-0" id="cabinetNameDisplay">-</p>
                         </div>
                     </div>
-                    
+
                     <div class="row g-3">
                         <div class="col-6">
                             <div class="p-3 bg-light rounded-3">
@@ -99,68 +106,10 @@
             </div>
         </div>
     </div>
+
+
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var calendarEl = document.getElementById('calendar');
-            var eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
-            
-            var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                locale: 'fr',
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
-                },
-                buttonText: {
-                    today: 'Aujourd\'hui',
-                    month: 'Mois',
-                    week: 'Semaine',
-                    day: 'Jour',
-                    list: 'Liste'
-                },
-                events: '{{ path('app_patient_calendar_events') }}',
-                loading: function(isLoading) {
-                    if (!isLoading) {
-                        console.log('Patient events loaded');
-                    }
-                },
-                eventSourceSuccess: function(content, xhr) {
-                    console.log('Successfully fetched patient events:', content);
-                    return content;
-                },
-                eventSourceFailure: function(error) {
-                    console.error('Error fetching patient events:', error);
-                },
-                eventClick: function(info) {
-                    const props = info.event.extendedProps;
-                    
-                    document.getElementById('psyNameDisplay').textContent = info.event.title;
-                    document.getElementById('cabinetNameDisplay').textContent = props.cabinet;
-                    document.getElementById('eventStartDisplay').textContent = info.event.start.toLocaleString('fr-FR');
-                    
-                    const statusBadge = document.getElementById('eventStatusDisplay');
-                    statusBadge.textContent = props.status;
-                    statusBadge.className = 'badge rounded-pill ';
-                    
-                    if (props.status === 'RESERVE') statusBadge.classList.add('bg-primary');
-                    else statusBadge.classList.add('bg-danger');
-                    
-                    document.getElementById('eventAddressDisplay').textContent = props.adresse;
-                    document.getElementById('viewAppointmentBtn').href = "{{ path('app_patient_rendezvous_index') }}";
-                    
-                    eventModal.show();
-                },
-                eventMouseEnter: function(info) {
-                    info.el.style.cursor = 'pointer';
-                }
-            });
-            calendar.render();
-        });
-    </script>
 {% endblock %}

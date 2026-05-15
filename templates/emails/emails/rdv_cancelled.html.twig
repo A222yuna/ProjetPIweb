@@ -1,0 +1,12 @@
+{% extends 'emails/_base.html.twig' %}
+{% block content %}
+<div class="header" style="background:linear-gradient(135deg,#EF4444,#F97316);">
+  <h1>❌ Rendez-vous Annulé</h1>
+  <p>Cabinet de Psychologie</p>
+</div>
+<div class="body">
+  <p>Bonjour <strong>{{ patient.prenom }} {{ patient.nom }}</strong>,</p>
+  <p>Votre rendez-vous a été annulé.</p>
+  <a href="http://127.0.0.1:8000/patient/rendezvous/" class="btn" style="background:#EF4444;">Prendre un nouveau rendez-vous</a>
+</div>
+{% endblock %}

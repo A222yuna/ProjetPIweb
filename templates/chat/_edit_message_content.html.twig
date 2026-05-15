@@ -1,0 +1,16 @@
+    <p class="text-muted mb-4">
+        <a href="{{ path('app_chat_view', {'id': message.conversation.id}) }}" class="text-decoration-none text-muted">← Retour à la conversation</a>
+    </p>
+
+    <div class="card border-0 shadow-sm rounded-4 p-4" style="max-width: 600px;">
+        <form method="post">
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Contenu du message</label>
+                <textarea name="message" class="form-control" rows="4" required>{{ initialContent }}</textarea>
+            </div>
+            <div class="d-flex gap-3">
+                <a href="{{ path('app_chat_view', {'id': message.conversation.id}) }}" class="btn btn-outline-primary rounded-pill">Annuler</a>
+                <button type="submit" class="btn btn-primary rounded-pill">Mettre à jour</button>
+            </div>
+        </form>
+    </div>

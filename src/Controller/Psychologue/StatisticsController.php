@@ -12,7 +12,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/psychologue/statistiques')]
@@ -39,8 +39,9 @@ class StatisticsController extends AbstractController
             'PAID' => 0,
         ];
         foreach ($statusCounts as $row) {
-            if (isset($statsByStatus[$row['status']])) {
-                $statsByStatus[$row['status']] = (int) $row['count'];
+            $status = ($row['status'] === null || $row['status'] === '') ? 'CONFIRMED' : $row['status'];
+            if (isset($statsByStatus[$status])) {
+                $statsByStatus[$status] += (int) $row['count'];
             }
         }
 
@@ -103,7 +104,7 @@ class StatisticsController extends AbstractController
         $appointments = $appointmentRepository->findForPsychologue($psyId);
         
         $psyCabinet = $psyCabinetRepo->findOneBy(['psychologue' => $user]);
-        $cabinetName = $psyCabinet?->getCabinet() ? $psyCabinet->getCabinet()->getVille() . ', ' . $psyCabinet->getCabinet()->getAdresse() : 'N/A';
+        $cabinetName = $psyCabinet?->getCabinet()?->getVille() ?? 'N/A';
 
         $spreadsheet = new Spreadsheet();
 

@@ -1,0 +1,15 @@
+{% extends (app.user and app.user.role == 'Psychologue') ? 'base_psychologue.html.twig' : 'base_patient.html.twig' %}
+
+{% block body_attr %} class="layout-chat-view"{% endblock %}
+{% block title %}Conversation #{{ '%03d'|format(conversation.id) }} — Messagerie{% endblock %}
+
+{% block patient_title %}Conversation #{{ '%03d'|format(conversation.id) }}{% endblock %}
+{% block psychologue_title %}Conversation #{{ '%03d'|format(conversation.id) }}{% endblock %}
+
+{% block patient_body %}
+    {{ include('chat/_view_content.html.twig') }}
+{% endblock %}
+
+{% block psychologue_body %}
+    {{ include('chat/_view_content.html.twig') }}
+{% endblock %}

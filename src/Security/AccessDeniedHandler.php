@@ -4,7 +4,8 @@ namespace App\Security;
 
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Http\Authorization\AccessDeniedHandlerInterface;
@@ -12,7 +13,7 @@ use Symfony\Component\Security\Http\Authorization\AccessDeniedHandlerInterface;
 final class AccessDeniedHandler implements AccessDeniedHandlerInterface
 {
     public function __construct(
-        private readonly RouterInterface $router,
+        private readonly UrlGeneratorInterface $router,
         private readonly TokenStorageInterface $tokenStorage,
     )
     {
@@ -29,7 +30,10 @@ final class AccessDeniedHandler implements AccessDeniedHandlerInterface
         };
 
         if ($request->hasSession()) {
-            $request->getSession()->getFlashBag()->add('warning', 'Accès refusé pour cette page.');
+            $session = $request->getSession();
+            if ($session instanceof FlashBagAwareSessionInterface) {
+                $session->getFlashBag()->add('warning', 'Accès refusé pour cette page.');
+            }
         }
 
         return new RedirectResponse($this->router->generate($targetRoute));

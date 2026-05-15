@@ -21,7 +21,7 @@ class Avis
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(name: 'psychologue_id_user', referencedColumnName: 'id_user', nullable: false, onDelete: 'CASCADE')]
-    private ?User $psychologue = null;
+    private ?User $patient = null;
 
     #[ORM\Column]
     private int $note = 1;
@@ -49,14 +49,14 @@ class Avis
         return $this;
     }
 
-    public function getPsychologue(): ?User
+    public function getPatient(): ?User
     {
-        return $this->psychologue;
+        return $this->patient;
     }
 
-    public function setPsychologue(?User $psychologue): static
+    public function setPatient(?User $patient): static
     {
-        $this->psychologue = $psychologue;
+        $this->patient = $patient;
 
         return $this;
     }

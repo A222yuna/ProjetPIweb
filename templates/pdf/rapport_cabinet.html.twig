@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: Arial, sans-serif; font-size: 12px; color: #1A1A2E; padding: 40px; }
+
+.header {
+    background: #6B3FA0;
+    color: white;
+    padding: 30px 40px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+.header h1 { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+.header p  { font-size: 13px; opacity: 0.85; }
+
+.cabinet-info {
+    background: #F4F6FB;
+    border-left: 5px solid #6B3FA0;
+    padding: 20px 24px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+.cabinet-info h2 { font-size: 16px; color: #6B3FA0; margin-bottom: 10px; }
+.info-row { font-size: 12px; color: #6B7280; line-height: 2; }
+
+.kpi-grid { width: 100%; margin-bottom: 30px; }
+.kpi-grid table { width: 100%; border-collapse: separate; border-spacing: 8px; }
+.kpi-card {
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    border-top: 4px solid #6B3FA0;
+    width: 23%;
+}
+.kpi-card.green  { border-top-color: #10B981; }
+.kpi-card.orange { border-top-color: #F59E0B; }
+.kpi-card.teal   { border-top-color: #00BFA5; }
+.kpi-number { font-size: 26px; font-weight: 800; color: #1A1A2E; display: block; }
+.kpi-label  { font-size: 10px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+.section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1A1A2E;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #E5E7EB;
+}
+
+table.data-table { width: 100%; border-collapse: collapse; margin-bottom: 28px; font-size: 12px; }
+table.data-table th { background: #6B3FA0; color: white; padding: 10px 14px; text-align: left; font-weight: 600; }
+table.data-table td { padding: 10px 14px; border-bottom: 1px solid #E5E7EB; color: #1A1A2E; }
+table.data-table tr:nth-child(even) td { background: #F9FAFB; }
+
+.bar-chart { margin-bottom: 28px; }
+.bar-row { margin-bottom: 10px; }
+.bar-label { font-size: 11px; color: #6B7280; display: inline-block; width: 60px; }
+.bar-track { display: inline-block; width: 300px; height: 16px; background: #F4F6FB; border-radius: 999px; vertical-align: middle; }
+.bar-fill  { height: 100%; background: #6B3FA0; border-radius: 999px; display: block; }
+.bar-value { font-size: 12px; font-weight: 600; color: #1A1A2E; display: inline-block; margin-left: 8px; }
+
+.footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid #E5E7EB;
+    text-align: center;
+    font-size: 10px;
+    color: #9CA3AF;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <h1>Rapport du Cabinet</h1>
+    <p>Genere le {{ stats.generated_at }}</p>
+</div>
+
+<!-- CABINET INFO -->
+<div class="cabinet-info">
+    <h2>Informations du Cabinet</h2>
+    <div class="info-row">
+        <strong>Adresse :</strong> {{ cabinet.adresse }}<br>
+        <strong>Ville :</strong> {{ cabinet.ville }}<br>
+        <strong>Horaires :</strong> {{ cabinet.horaires ?: 'Non renseignes' }}<br>
+        <strong>Statut :</strong> {{ cabinet.valide ? 'Valide' : (cabinet.archive ? 'Rejete' : 'En attente') }}
+    </div>
+</div>
+
+<!-- KPI CARDS (table layout for dompdf compatibility) -->
+<div class="section-title">Indicateurs cles</div>
+<table style="width:100%;border-collapse:separate;border-spacing:8px;margin-bottom:28px;">
+    <tr>
+        <td class="kpi-card">
+            <span class="kpi-number">{{ stats.reserved_creneaux }}</span>
+            <div class="kpi-label">Creneaux reserves</div>
+        </td>
+        <td class="kpi-card green">
+            <span class="kpi-number">{{ stats.occupation_rate }}%</span>
+            <div class="kpi-label">Taux d'occupation</div>
+        </td>
+        <td class="kpi-card orange">
+            <span class="kpi-number">{{ stats.estimated_revenue }} TND</span>
+            <div class="kpi-label">Revenu estime</div>
+        </td>
+        <td class="kpi-card teal">
+            <span class="kpi-number">{{ stats.avg_rating > 0 ? stats.avg_rating ~ '/5' : 'N/A' }}</span>
+            <div class="kpi-label">Note moyenne</div>
+        </td>
+    </tr>
+</table>
+
+<!-- MONTHLY BAR CHART -->
+{% if stats.creneaux_monthly is not empty %}
+<div class="section-title">Creneaux par mois (6 derniers mois)</div>
+<div class="bar-chart">
+    {% set months = ['Jan','Fev','Mar','Avr','Mai','Jun','Jul','Aou','Sep','Oct','Nov','Dec'] %}
+    {% set maxVal = 1 %}
+    {% for row in stats.creneaux_monthly %}
+        {% if row.total > maxVal %}{% set maxVal = row.total %}{% endif %}
+    {% endfor %}
+    {% for row in stats.creneaux_monthly %}
+    <div class="bar-row">
+        <span class="bar-label">{{ months[row.mois - 1] }}</span>
+        <span class="bar-track">
+            <span class="bar-fill" style="width:{{ (row.total / maxVal * 100)|round }}%;"></span>
+        </span>
+        <span class="bar-value">{{ row.total }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- STATS TABLE -->
+<div class="section-title">Recapitulatif</div>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Indicateur</th>
+            <th>Valeur</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td>Total creneaux</td><td>{{ stats.total_creneaux }}</td></tr>
+        <tr><td>Creneaux reserves</td><td>{{ stats.reserved_creneaux }}</td></tr>
+        <tr><td>Creneaux annules</td><td>{{ stats.cancelled_creneaux }}</td></tr>
+        <tr><td>Taux d'occupation</td><td>{{ stats.occupation_rate }}%</td></tr>
+        <tr><td>Disponibilites configurees</td><td>{{ stats.total_disponibilites }}</td></tr>
+        <tr><td>Revenu estime (50 TND/creneau)</td><td>{{ stats.estimated_revenue }} TND</td></tr>
+        <tr><td>Note moyenne patients</td><td>{{ stats.avg_rating > 0 ? stats.avg_rating ~ ' / 5' : 'Aucun avis' }}</td></tr>
+        <tr><td>Nombre d'avis</td><td>{{ stats.total_ratings }}</td></tr>
+    </tbody>
+</table>
+
+<!-- FOOTER -->
+<div class="footer">
+    Cabinet de Psychologie &mdash; Rapport confidentiel &mdash; Genere automatiquement le {{ stats.generated_at }}
+</div>
+
+</body>
+</html>

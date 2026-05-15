@@ -1,0 +1,56 @@
+{% extends 'base_admin.html.twig' %}
+
+{% block title %}Disponibilités{% endblock %}
+{% block admin_title %}Disponibilités{% endblock %}
+
+{% block admin_body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="fw-bold mb-0">Liste des disponibilités</h5>
+    <div class="d-flex gap-2">
+        <a href="{{ path(disponibilite_route_prefix ~ 'new') }}" class="btn btn-primary rounded-pill">
+            <i class="fa-solid fa-plus me-1"></i> Ajouter
+        </a>
+        <a href="{{ path(cabinet_index_route) }}" class="btn btn-light rounded-pill">
+            ← Cabinets
+        </a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="bg-light">
+                <tr>
+                    <th>Cabinet</th>
+                    <th>Jour</th>
+                    <th>Heure début</th>
+                    <th>Heure fin</th>
+                    <th>Durée (min)</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% set jours = {1: 'Lundi', 2: 'Mardi', 3: 'Mercredi', 4: 'Jeudi', 5: 'Vendredi', 6: 'Samedi', 7: 'Dimanche'} %}
+            {% for d in disponibilites %}
+                <tr>
+                    <td>{{ d.cabinet ? d.cabinet.ville ~ ' - ' ~ d.cabinet.adresse : '-' }}</td>
+                    <td>{{ jours[d.jour] ?? d.jour }}</td>
+                    <td>{{ d.heureDebut ? d.heureDebut|date('H:i') : '-' }}</td>
+                    <td>{{ d.heureFin ? d.heureFin|date('H:i') : '-' }}</td>
+                    <td>{{ d.dureeConsultation }}</td>
+                    <td class="text-end">
+                        <a href="{{ path(disponibilite_route_prefix ~ 'edit', {id: d.id}) }}" class="btn btn-sm btn-outline-secondary rounded-pill">Modifier</a>
+                        <form method="post" action="{{ path(disponibilite_route_prefix ~ 'delete', {id: d.id}) }}" style="display:inline" onsubmit="return confirm('Supprimer cette disponibilité ?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete_disponibilite_' ~ d.id) }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">Supprimer</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6" class="text-center text-muted py-4">Aucune disponibilité enregistrée.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

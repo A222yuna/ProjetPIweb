@@ -1,0 +1,43 @@
+{% extends 'base_admin.html.twig' %}
+
+{% block title %}Modifier disponibilité{% endblock %}
+{% block admin_title %}Modifier disponibilité{% endblock %}
+
+{% block admin_body %}
+<div class="card border-0 shadow-sm rounded-4 p-4" style="max-width:600px">
+    <h5 class="fw-bold mb-4">Modifier la disponibilité</h5>
+    {{ form_start(form, { attr: { novalidate: 'novalidate' } }) }}
+        <div class="mb-3">
+            {{ form_label(form.cabinet, 'Cabinet', { label_attr: { class: 'form-label fw-semibold' } }) }}
+            {{ form_widget(form.cabinet, { attr: { class: 'form-select rounded-3' } }) }}
+            {{ form_errors(form.cabinet) }}
+        </div>
+        <div class="mb-3">
+            {{ form_label(form.jour, 'Jour', { label_attr: { class: 'form-label fw-semibold' } }) }}
+            {{ form_widget(form.jour, { attr: { class: 'form-select rounded-3' } }) }}
+            {{ form_errors(form.jour) }}
+        </div>
+        <div class="row g-3 mb-3">
+            <div class="col">
+                {{ form_label(form.heureDebut, 'Heure début', { label_attr: { class: 'form-label fw-semibold' } }) }}
+                {{ form_widget(form.heureDebut, { attr: { class: 'form-control rounded-3' } }) }}
+                {{ form_errors(form.heureDebut) }}
+            </div>
+            <div class="col">
+                {{ form_label(form.heureFin, 'Heure fin', { label_attr: { class: 'form-label fw-semibold' } }) }}
+                {{ form_widget(form.heureFin, { attr: { class: 'form-control rounded-3' } }) }}
+                {{ form_errors(form.heureFin) }}
+            </div>
+        </div>
+        <div class="mb-4">
+            {{ form_label(form.dureeConsultation, 'Durée consultation (min)', { label_attr: { class: 'form-label fw-semibold' } }) }}
+            {{ form_widget(form.dureeConsultation, { attr: { class: 'form-control rounded-3' } }) }}
+            {{ form_errors(form.dureeConsultation) }}
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary rounded-pill px-4">Enregistrer</button>
+            <a href="{{ path(index_route) }}" class="btn btn-light rounded-pill px-4">Annuler</a>
+        </div>
+    {{ form_end(form) }}
+</div>
+{% endblock %}

@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: PostRepository::class)]
 #[ORM\Table(name: 'post')]
@@ -25,9 +26,19 @@ class Post
     private ?string $auteurRole = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le titre ne peut pas être vide.")]
+    #[Assert\Length(
+        min: 3,
+        minMessage: "Le titre doit faire au moins {{ limit }} caractères."
+    )]
     private ?string $titre = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Assert\NotBlank(message: "La description ne peut pas être vide.")]
+    #[Assert\Length(
+        min: 10,
+        minMessage: "La description doit faire au moins {{ limit }} caractères."
+    )]
     private ?string $contenu = null;
 
     #[ORM\Column(length: 100)]
@@ -38,6 +49,22 @@ class Post
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $date = null;
+
+    #[ORM\Column(name: "image_url", length: 255, nullable: true)]
+    private ?string $imageUrl = null;
+
+    #[ORM\Column(name: 'is_hidden', options: ['default' => 0])]
+    private bool $isHidden = false;
+
+    #[ORM\Column(name: 'is_anonymous', options: ['default' => false])]
+    private bool $isAnonymous = false;
+
+    #[ORM\Column(name: 'hidden_at', type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $hiddenAt = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(name: 'hidden_by_id_user', referencedColumnName: 'id_user', nullable: true, onDelete: 'SET NULL')]
+    private ?User $hiddenBy = null;
 
     /** @var Collection<int, Commentaire> */
     #[ORM\OneToMany(targetEntity: Commentaire::class, mappedBy: 'post', orphanRemoval: true)]
@@ -127,10 +154,64 @@ class Post
         return $this;
     }
 
+    public function getImageUrl(): ?string
+    {
+        return $this->imageUrl;
+    }
+
+    public function setImageUrl(?string $imageUrl): static
+    {
+        $this->imageUrl = $imageUrl;
+
+        return $this;
+    }
+
+    public function isHidden(): bool
+    {
+        return $this->isHidden;
+    }
+
+    public function setIsHidden(bool $isHidden): static
+    {
+        $this->isHidden = $isHidden;
+        return $this;
+    }
+
+    public function isAnonymous(): bool
+    {
+        return $this->isAnonymous;
+    }
+
+    public function setIsAnonymous(bool $isAnonymous): static
+    {
+        $this->isAnonymous = $isAnonymous;
+        return $this;
+    }
+
+    public function getHiddenAt(): ?\DateTimeInterface
+    {
+        return $this->hiddenAt;
+    }
+
+    public function setHiddenAt(?\DateTimeInterface $hiddenAt): static
+    {
+        $this->hiddenAt = $hiddenAt;
+        return $this;
+    }
+
+    public function getHiddenBy(): ?User
+    {
+        return $this->hiddenBy;
+    }
+
+    public function setHiddenBy(?User $hiddenBy): static
+    {
+        $this->hiddenBy = $hiddenBy;
+        return $this;
+    }
+
     public function isLikedByUser(User $user): bool
     {
-        // Comme nous n'avons pas la table de jointure, on renvoie false par défaut
-        // Cela évitera l'erreur SQL
         return false;
     }
 

@@ -39,4 +39,18 @@ class CabinetAdminController extends AbstractController
         $this->addFlash('success', 'Cabinet archivé avec succès.');
         return $this->redirectToRoute('app_admin_cabinets_index');
     }
+
+    #[Route('/{id}/rejeter', name: 'app_admin_cabinets_reject', methods: ['POST'])]
+    public function reject(Cabinet $cabinet, \Symfony\Component\HttpFoundation\Request $request, EntityManagerInterface $em): Response
+    {
+        if (!$this->isCsrfTokenValid('reject_cabinet_'.$cabinet->getId(), (string) $request->request->get('_token'))) {
+            $this->addFlash('error', 'Jeton CSRF invalide.');
+            return $this->redirectToRoute('app_admin_cabinets_index');
+        }
+
+        $em->remove($cabinet);
+        $em->flush();
+        $this->addFlash('success', 'Cabinet rejeté et supprimé.');
+        return $this->redirectToRoute('app_admin_cabinets_index');
+    }
 }

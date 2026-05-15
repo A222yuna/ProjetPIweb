@@ -70,8 +70,8 @@ final class PsychologueAppointmentController extends AbstractController
             return $this->redirectToRoute('app_psychologue_appointments_index');
         }
 
-        if ($appointment->getStatus() !== Appointment::STATUS_SCHEDULED) {
-            $this->addFlash('warning', 'Seuls les rendez-vous SCHEDULED peuvent être terminés.');
+        if (!in_array($appointment->getStatus(), [Appointment::STATUS_SCHEDULED, Appointment::STATUS_CONFIRMED, Appointment::STATUS_PAID, ''], true)) {
+            $this->addFlash('warning', 'Ce rendez-vous ne peut pas être terminé dans son état actuel.');
             return $this->redirectToRoute('app_psychologue_appointments_index');
         }
 
@@ -91,12 +91,12 @@ final class PsychologueAppointmentController extends AbstractController
 
     #[Route('/{id}/confirm', name: 'app_psychologue_appointments_confirm', methods: ['POST'])]
     public function confirm(
-        int $id, 
-        Request $request, 
-        AppointmentRepository $appointments, 
-        CreneauRepository $creneauRepo, 
+        int $id,
+        Request $request,
+        AppointmentRepository $appointments,
+        CreneauRepository $creneauRepo,
         \App\Repository\PsyCabinetRepository $psyCabinetRepo,
-        EntityManagerInterface $em, 
+        EntityManagerInterface $em,
         NotificationMailer $mailer
     ): Response
     {
@@ -120,8 +120,8 @@ final class PsychologueAppointmentController extends AbstractController
             return $this->redirectToRoute('app_psychologue_face_verify', ['appointmentId' => $id]);
         }
 
-        if ($appointment->getStatus() !== Appointment::STATUS_SCHEDULED) {
-            $this->addFlash('warning', 'Seuls les rendez-vous SCHEDULED peuvent être confirmés.');
+        if ($appointment->getStatus() !== Appointment::STATUS_SCHEDULED && $appointment->getStatus() !== '' && $appointment->getStatus() !== null) {
+            $this->addFlash('warning', 'Seuls les rendez-vous en attente peuvent être confirmés.');
             return $this->redirectToRoute('app_psychologue_appointments_index');
         }
 

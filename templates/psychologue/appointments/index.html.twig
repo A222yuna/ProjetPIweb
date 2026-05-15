@@ -68,35 +68,41 @@
                             <div class="small text-muted"><i class="fa-solid fa-clock me-1"></i> {{ a.plan.period }}</div>
                         </td>
                         <td>
-                            {% if a.status == 'SCHEDULED' %}
-                                <span class="badge bg-warning text-dark">⏳ En attente</span>
-                            {% elseif a.status == 'CONFIRMED' %}
-                                <span class="badge bg-success">✅ Confirmé</span>
-                            {% elseif a.status == 'COMPLETED' %}
-                                <span class="badge bg-primary">🏁 Terminé</span>
-                            {% elseif a.status == 'CANCELLED' %}
-                                <span class="badge bg-danger">❌ Annulé</span>
-                            {% else %}
-                                <span class="badge bg-secondary">{{ a.status }}</span>
-                            {% endif %}
+                            <span class="badge rounded-pill {% if a.status == 'SCHEDULED' %}bg-warning text-dark{% elseif a.status == 'CONFIRMED' or a.status == '' %}bg-info{% elseif a.status == 'PAID' %}bg-primary{% elseif a.status == 'COMPLETED' %}bg-success{% elseif a.status == 'CANCELLED' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                {{ a.status == '' ? 'CONFIRMED' : a.status }}
+                            </span>
                         </td>
                         <td class="text-end">
-                            {% if a.status == 'SCHEDULED' %}
+                            {% if a.status == 'SCHEDULED' or a.status == '' %}
                                 <div class="d-flex gap-1 justify-content-end">
                                     {% if app.user.photoProfil %}
-                                      <a href="{{ path('app_psychologue_face_verify', {appointmentId: a.id}) }}" class="btn btn-success btn-sm" data-turbo="false">
-                                        🔒 Vérifier & Confirmer
-                                      </a>
+                                        <a href="{{ path('app_psychologue_face_verify', {appointmentId: a.id}) }}" class="btn btn-success btn-sm rounded-pill">
+                                            🔒 Vérifier & Confirmer
+                                        </a>
                                     {% else %}
-                                      <form method="POST" action="{{ path('app_psychologue_appointments_confirm', {id: a.id}) }}" style="display:inline;">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('confirm_appointment_' ~ a.id) }}">
-                                        <input type="hidden" name="face_verified" value="true">
-                                        <button type="submit" class="btn btn-success btn-sm">✅ Confirmer</button>
-                                      </form>
+                                        <form method="POST" action="{{ path('app_psychologue_appointments_confirm', {id: a.id}) }}" style="display:inline;">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('confirm_appointment_' ~ a.id) }}">
+                                            <input type="hidden" name="face_verified" value="true">
+                                            <button type="submit" class="btn btn-success btn-sm rounded-pill">✅ Confirmer</button>
+                                        </form>
                                     {% endif %}
+                                    <form method="post" action="{{ path('app_psychologue_appointments_complete', { id: a.id }) }}" style="display:inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('complete_appointment_' ~ a.id) }}">
+                                        <button class="btn btn-sm btn-outline-success rounded-pill px-3" type="submit">
+                                            <i class="fa-solid fa-check me-1"></i> Terminer
+                                        </button>
+                                    </form>
                                 </div>
                             {% elseif a.status == 'CONFIRMED' %}
-                                <span class="text-muted small">En attente de paiement</span>
+                                <div class="d-flex gap-1 justify-content-end align-items-center">
+                                    <span class="text-muted small me-2">En attente de paiement</span>
+                                    <form method="post" action="{{ path('app_psychologue_appointments_complete', { id: a.id }) }}" style="display:inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('complete_appointment_' ~ a.id) }}">
+                                        <button class="btn btn-sm btn-outline-success rounded-pill px-3" type="submit">
+                                            <i class="fa-solid fa-check me-1"></i> Terminer
+                                        </button>
+                                    </form>
+                                </div>
                             {% elseif a.status == 'PAID' %}
                                 <div class="d-flex gap-1 justify-content-end">
                                     <a href="{{ path('app_appointment_pdf', {id: a.id}) }}" class="btn btn-sm btn-outline-danger rounded-pill px-3">
@@ -104,7 +110,7 @@
                                     </a>
                                     <form method="post" action="{{ path('app_psychologue_appointments_complete', { id: a.id }) }}">
                                         <input type="hidden" name="_token" value="{{ csrf_token('complete_appointment_' ~ a.id) }}">
-                                        <button class="btn btn-sm btn-success rounded-pill px-3 shadow-sm" type="submit">
+                                        <button class="btn btn-sm btn-success rounded-pill px-3" type="submit">
                                             <i class="fa-solid fa-flag-checkered me-1"></i> Terminer
                                         </button>
                                     </form>
@@ -122,4 +128,3 @@
         </div>
     </div>
 {% endblock %}
-

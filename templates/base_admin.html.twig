@@ -47,7 +47,30 @@
                             <span class="d-none d-md-inline">{{ 'nav.cabinets'|trans }}</span>
                         </a>
                     </li>
-                    <!-- Add more admin routes as needed -->
+                    <li class="nav-item">
+                        <a href="{{ path('app_admin_statistics') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') == 'app_admin_statistics' ? 'active bg-primary' : '' }}">
+                            <i class="fa-solid fa-chart-pie"></i>
+                            <span class="d-none d-md-inline">Statistiques</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ path('app_admin_module_forum') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') starts with 'app_admin_forum' or app.request.get('_route') starts with 'app_admin_module_forum' ? 'active bg-primary' : '' }}">
+                            <i class="fa-solid fa-comments"></i>
+                            <span class="d-none d-md-inline">Forum</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ path('app_admin_forum_reports') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') == 'app_admin_forum_reports' ? 'active bg-primary' : '' }}">
+                            <i class="fa-solid fa-flag"></i>
+                            <span class="d-none d-md-inline">Signalements</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ path('app_admin_wellbeing_programmes') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') starts with 'app_admin_wellbeing' ? 'active bg-primary' : '' }}">
+                            <i class="fa-solid fa-heart"></i>
+                            <span class="d-none d-md-inline">Bien-être</span>
+                        </a>
+                    </li>
                 </ul>
                 <hr class="opacity-25 mt-4">
                 <div class="dropdown p-2 mt-auto">

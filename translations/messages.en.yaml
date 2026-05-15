@@ -1,16 +1,17 @@
 nav:
-  calendar: "Calendar"
-  appointments: "My Appointments"
+  dashboard: "Dashboard"
   planning: "Planning"
-  availability: "Availabilities"
+  availability: "Availability"
+  plans: "Plans"
+  cabinets: "My Cabinets"
+  programs: "Programs"
+  messages: "Messages"
+  forum: "Forum"
+  statistics: "Statistics"
+  calendar: "Calendar"
   logout: "Logout"
   profile: "My Profile"
-  dashboard: "Dashboard"
-  forum: "Forum"
-  messages: "Messages"
-  programmes: "Programs"
-  cabinets: "My Offices"
-  plans: "Plans"
+  appointments: "Appointments"
 
 appointment:
   book: "Book"
@@ -35,25 +36,21 @@ user:
   role: "Role"
   active: "Active"
   inactive: "Inactive"
-  welcome: "Welcome"
 
 flash:
-  booking_success: "Appointment booked successfully!"
-  booking_error: "Error during booking."
+  booking_success: "Appointment booked successfully."
+  booking_error: "Error while booking."
   cancel_success: "Appointment cancelled."
-  plan_created: "Planning created."
-  plan_deleted: "Planning deleted."
-  payment_success: "Payment successful!"
+  plan_created: "Plan created successfully."
+  plan_deleted: "Plan deleted."
+  payment_success: "Payment successful."
 
 pdf:
   download: "Download PDF"
-  history: "My History PDF"
-  rdv_pdf: "PDF"
-
+  history: "History"
 qr:
   scan: "Scan"
   generate: "Generate"
-
 weather:
   temperature: "Temperature"
   humidity: "Humidity"

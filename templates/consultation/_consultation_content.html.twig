@@ -1,0 +1,213 @@
+    <style>
+        .forum-hero {
+            background: linear-gradient(135deg, #ffffff 0%, #d4e9e2 100%);
+            border: 1px solid #dee2e6; border-radius: 16px;
+            padding: 2rem 2rem 1.75rem; margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex; gap: 2rem; align-items: center; flex-wrap: wrap;
+        }
+        .forum-hero-text { flex: 1; min-width: 240px; }
+        .forum-hero-text h1 { margin: 0 0 0.5rem; }
+        .forum-hero-text p { margin: 0; max-width: 38rem; }
+        .forum-hero-img { flex-shrink: 0; width: 180px; height: 130px; object-fit: cover; border-radius: 12px; opacity: 0.9; }
+        @media (max-width: 600px) { .forum-hero-img { display: none; } }
+
+        .forum-toolbar {
+            display: flex; flex-wrap: wrap; gap: 0.75rem;
+            align-items: flex-end; margin-bottom: 1.75rem;
+        }
+        .forum-toolbar form { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: flex-end; flex: 1; }
+        .forum-field { display: flex; flex-direction: column; gap: 0.25rem; }
+        .forum-field label { font-size: 0.8rem; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing: 0.05em; }
+        .forum-field input, .forum-field select {
+            padding: 0.5rem 0.75rem; border: 1px solid #dee2e6;
+            border-radius: 8px; font-family: inherit; font-size: 0.9375rem;
+            background: #ffffff; color: #212529; min-width: 140px;
+        }
+        .forum-field input:focus, .forum-field select:focus { outline: 2px solid #1abc9c; border-color: #1abc9c; }
+        .forum-toolbar-actions { display: flex; gap: 0.5rem; align-items: flex-end; }
+
+        .post-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.25rem;
+        }
+        .post-card {
+            background: #ffffff; border: 1px solid #dee2e6;
+            border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            overflow: hidden; display: flex; flex-direction: column;
+            transition: box-shadow 0.18s, border-color 0.18s;
+        }
+        .post-card:hover { box-shadow: 0 8px 28px rgba(26, 188, 156, 0.12); border-color: rgba(26, 188, 156, 0.3); }
+        .post-card-cover {
+            width: 100%; height: 160px; object-fit: cover; display: block;
+            background: #d4e9e2;
+        }
+        .post-card-cover-placeholder {
+            width: 100%; height: 120px;
+            background: linear-gradient(135deg, #d4e9e2 0%, #a8e6cf 100%);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; color: #1abc9c;
+        }
+        .post-card-body { padding: 1.1rem 1.25rem; flex: 1; display: flex; flex-direction: column; }
+        .post-card-tags { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+        .post-card-tag {
+            font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
+            text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 999px;
+            background: #d4e9e2; color: #1abc9c;
+        }
+        .post-card-tag.muted { background: #f8f9fa; color: #6c757d; }
+        .post-card-body h2 { font-size: 1.05rem; margin: 0 0 0.4rem; line-height: 1.3; }
+        .post-card-body h2 a { color: #212529; font-weight: 600; }
+        .post-card-body h2 a:hover { color: #1abc9c; }
+        .post-card-author { font-size: 0.85rem; color: #6c757d; margin-bottom: 0.5rem; }
+        .post-card-snippet { font-size: 0.9rem; color: #6c757d; line-height: 1.55; flex: 1; margin-bottom: 0.85rem; }
+        .post-card-footer-row {
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 0.8125rem; color: #6c757d;
+            padding-top: 0.75rem; border-top: 1px solid #dee2e6;
+            margin-bottom: 0.75rem;
+        }
+        .post-card-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+        .card-action-btn {
+            display: inline-flex; align-items: center; gap: 0.25rem;
+            padding: 0.35rem 0.7rem; border-radius: 999px; font-size: 0.8125rem;
+            font-weight: 500; border: 1px solid #dee2e6; background: #ffffff;
+            color: #212529; text-decoration: none; cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+            white-space: nowrap;
+        }
+        .card-action-btn:hover { background: #d4e9e2; border-color: #1abc9c; color: #1abc9c; }
+        .card-action-btn.primary { background: #1abc9c; border-color: #1abc9c; color: #fff; }
+        .card-action-btn.primary:hover { background: #16a085; }
+        .card-action-btn.danger:hover { background: #fdeaea; border-color: #e2b0b0; color: #842525; }
+
+        .pagination { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; margin-top: 2rem; justify-content: center; }
+        .page-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 36px; height: 36px; border-radius: 50%; font-size: 0.9rem;
+            font-weight: 600; border: 1px solid #dee2e6; background: #ffffff;
+            color: #212529; text-decoration: none; transition: background 0.15s, border-color 0.15s;
+        }
+        .page-btn:hover, .page-btn.active { background: #1abc9c; border-color: #1abc9c; color: #fff; }
+    </style>
+
+    <div class="forum-hero">
+        <div class="forum-hero-text">
+            <h1 class="h4">Forum &amp; échanges</h1>
+            <p class="text-muted">Partagez vos expériences, posez vos questions et interagissez avec la communauté en toute bienveillance.</p>
+        </div>
+        <img class="forum-hero-img"
+             src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=400&q=75"
+             alt="" aria-hidden="true">
+    </div>
+
+    <div class="forum-toolbar">
+        <form method="get" action="{{ path('app_consultation') }}" role="search">
+            <div class="forum-field">
+                <label for="q">Recherche</label>
+                <input id="q" type="search" name="q" value="{{ q }}" placeholder="Mots clés…" autocomplete="off">
+            </div>
+            <div class="forum-field">
+                <label for="filtre-cat">Catégorie</label>
+                <select id="filtre-cat" name="categorie">
+                    <option value="">Toutes</option>
+                    {% for c in category_suggestions %}
+                        <option value="{{ c }}" {% if filter_categorie == c %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="forum-field">
+                <label for="sort">Trier par</label>
+                <select id="sort" name="sort">
+                    <option value="recent" {% if sort_by == 'recent' %}selected{% endif %}>Plus récents</option>
+                    <option value="likes" {% if sort_by == 'likes' %}selected{% endif %}>Plus aimés</option>
+                    <option value="comments" {% if sort_by == 'comments' %}selected{% endif %}>Plus commentés</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Filtrer</button>
+            {% if q or filter_categorie or sort_by != 'recent' %}
+                <a href="{{ path('app_consultation') }}" class="btn btn-outline-primary btn-sm">Réinitialiser</a>
+            {% endif %}
+        </form>
+        <div class="forum-toolbar-actions">
+            <a href="{{ path('app_post_new') }}" class="btn btn-primary btn-sm">+ Nouvelle publication</a>
+        </div>
+    </div>
+
+    {% set cover_images = [
+        'https://images.unsplash.com/photo-1573497019940-1c28c88b0f9e?auto=format&fit=crop&w=600&q=75',
+        'https://images.unsplash.com/photo-1516307365426-bea591f05011?auto=format&fit=crop&w=600&q=75',
+        'https://images.unsplash.com/photo-1499202184017-35f4930cdf80?auto=format&fit=crop&w=600&q=75',
+        'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=600&q=75',
+        'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=75',
+    ] %}
+
+    {% if posts is empty %}
+        <div class="card empty-state border-0 shadow-sm rounded-4 p-5 text-center">
+            <p class="text-muted" style="margin:0 0 1rem">Aucune publication ne correspond à votre recherche.</p>
+            <a href="{{ path('app_post_new') }}" class="btn btn-outline-primary">Publier le premier message</a>
+        </div>
+    {% else %}
+        <div class="post-grid">
+            {% for post in posts %}
+                {% set cover = post.imageUrl
+                    ? (post.imageUrl starts with '/uploads/' ? asset(post.imageUrl) : post.imageUrl)
+                    : cover_images[loop.index0 % cover_images|length] %}
+                <article class="post-card">
+                    {% if post.imageUrl %}
+                        <img class="post-card-cover" src="{{ cover }}" alt="{{ post.titre }}" loading="lazy">
+                    {% else %}
+                        <div class="post-card-cover-placeholder" aria-hidden="true">💬</div>
+                    {% endif %}
+                    <div class="post-card-body">
+                        <div class="post-card-tags">
+                            <span class="post-card-tag">{{ post.categorie }}</span>
+                            <span class="post-card-tag muted">{{ post.auteurRole }}</span>
+                        </div>
+                        <h2><a href="{{ path('app_post_show', { id: post.id }) }}">{{ post.titre }}</a></h2>
+                        <p class="post-card-author">
+                            Par
+                            {% if post.isAnonymous %}Anonyme
+                            {% elseif post.auteur %}{{ post.auteur.prenom }} {{ post.auteur.nom }}
+                            {% else %}Anonyme{% endif %}
+                        </p>
+                        <p class="post-card-snippet">{{ post.contenu|length > 200 ? post.contenu|slice(0,200) ~ '…' : post.contenu }}</p>
+                        <div class="post-card-footer-row">
+                            <span>{{ post.date|date('d/m/Y') }}</span>
+                            <span>♥ <span id="post-card-{{ post.id }}" class="likes-count">{{ post.nbLikes }}</span></span>
+                        </div>
+                        <div class="post-card-actions">
+                            <a href="{{ path('app_post_show', { id: post.id }) }}" class="card-action-btn primary">Lire</a>
+                            <a href="{{ path('app_post_show', { id: post.id }) }}#comment-form" class="card-action-btn">💬</a>
+                            <button type="button" class="card-action-btn like-btn"
+                                    data-like-url="{{ path('app_post_like', { id: post.id }) }}"
+                                    data-likes-counter="post-card-{{ post.id }}">♥</button>
+                            {% if app.user and post.auteur and app.user.id == post.auteur.id %}
+                                <a href="{{ path('app_post_edit', { id: post.id }) }}" class="card-action-btn" style="margin-left:auto">✏️</a>
+                                <form method="post" action="{{ path('app_post_delete', {id: post.id}) }}"
+                                      onsubmit="return confirm('Supprimer cette publication ?');" style="display:contents">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ post.id) }}">
+                                    <button type="submit" class="card-action-btn danger">🗑️</button>
+                                </form>
+                            {% elseif is_granted('ROLE_ADMIN') %}
+                                <form method="post" action="{{ path('app_admin_forum_post_delete', {id: post.id}) }}"
+                                      onsubmit="return confirm('Supprimer cette publication ?');" style="display:contents; margin-left:auto">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_post_' ~ post.id) }}">
+                                    <button type="submit" class="card-action-btn danger" style="margin-left:auto">🗑️</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if total_pages > 1 %}
+        <div class="pagination">
+            {% for p in 1..total_pages %}
+                <a class="page-btn {% if p == page %}active{% endif %}"
+                   href="{{ path('app_consultation', { page: p, q: q, categorie: filter_categorie, sort: sort_by }) }}">{{ p }}</a>
+            {% endfor %}
+        </div>
+    {% endif %}

@@ -8,7 +8,6 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
-use Symfony\Component\Validator\Constraints\NotBlank;
 
 class AvisType extends AbstractType
 {
@@ -16,22 +15,22 @@ class AvisType extends AbstractType
     {
         $builder
             ->add('note', ChoiceType::class, [
+                'label' => 'Votre note',
                 'choices' => [
-                    '1' => 1,
-                    '2' => 2,
-                    '3' => 3,
-                    '4' => 4,
-                    '5' => 5,
+                    '⭐' => 1,
+                    '⭐⭐' => 2,
+                    '⭐⭐⭐' => 3,
+                    '⭐⭐⭐⭐' => 4,
+                    '⭐⭐⭐⭐⭐' => 5,
                 ],
-                'expanded' => true,
-                'multiple' => false,
-                'label' => 'Note',
-                'constraints' => [new NotBlank(message: 'Veuillez choisir une note')],
+                'expanded' => false,
+                'placeholder' => '-- Attribuer une note --',
             ])
             ->add('commentaire', TextareaType::class, [
-                'label' => 'Votre avis',
-                'constraints' => [new NotBlank(message: 'Veuillez laisser un commentaire')],
-            ]);
+                'label' => 'Votre commentaire',
+                'attr' => ['placeholder' => 'Partagez votre expérience avec ce programme...', 'rows' => 5],
+            ])
+        ;
     }
 
     public function configureOptions(OptionsResolver $resolver): void

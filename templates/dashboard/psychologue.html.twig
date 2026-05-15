@@ -27,7 +27,7 @@
                     </div>
                     <div>
                         <h6 class="text-muted mb-1 text-uppercase fw-bold small ls-1">Disponibilités</h6>
-                        <h3 class="mb-0 fw-bold">Active</h3>
+                        <h3 class="mb-0 fw-bold">{{ stats.dispos_count > 0 ? 'Active' : 'Inactif' }}</h3>
                     </div>
                 </div>
             </div>
@@ -89,8 +89,8 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="badge rounded-pill {% if appointment.status == 'CONFIRMED' %}bg-success{% elseif appointment.status == 'PENDING' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
-                                                {{ appointment.status }}
+                                            <span class="badge rounded-pill {% if appointment.status == 'SCHEDULED' %}bg-warning text-dark{% elseif appointment.status == 'CONFIRMED' or appointment.status == '' %}bg-info{% elseif appointment.status == 'PAID' %}bg-primary{% elseif appointment.status == 'COMPLETED' %}bg-success{% elseif appointment.status == 'CANCELLED' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                                {{ appointment.status == '' ? 'CONFIRMED' : appointment.status }}
                                             </span>
                                         </td>
                                         <td class="text-end">

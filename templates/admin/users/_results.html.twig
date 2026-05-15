@@ -1,0 +1,144 @@
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <small class="text-muted text-uppercase fw-bold ls-1 small">Total comptes</small>
+            <div class="h4 mb-0 fw-bold text-primary">{{ users.getTotalItemCount }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <small class="text-muted text-uppercase fw-bold ls-1 small">Filtre role</small>
+            <div class="h5 mb-0 fw-bold">{{ role_filter ?: 'Tous' }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+            <small class="text-muted text-uppercase fw-bold ls-1 small">Filtre statut</small>
+            <div class="h5 mb-0 fw-bold">{{ active_filter is same as('1') ? 'Actif' : (active_filter is same as('0') ? 'Bloqué' : 'Tous') }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white text-center">
+            <small class="text-muted text-uppercase fw-bold ls-1 small">Page</small>
+            <div class="h5 mb-0 fw-bold text-success">{{ users.currentPageNumber }} / {{ users.pageCount }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 p-4">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle border-0">
+            <thead class="bg-light">
+                <tr>
+                    <th class="border-0 rounded-start">Utilisateur</th>
+                    <th class="border-0">Role</th>
+                    <th class="border-0">Email</th>
+                    <th class="border-0">Statut</th>
+                    <th class="border-0">Vérifié</th>
+                    <th class="border-0 rounded-end text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for u in users %}
+                <tr>
+                    <td>
+                        <div class="fw-bold">{{ u.prenom }} {{ u.nom }}</div>
+                        <div class="small text-muted">Inscrit le {{ u.dateInscription ? u.dateInscription|date('d/m/Y') : '-' }}</div>
+                    </td>
+                    <td>
+                        <span class="badge rounded-pill {% if u.role == 'Admin' %}bg-dark{% elseif u.role == 'Psychologue' %}bg-primary{% else %}bg-info text-dark{% endif %}">
+                            {{ u.role }}
+                        </span>
+                    </td>
+                    <td>{{ u.email }}</td>
+                    <td>
+                        {% if u.estActif %}
+                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3">Actif</span>
+                        {% else %}
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-3">Bloqué</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if u.emailVerifie %}
+                            <i class="fa-solid fa-circle-check text-success fs-5"></i>
+                        {% else %}
+                            <i class="fa-solid fa-circle-xmark text-warning fs-5"></i>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-white border rounded-circle shadow-sm" data-bs-toggle="dropdown">
+                                <i class="fa-solid fa-ellipsis-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
+                                <li>
+                                    <form method="post" action="{{ path('app_admin_users_toggle_active', { id: u.id }) }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('toggle_active_' ~ u.id) }}">
+                                        <button class="dropdown-item d-flex align-items-center gap-2" type="submit">
+                                            <i class="fa-solid fa-power-off text-warning"></i>
+                                            {% if u.estActif %}Désactiver{% else %}Activer{% endif %}
+                                        </button>
+                                    </form>
+                                </li>
+                                <li>
+                                    <form method="post" action="{{ path('app_admin_users_toggle_verified', { id: u.id }) }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('toggle_verified_' ~ u.id) }}">
+                                        <button class="dropdown-item d-flex align-items-center gap-2" type="submit">
+                                            <i class="fa-solid fa-envelope-circle-check text-info"></i>
+                                            Toggle vérification
+                                        </button>
+                                    </form>
+                                </li>
+                                {% if u.role == 'Psychologue' %}
+                                <li>
+                                    <button class="dropdown-item d-flex align-items-center gap-2 ai-report-btn"
+                                            data-user-id="{{ u.id }}"
+                                            data-user-name="{{ u.prenom }} {{ u.nom }}"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#aiReportModal">
+                                        <i class="fa-solid fa-robot text-primary"></i>
+                                        Rapport IA (Validation)
+                                    </button>
+                                </li>
+                                {% endif %}
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-center gap-2" href="{{ path('app_admin_users_account_pdf', { id: u.id }) }}" target="_blank" rel="noopener">
+                                        <i class="fa-solid fa-file-pdf text-danger"></i>
+                                        Fiche PDF (compte)
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" action="{{ path('app_admin_users_delete', { id: u.id }) }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete_user_' ~ u.id) }}">
+                                        <button class="dropdown-item d-flex align-items-center gap-2 text-danger" type="submit">
+                                            <i class="fa-solid fa-trash text-danger"></i>
+                                            Supprimer
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="6" class="text-center py-5 text-muted">Aucun utilisateur trouvé.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if users.pageCount > 1 %}
+    <nav class="mt-4">
+        <ul class="pagination pagination-sm justify-content-center gap-2 border-0">
+            {% for p in 1..users.pageCount %}
+                <li class="page-item {{ p == users.currentPageNumber ? 'active' : '' }}">
+                    <a class="page-link rounded-circle border shadow-sm d-flex align-items-center justify-content-center"
+                       style="width: 35px; height: 35px;"
+                       href="{{ path('app_admin_users_index', { page: p, role: role_filter, active: active_filter, q: search_term }) }}">{{ p }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </nav>
+{% endif %}

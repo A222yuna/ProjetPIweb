@@ -5,7 +5,6 @@ namespace App\Entity;
 use App\Repository\AppointmentRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: AppointmentRepository::class)]
 #[ORM\Table(name: 'appointments')]
@@ -31,9 +30,6 @@ class Appointment
     private ?PsychologuePlan $plan = null;
 
     #[ORM\Column(length: 20, options: ['default' => 'SCHEDULED'])]
-    #[Assert\NotBlank(message: 'Le statut est obligatoire')]
-    #[Assert\Length(max: 20)]
-    #[Assert\Choice(choices: [self::STATUS_SCHEDULED, self::STATUS_CONFIRMED, self::STATUS_PAID, self::STATUS_CANCELLED, self::STATUS_COMPLETED], message: 'Statut invalide')]
     private string $status = self::STATUS_SCHEDULED;
 
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE)]

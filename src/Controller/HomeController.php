@@ -12,6 +12,8 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class HomeController extends AbstractController
 {
+    #[Route('/{_locale}/', name: 'app_home_locale', requirements: ['_locale' => 'fr|en'])]
+    #[Route('/{_locale}', name: 'app_home_locale_no_slash', requirements: ['_locale' => 'fr|en'])]
     #[Route('/', name: 'app_home')]
     public function index(
         UserRepository $users,

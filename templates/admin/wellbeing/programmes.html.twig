@@ -1,0 +1,90 @@
+{% extends 'base_admin.html.twig' %}
+
+{% block title %}Admin - Programmes{% endblock %}
+
+{% block admin_body %}
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+        <div>
+            <h1 class="h4 mb-1">Programmes bien-etre</h1>
+            <p class="text-muted mb-0">Supervision des programmes, activites et avis associes.</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Programmes</small><div class="h4 mb-0">{{ stats.programmes_total }}</div></div></div>
+        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Programmes actifs</small><div class="h4 mb-0">{{ stats.programmes_actifs }}</div></div></div>
+        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Activites</small><div class="h4 mb-0">{{ stats.activites_total }}</div></div></div>
+        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Avis</small><div class="h4 mb-0">{{ stats.avis_total }}</div></div></div>
+    </div>
+
+    <form class="card p-3 mb-3 js-admin-filter" method="get" action="{{ path('app_admin_wellbeing_programmes') }}" data-target="#js-programmes-results">
+        <div class="row g-2">
+            <div class="col-lg-5">
+                <label class="form-label mb-1">Recherche</label>
+                <input class="form-control" type="search" name="q" value="{{ q }}" placeholder="Nom programme, objectif, psychologue...">
+            </div>
+            <div class="col-lg-3">
+                <label class="form-label mb-1">Statut</label>
+                <select class="form-select" name="statut">
+                    <option value="">Tous</option>
+                    {% for s in statuts %}
+                        <option value="{{ s }}" {{ statut == s ? 'selected' : '' }}>{{ s|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-lg-3">
+                <label class="form-label mb-1">Niveau</label>
+                <select class="form-select" name="niveau">
+                    <option value="">Tous</option>
+                    {% for n in niveaux %}
+                        <option value="{{ n }}" {{ niveau == n ? 'selected' : '' }}>{{ n|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </form>
+
+    <div id="js-programmes-results">
+        {% include 'admin/wellbeing/_programmes_table.html.twig' with { programmes: programmes } %}
+    </div>
+
+    <script>
+        (() => {
+            const form = document.querySelector('.js-admin-filter');
+            if (!form) return;
+            const target = document.querySelector(form.dataset.target);
+            if (!target) return;
+            let timer = null;
+            const run = (url = null) => {
+                const fetchUrl = url ?? new URL(form.action, window.location.origin);
+                const data = new FormData(form);
+                for (const [key, value] of data.entries()) {
+                    if (value !== '') fetchUrl.searchParams.set(key, value);
+                }
+                fetch(fetchUrl.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then((r) => r.text())
+                    .then((html) => {
+                        target.innerHTML = html;
+                        bindPaginationLinks();
+                    })
+                    .catch(() => {});
+            };
+            const bindPaginationLinks = () => {
+                target.querySelectorAll('.pagination a').forEach((link) => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        run(new URL(link.href, window.location.origin));
+                    });
+                });
+            };
+            const debouncedRun = () => {
+                clearTimeout(timer);
+                timer = setTimeout(run, 300);
+            };
+            form.addEventListener('input', debouncedRun);
+            form.addEventListener('change', debouncedRun);
+            form.addEventListener('submit', (e) => { e.preventDefault(); run(); });
+            bindPaginationLinks();
+        })();
+    </script>
+{% endblock %}

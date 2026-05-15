@@ -32,78 +32,73 @@ final class PatientCalendarController extends AbstractController
         }
 
         $myCreneaux = $creneaux->createQueryBuilder('c')
+            ->leftJoin('c.disponibilite', 'd')->addSelect('d')
+            ->leftJoin('d.cabinet', 'cab')->addSelect('cab')
+            ->leftJoin('cab.psyCabinets', 'pc')->addSelect('pc')
+            ->leftJoin('pc.psychologue', 'psy')->addSelect('psy')
             ->where('c.patient = :user')
             ->setParameter('user', $user)
             ->getQuery()
             ->getResult();
 
+        // Get all appointments for this patient indexed by plan
+        $myAppointments = $appointments->findForPatient($user->getId() ?? 0);
+        $apptByPlan = [];
+        foreach ($myAppointments as $appt) {
+            $planId = $appt->getPlan()?->getId();
+            if ($planId) {
+                $apptByPlan[$planId] = $appt->getStatus();
+            }
+        }
+
         $events = [];
         foreach ($myCreneaux as $creneau) {
-            /** @var Creneau $creneau */
-            $psy = null;
             $dispo = $creneau->getDisponibilite();
-            if ($dispo && $dispo->getCabinet()) {
-                $psyCabinet = $dispo->getCabinet()->getPsyCabinets()->first();
+            $cabinet = $dispo?->getCabinet();
+            $psy = null;
+
+            if ($cabinet) {
+                $psyCabinet = $cabinet->getPsyCabinets()->first();
                 if ($psyCabinet) {
                     $psy = $psyCabinet->getPsychologue();
                 }
             }
 
+            // Determine status from appointment if available
             $status = $creneau->getStatut();
             if ($psy) {
-                $dayMap = [
-                    'MONDAY' => 'MONDAY', 'TUESDAY' => 'TUESDAY', 'WEDNESDAY' => 'WEDNESDAY',
-                    'THURSDAY' => 'THURSDAY', 'FRIDAY' => 'FRIDAY', 'SATURDAY' => 'SATURDAY', 'SUNDAY' => 'SUNDAY'
-                ];
-                $date = $creneau->getDateCreneau();
-                $heure = $creneau->getHeure();
-                $dayOfWeek = $dayMap[strtoupper($date->format('l'))] ?? 'MONDAY';
-                $period = ((int)$heure->format('H') < 18) ? 'DAY' : 'NIGHT';
-
-                $appointment = $appointments->createQueryBuilder('a')
-                    ->join('a.plan', 'p')
-                    ->where('a.patient = :patient')
-                    ->andWhere('p.psychologue = :psy')
-                    ->andWhere('p.dayOfWeek = :day')
-                    ->andWhere('p.period = :period')
-                    ->setParameter('patient', $user)
-                    ->setParameter('psy', $psy)
-                    ->setParameter('day', $dayOfWeek)
-                    ->setParameter('period', $period)
-                    ->orderBy('a.id', 'DESC')
-                    ->setMaxResults(1)
-                    ->getQuery()
-                    ->getOneOrNullResult();
-
-                if ($appointment) {
-                    $status = $appointment->getStatus();
+                // Find appointment for this psy
+                foreach ($myAppointments as $appt) {
+                    if ($appt->getPlan()?->getPsychologue()?->getId() === $psy->getId()) {
+                        $status = $appt->getStatus();
+                        break;
+                    }
                 }
             }
 
-            $title = $psy ? 'Dr. ' . $psy->getPrenom() . ' ' . $psy->getNom() : 'Rendez-vous';
-            $start = $creneau->getDateCreneau()->format('Y-m-d') . 'T' . $creneau->getHeure()->format('H:i:s');
-            
-            $color = '#5B9BD5'; 
-            if ($status === Appointment::STATUS_PAID) {
-                $color = '#2ecc71'; 
-            } elseif ($status === Appointment::STATUS_CONFIRMED) {
-                $color = '#3498db'; 
-            } elseif ($status === Creneau::STATUT_ANNULE || $status === Appointment::STATUS_CANCELLED) {
-                $color = '#e74c3c'; 
-            } elseif ($status === Appointment::STATUS_SCHEDULED) {
-                $color = '#f1c40f'; 
-            }
+            $color = match($status) {
+                'SCHEDULED', 'RESERVE' => '#ffc107', // Warning Yellow
+                'CONFIRMED' => '#0dcaf0',           // Info Cyan
+                'PAID'      => '#0d6efd',           // Primary Blue
+                'COMPLETED' => '#198754',           // Success Green
+                'CANCELLED' => '#dc3545',           // Danger Red
+                default     => '#6c757d',           // Secondary Gray
+            };
+
+            $date = $creneau->getDateCreneau();
+            $heure = $creneau->getHeure();
+            if (!$date || !$heure) continue;
 
             $events[] = [
-                'id' => $creneau->getId(),
-                'title' => $title,
-                'start' => $start,
+                'id'    => $creneau->getId(),
+                'title' => $psy ? 'Dr. ' . $psy->getPrenom() . ' ' . $psy->getNom() : 'Rendez-vous',
+                'start' => $date->format('Y-m-d') . 'T' . $heure->format('H:i:s'),
                 'color' => $color,
                 'extendedProps' => [
-                    'status' => $status,
-                    'cabinet' => $dispo && $dispo->getCabinet() ? $dispo->getCabinet()->getVille() : 'N/A',
-                    'adresse' => $dispo && $dispo->getCabinet() ? $dispo->getCabinet()->getAdresse() : 'N/A'
-                ]
+                    'status'  => $status,
+                    'cabinet' => $cabinet ? $cabinet->getVille() . ' - ' . $cabinet->getAdresse() : 'N/A',
+                    'adresse' => $cabinet ? $cabinet->getAdresse() : 'N/A',
+                ],
             ];
         }
 

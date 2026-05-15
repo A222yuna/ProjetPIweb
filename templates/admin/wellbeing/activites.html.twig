@@ -1,0 +1,142 @@
+{% extends 'base_admin.html.twig' %}
+
+{% block title %}Admin - Activites{% endblock %}
+
+{% block admin_body %}
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+        <div>
+            <h1 class="h4 mb-1">Activites des programmes</h1>
+            <p class="text-muted mb-0">Controle global des activites planifiees par les psychologues.</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Activites total</small><div class="h4 mb-0">{{ stats.activites_total }}</div></div></div>
+        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Types distincts</small><div class="h4 mb-0">{{ stats.types_total }}</div></div></div>
+        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Duree moyenne</small><div class="h4 mb-0">{{ stats.duree_moyenne }} min</div></div></div>
+        <div class="col-md-3"><div class="card p-3"><small class="text-muted">Jour max planifie</small><div class="h4 mb-0">J{{ stats.jours_max }}</div></div></div>
+    </div>
+
+    <form class="card p-3 mb-3 js-admin-filter" method="get" action="{{ path('app_admin_wellbeing_activites') }}" data-target="#js-activites-results">
+        <div class="row g-2">
+            <div class="col-lg-4">
+                <label class="form-label mb-1">Recherche</label>
+                <input class="form-control" type="search" name="q" value="{{ q }}" placeholder="Titre, description, programme...">
+            </div>
+            <div class="col-lg-3">
+                <label class="form-label mb-1">Type</label>
+                <select class="form-select" name="type">
+                    <option value="">Tous</option>
+                    {% for t in types %}
+                        <option value="{{ t }}" {{ type == t ? 'selected' : '' }}>{{ t|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-lg-3">
+                <label class="form-label mb-1">Programme</label>
+                <select class="form-select" name="programme_id">
+                    <option value="">Tous</option>
+                    {% for p in programmes %}
+                        <option value="{{ p.id }}" {{ programme_id == p.id ? 'selected' : '' }}>{{ p.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-lg-1">
+                <label class="form-label mb-1">Jour</label>
+                <input class="form-control" type="number" min="1" name="jour" value="{{ jour }}">
+            </div>
+        </div>
+    </form>
+
+    <div id="js-activites-results">
+        {% include 'admin/wellbeing/_activites_table.html.twig' with { activites: activites } %}
+    </div>
+
+    <div class="card p-3 mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h2 class="h6 mb-0">Calendrier des activites</h2>
+            <small class="text-muted">Vue hebdomadaire basee sur le planning filtre</small>
+        </div>
+        <div id="admin-activites-calendar"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <script>
+        (() => {
+            const form = document.querySelector('.js-admin-filter');
+            if (!form) return;
+            const target = document.querySelector(form.dataset.target);
+            if (!target) return;
+            const calendarHolder = document.getElementById('admin-activites-calendar');
+            let calendar = null;
+            let timer = null;
+            const getFilters = () => {
+                const data = new FormData(form);
+                return {
+                    admin_wellbeing: true,
+                    q: (data.get('q') ?? '').toString().trim(),
+                    type: (data.get('type') ?? '').toString().trim(),
+                    programme_id: (data.get('programme_id') ?? '').toString().trim(),
+                    jour: (data.get('jour') ?? '').toString().trim(),
+                };
+            };
+            const run = (url = null) => {
+                const fetchUrl = url ?? new URL(form.action, window.location.origin);
+                const data = new FormData(form);
+                for (const [key, value] of data.entries()) {
+                    if (value !== '') fetchUrl.searchParams.set(key, value);
+                }
+                fetch(fetchUrl.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then((r) => r.text())
+                    .then((html) => {
+                        target.innerHTML = html;
+                        bindPaginationLinks();
+                        if (calendar) {
+                            calendar.refetchEvents();
+                        }
+                    })
+                    .catch(() => {});
+            };
+            const bindPaginationLinks = () => {
+                target.querySelectorAll('.pagination a').forEach((link) => {
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        run(new URL(link.href, window.location.origin));
+                    });
+                });
+            };
+            const debouncedRun = () => {
+                clearTimeout(timer);
+                timer = setTimeout(run, 300);
+            };
+            form.addEventListener('input', debouncedRun);
+            form.addEventListener('change', debouncedRun);
+            form.addEventListener('submit', (e) => { e.preventDefault(); run(); });
+
+            if (calendarHolder && window.FullCalendar) {
+                calendar = new FullCalendar.Calendar(calendarHolder, {
+                    initialView: 'timeGridWeek',
+                    locale: 'fr',
+                    firstDay: 1,
+                    headerToolbar: {
+                        start: 'prev,next today',
+                        center: 'title',
+                        end: 'timeGridWeek,dayGridMonth'
+                    },
+                    eventSources: [
+                        {
+                            url: '{{ path('fc_load_events') }}',
+                            method: 'POST',
+                            extraParams: () => ({
+                                filters: JSON.stringify(getFilters())
+                            })
+                        }
+                    ]
+                });
+                calendar.render();
+            }
+
+            bindPaginationLinks();
+        })();
+    </script>
+{% endblock %}

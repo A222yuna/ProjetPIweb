@@ -13,10 +13,52 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+use App\Service\DisponibiliteExportService;
+use App\Service\PdfService;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
 #[Route('/psychologue/disponibilites')]
 #[IsGranted('ROLE_PSYCHOLOGUE')]
 final class DisponibiliteController extends AbstractController
 {
+    #[Route('/export/excel', name: 'app_psychologue_disponibilites_export_excel', methods: ['GET'])]
+    public function exportExcel(DisponibiliteExportService $exportService): StreamedResponse
+    {
+        $spreadsheet = $exportService->exportAll(); // Or exportByCabinet if needed
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+
+        return new StreamedResponse(function () use ($writer) {
+            $writer->save('php://output');
+        }, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="disponibilites_' . date('Y-m-d') . '.xlsx"',
+        ]);
+    }
+
+    #[Route('/export/pdf', name: 'app_psychologue_disponibilites_export_pdf', methods: ['GET'])]
+    public function exportPdf(DisponibiliteRepository $repo, PdfService $pdfService): Response
+    {
+        $dispos = $repo->findForPsychologue($this->getUser());
+        $html = $this->renderView('pdf/psychologue_disponibilites.html.twig', [
+            'disponibilites' => $dispos,
+            'psychologue' => $this->getUser(),
+            'generatedAt' => new \DateTime(),
+        ]);
+
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'Arial');
+        $dompdf = new \Dompdf\Dompdf($options);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+
+        return new Response($dompdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="disponibilites.pdf"',
+        ]);
+    }
+
     #[Route('/', name: 'app_psychologue_disponibilites_index', methods: ['GET'])]
     public function index(Request $request, DisponibiliteRepository $disponibilites): Response
     {

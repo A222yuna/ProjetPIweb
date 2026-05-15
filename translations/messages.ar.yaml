@@ -1,20 +1,21 @@
 nav:
-  calendar: "التقويم"
-  appointments: "مواعيدي"
+  dashboard: "لوحة القيادة"
   planning: "التخطيط"
-  availability: "المواعيد المتاحة"
+  availability: "التوفر"
+  plans: "الخطط"
+  cabinets: "عياداتي"
+  programs: "البرامج"
+  messages: "الرسائل"
+  forum: "المنتدى"
+  statistics: "الإحصائيات"
+  calendar: "التقويم"
   logout: "تسجيل الخروج"
   profile: "ملفي الشخصي"
-  dashboard: "لوحة القيادة"
-  forum: "المنتدى"
-  messages: "الرسائل"
-  programmes: "البرامج"
-  cabinets: "عياداتي"
-  plans: "الخطط"
+  appointments: "المواعيد"
 
 appointment:
-  book: "حجز"
-  cancel: "إلغاء"
+  book: "حجز موعد"
+  cancel: "إلغاء الموعد"
   confirm: "تأكيد"
   accept: "قبول"
   reject: "رفض"
@@ -35,25 +36,21 @@ user:
   role: "الدور"
   active: "نشط"
   inactive: "غير نشط"
-  welcome: "مرحباً"
 
 flash:
-  booking_success: "تم حجز الموعد بنجاح!"
+  booking_success: "تم حجز الموعد بنجاح."
   booking_error: "خطأ أثناء الحجز."
   cancel_success: "تم إلغاء الموعد."
-  plan_created: "تم إنشاء التخطيط."
-  plan_deleted: "تم حذف التخطيط."
-  payment_success: "تم الدفع بنجاح!"
+  plan_created: "تم إنشاء الخطة بنجاح."
+  plan_deleted: "تم حذف الخطة."
+  payment_success: "تم الدفع بنجاح."
 
 pdf:
   download: "تحميل PDF"
-  history: "تاريخي PDF"
-  rdv_pdf: "PDF"
-
+  history: "السجل"
 qr:
   scan: "مسح"
   generate: "توليد"
-
 weather:
   temperature: "درجة الحرارة"
   humidity: "الرطوبة"

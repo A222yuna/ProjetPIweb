@@ -29,11 +29,16 @@ final class DashboardController extends AbstractController
 
     #[Route('/psychologue/dashboard', name: 'app_psychologue_dashboard')]
     #[IsGranted('ROLE_PSYCHOLOGUE')]
-    public function psychologue(AppointmentRepository $appRepo): Response
-    {
+    public function psychologue(
+        \App\Repository\AppointmentRepository $appRepo,
+        \App\Repository\DisponibiliteRepository $dispoRepo
+    ): Response {
         $user = $this->getUser();
         return $this->render('dashboard/psychologue.html.twig', [
             'upcoming_appointments' => $appRepo->findForPsychologue($user->getId() ?? 0),
+            'stats' => [
+                'dispos_count' => count($dispoRepo->findForPsychologue($user)),
+            ]
         ]);
     }
 

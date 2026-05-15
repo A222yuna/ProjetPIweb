@@ -23,17 +23,26 @@ class PostRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('p')
             ->leftJoin('p.auteur', 'u')->addSelect('u')
+            ->andWhere('p.isHidden = 0')
             ->orderBy('p.date', 'DESC')
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
     }
 
-    public function findOneWithComments(int $id): ?Post
+    public function findOneWithComments(int $id, bool $includeHidden = false): ?Post
     {
-        return $this->createQueryBuilder('p')
-            ->leftJoin('p.auteur', 'a')->addSelect('a')
-            ->leftJoin('p.commentaires', 'c')->addSelect('c')
+        $qb = $this->createQueryBuilder('p')
+            ->leftJoin('p.auteur', 'a')->addSelect('a');
+
+        if ($includeHidden) {
+            $qb->leftJoin('p.commentaires', 'c')->addSelect('c');
+        } else {
+            $qb->andWhere('p.isHidden = 0')
+               ->leftJoin('p.commentaires', 'c', 'WITH', 'c.isHidden = 0')->addSelect('c');
+        }
+
+        return $qb
             ->leftJoin('c.auteur', 'ca')->addSelect('ca')
             ->leftJoin('c.parent', 'cp')->addSelect('cp')
             ->leftJoin('c.replies', 'cr')->addSelect('cr')
@@ -48,11 +57,15 @@ class PostRepository extends ServiceEntityRepository
      *
      * @return Post[]
      */
-    public function searchConsultations(?string $query, ?string $categorie): array
+    public function searchConsultations(?string $query, ?string $categorie, bool $includeHidden = false): array
     {
         $qb = $this->createQueryBuilder('p')
             ->leftJoin('p.auteur', 'u')->addSelect('u')
             ->orderBy('p.date', 'DESC');
+
+        if (!$includeHidden) {
+            $qb->andWhere('p.isHidden = 0');
+        }
 
         if ($query !== null && $query !== '') {
             $qb->andWhere($qb->expr()->orX(
@@ -71,39 +84,62 @@ class PostRepository extends ServiceEntityRepository
     /**
      * @return array{items: Post[], total:int}
      */
-    public function searchConsultationsPaginated(?string $query, ?string $categorie, int $page, int $perPage = 6): array
+    public function searchConsultationsPaginated(?string $query, ?string $categorie, int $page, int $perPage = 6, ?string $sortBy = 'recent', bool $includeHidden = false): array
     {
         $page = max(1, $page);
         $offset = ($page - 1) * $perPage;
 
-        $qb = $this->createQueryBuilder('p')
-            ->leftJoin('p.auteur', 'u')->addSelect('u')
-            ->orderBy('p.date', 'DESC');
+        // Base query without sorting
+        $baseQb = $this->createQueryBuilder('p')
+            ->leftJoin('p.auteur', 'u')->addSelect('u');
+
+        if (!$includeHidden) {
+            $baseQb->andWhere('p.isHidden = 0');
+        }
 
         if ($query !== null && $query !== '') {
-            $qb->andWhere($qb->expr()->orX(
+            $baseQb->andWhere($baseQb->expr()->orX(
                 'LOWER(p.titre) LIKE :q',
                 'LOWER(p.contenu) LIKE :q'
             ))->setParameter('q', '%'.mb_strtolower($query).'%');
         }
 
         if ($categorie !== null && $categorie !== '') {
-            $qb->andWhere('p.categorie = :cat')->setParameter('cat', $categorie);
+            $baseQb->andWhere('p.categorie = :cat')->setParameter('cat', $categorie);
         }
 
-        $items = (clone $qb)
+        // Get total count first
+        $totalCountQb = clone $baseQb;
+        $totalCountQb->select('COUNT(DISTINCT p.id)');
+        $total = (int) $totalCountQb->getQuery()->getSingleScalarResult();
+
+        // Apply sorting
+        switch ($sortBy) {
+            case 'likes':
+                $baseQb->orderBy('p.nbLikes', 'DESC');
+                break;
+            case 'comments':
+                // Use a subquery to get posts with comment counts, then order by it
+                $baseQb->addSelect('(SELECT COUNT(c2.id) FROM App\Entity\Commentaire c2 WHERE c2.post = p) AS HIDDEN commentCount')
+                   ->orderBy('commentCount', 'DESC');
+                break;
+            case 'recent':
+            default:
+                $baseQb->orderBy('p.date', 'DESC');
+                break;
+        }
+
+        // Apply pagination and get results
+        $items = $baseQb
             ->setFirstResult($offset)
             ->setMaxResults($perPage)
             ->getQuery()
             ->getResult();
 
-        $total = (int) (clone $qb)
-            ->select('COUNT(p.id)')
-            ->resetDQLPart('orderBy')
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        return ['items' => $items, 'total' => $total];
+        return [
+            'items' => $items,
+            'total' => $total,
+        ];
     }
 
     /**

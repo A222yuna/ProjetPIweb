@@ -1,27 +1,61 @@
-{% extends 'base.html.twig' %}
+{% extends (app.user and app.user.role == 'Psychologue') ? 'base_psychologue.html.twig' : 'base_patient.html.twig' %}
 
 {% block title %}Nouvelle publication — Forum{% endblock %}
 
-{% block body %}
-    <p class="muted back-link">
-        <a href="{{ path('app_consultation') }}">← Retour au forum</a>
+{% block patient_title %}Créer une nouvelle publication{% endblock %}
+{% block psychologue_title %}Créer une nouvelle publication{% endblock %}
+
+{% block patient_body %}
+    <p class="text-muted mb-4">
+        <a href="{{ path('app_consultation') }}" class="text-decoration-none text-muted">← Retour au forum</a>
     </p>
 
-    <div class="card" style="max-width: 800px; margin: 0 auto;">
-        <h1>Créer une nouvelle publication</h1>
-        <p class="muted" style="margin-bottom: 2rem;">
+    <div class="card border-0 shadow-sm rounded-4 p-4" style="max-width: 800px;">
+        <h1 class="h4 fw-bold mb-2">Créer une nouvelle publication</h1>
+        <p class="text-muted mb-4">
             Partagez vos questions ou vos expériences avec la communauté.
         </p>
         
-        {{ form_start(form, { attr: { class: 'stack-form' } }) }}
-            {{ form_row(form.titre) }}
-            {{ form_row(form.categorie) }}
-            {{ form_row(form.contenu) }}
+        {{ form_start(form, { attr: { class: 'needs-validation', enctype: 'multipart/form-data', novalidate: 'novalidate' } }) }}
+            <div class="mb-3">
+                {{ form_label(form.titre, 'Titre', { 'label_attr': { 'class': 'form-label fw-semibold' } }) }}
+                {{ form_widget(form.titre, { 'attr': { 'class': 'form-control' } }) }}
+                {{ form_errors(form.titre) }}
+            </div>
+            <div class="mb-3">
+                {{ form_label(form.categorie, 'Catégorie', { 'label_attr': { 'class': 'form-label fw-semibold' } }) }}
+                {{ form_widget(form.categorie, { 'attr': { 'class': 'form-select' } }) }}
+                {{ form_errors(form.categorie) }}
+            </div>
+            <div class="mb-3">
+                {{ form_label(form.imageFile, 'Ou : Télécharger une image (Fichier)', { 'label_attr': { 'class': 'form-label fw-semibold' } }) }}
+                {{ form_widget(form.imageFile, { 'attr': { 'class': 'form-control' } }) }}
+                {{ form_errors(form.imageFile) }}
+            </div>
+            <div class="mb-3">
+                {{ form_label(form.imageUrl, 'Image (Lien externe)', { 'label_attr': { 'class': 'form-label fw-semibold' } }) }}
+                {{ form_widget(form.imageUrl, { 'attr': { 'class': 'form-control' } }) }}
+                {{ form_errors(form.imageUrl) }}
+            </div>
+            <div class="mb-3">
+                {{ form_label(form.contenu, 'Contenu', { 'label_attr': { 'class': 'form-label fw-semibold' } }) }}
+                {{ form_widget(form.contenu, { 'attr': { 'class': 'form-control', 'rows': 6 } }) }}
+                {{ form_errors(form.contenu) }}
+            </div>
+            <div class="mb-4 form-check">
+                {{ form_widget(form.isAnonymous, { 'attr': { 'class': 'form-check-input' } }) }}
+                {{ form_label(form.isAnonymous, 'Publier anonymement', { 'label_attr': { 'class': 'form-check-label' } }) }}
+                <div class="form-text">{{ form_help(form.isAnonymous) }}</div>
+            </div>
             
-            <div class="stack-form-actions">
-                <button type="submit" class="btn btn-primary">Publier sur le forum</button>
-                <a href="{{ path('app_consultation') }}" class="btn btn-outline">Annuler</a>
+            <div class="d-flex gap-3">
+                <button type="submit" class="btn btn-primary rounded-pill">Publier sur le forum</button>
+                <a href="{{ path('app_consultation') }}" class="btn btn-outline-primary rounded-pill">Annuler</a>
             </div>
         {{ form_end(form) }}
     </div>
+{% endblock %}
+
+{% block psychologue_body %}
+    {{ block('patient_body') }}
 {% endblock %}

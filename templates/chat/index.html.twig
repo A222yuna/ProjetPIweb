@@ -1,0 +1,15 @@
+{% extends (app.user and app.user.role == 'Psychologue') ? 'base_psychologue.html.twig' : 'base_patient.html.twig' %}
+
+{% block body_attr %} class="layout-chat"{% endblock %}
+{% block title %}Messagerie — Cabinet de psychologie{% endblock %}
+
+{% block patient_title %}Boîte de réception{% endblock %}
+{% block psychologue_title %}Boîte de réception{% endblock %}
+
+{% block patient_body %}
+    {{ include('chat/_chat_content.html.twig') }}
+{% endblock %}
+
+{% block psychologue_body %}
+    {{ include('chat/_chat_content.html.twig') }}
+{% endblock %}

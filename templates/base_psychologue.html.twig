@@ -30,12 +30,6 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ path('app_psychologue_calendar') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') == 'app_psychologue_calendar' ? 'active bg-primary' : '' }}">
-                            <i class="fa-solid fa-calendar-check"></i>
-                            <span class="d-none d-md-inline">{{ 'nav.calendar'|trans }}</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <a href="{{ path('app_psychologue_planning_index') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') starts with 'app_psychologue_planning' ? 'active bg-primary' : '' }}">
                             <i class="fa-solid fa-calendar-days"></i>
                             <span class="d-none d-md-inline">{{ 'nav.planning'|trans }}</span>
@@ -62,17 +56,11 @@
                     <li class="nav-item">
                         <a href="{{ path('app_psychologue_programmes_index') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') starts with 'app_psychologue_programmes' ? 'active bg-primary' : '' }}">
                             <i class="fa-solid fa-leaf"></i>
-                            <span class="d-none d-md-inline">{{ 'nav.programmes'|trans }}</span>
+                            <span class="d-none d-md-inline">{{ 'nav.programs'|trans }}</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ path('app_psychologue_statistiques') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') == 'app_psychologue_statistiques' ? 'active bg-primary' : '' }}">
-                            <i class="fa-solid fa-chart-line"></i>
-                            <span class="d-none d-md-inline">Statistiques</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ path('app_messages_index') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') starts with 'app_messages' ? 'active bg-primary' : '' }}">
+                        <a href="{{ path('app_chat_inbox') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') starts with 'app_messages' or app.request.get('_route') starts with 'app_chat' ? 'active bg-primary' : '' }}">
                             <i class="fa-solid fa-envelope"></i>
                             <span class="d-none d-md-inline">{{ 'nav.messages'|trans }}</span>
                         </a>
@@ -84,14 +72,15 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ path('app_psychologue_profile_photo') }}" class="nav-link d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') == 'app_psychologue_profile_photo' ? 'active bg-primary text-white' : (app.user.photoProfil is null ? 'text-warning fw-semibold' : 'text-white') }}">
-                            <i class="fa-solid fa-camera"></i>
-                            <span class="d-none d-md-inline">
-                                Photo de profil
-                                {% if app.user.photoProfil is null %}
-                                    <span class="badge bg-warning text-dark ms-1" style="font-size:0.65rem;">!</span>
-                                {% endif %}
-                            </span>
+                        <a href="{{ path('app_psychologue_statistiques') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') starts with 'app_psychologue_statistiques' ? 'active bg-primary' : '' }}">
+                            <i class="fa-solid fa-chart-bar"></i>
+                            <span class="d-none d-md-inline">{{ 'nav.statistics'|trans }}</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ path('app_psychologue_calendar_index') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') starts with 'app_psychologue_calendar' ? 'active bg-primary' : '' }}">
+                            <i class="fa-solid fa-calendar-days"></i>
+                            <span class="d-none d-md-inline">{{ 'nav.calendar'|trans }}</span>
                         </a>
                     </li>
                 </ul>
@@ -104,9 +93,10 @@
                         <strong class="d-none d-md-inline">{{ app.user.prenom }}</strong>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
-                        <li><a class="dropdown-item" href="{{ path('app_account_profile') }}">{{ 'nav.profile'|trans }}</a></li>
+                        <li><a class="dropdown-item" href="{{ path('app_psychologue_account_pdf') }}" target="_blank" rel="noopener">Fiche compte (PDF)</a></li>
+                        <li><a class="dropdown-item" href="{{ path('app_account_profile') }}">Mon Profil</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ path('app_logout', {'_locale': app.request.locale}) }}">{{ 'nav.logout'|trans }}</a></li>
+                        <li><a class="dropdown-item" href="{{ path('app_logout') }}">Déconnexion</a></li>
                     </ul>
                 </div>
             </aside>
@@ -116,56 +106,41 @@
                 <div class="bg-light min-vh-100 p-4 rounded-3 shadow-sm">
                     <!-- Top Bar in Content -->
                     <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-                        <h2 class="h4 mb-0 fw-bold">{% block psychologue_title %}{{ 'nav.dashboard'|trans }}{% endblock %}</h2>
+                        <h2 class="h4 mb-0 fw-bold">{% block psychologue_title %}Espace Psychologue{% endblock %}</h2>
                         <div class="d-flex align-items-center gap-4">
-                            <!-- Lang Switcher -->
-                            <div class="lang-switcher d-flex gap-1 bg-white p-1 rounded-pill shadow-sm border">
+                            {% set weather = get_weather('Tunis') %}
+                            {% if weather %}
+                                <div class="weather-widget d-flex align-items-center gap-2 bg-white px-3 py-1 rounded-pill shadow-sm border">
+                                    <img src="https://openweathermap.org/img/wn/{{ weather.icon }}.png" width="35" alt="meteo">
+                                    <div class="d-flex flex-column" style="line-height: 1;">
+                                        <span class="fw-bold" style="font-size: 0.9rem;">{{ weather.temp }}°C</span>
+                                        <small class="text-muted" style="font-size: 0.7rem;">{{ weather.city }}</small>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <small class="text-muted italic">{{ 'weather.unavailable'|trans }}</small>
+                            {% endif %}
+
+                            <div class="lang-switcher d-flex gap-1 bg-white p-1 rounded-pill border shadow-sm">
                                 <a href="{{ path(app.request.get('_route'), app.request.get('_route_params')|merge({'_locale': 'fr'})) }}" 
-                                   class="btn btn-sm py-0 px-2 rounded-pill {{ app.request.locale == 'fr' ? 'btn-primary' : 'btn-outline-secondary border-0' }}">
-                                   FR
+                                   class="btn btn-sm py-0 px-2 rounded-pill {{ app.request.locale == 'fr' ? 'btn-primary' : 'btn-light' }}" title="Français">
+                                    FR
                                 </a>
                                 <a href="{{ path(app.request.get('_route'), app.request.get('_route_params')|merge({'_locale': 'en'})) }}" 
-                                   class="btn btn-sm py-0 px-2 rounded-pill {{ app.request.locale == 'en' ? 'btn-primary' : 'btn-outline-secondary border-0' }}">
-                                   EN
+                                   class="btn btn-sm py-0 px-2 rounded-pill {{ app.request.locale == 'en' ? 'btn-primary' : 'btn-light' }}" title="English">
+                                    EN
                                 </a>
                                 <a href="{{ path(app.request.get('_route'), app.request.get('_route_params')|merge({'_locale': 'ar'})) }}" 
-                                   class="btn btn-sm py-0 px-2 rounded-pill {{ app.request.locale == 'ar' ? 'btn-primary' : 'btn-outline-secondary border-0' }}">
-                                   AR
+                                   class="btn btn-sm py-0 px-2 rounded-pill {{ app.request.locale == 'ar' ? 'btn-primary' : 'btn-light' }}" title="العربية">
+                                    AR
                                 </a>
                             </div>
 
-                            {% set weather = weather_service.getWeather('Tunis') %}
-                            {% if weather %}
-                                <div class="weather-widget d-flex align-items-center gap-2 bg-white px-3 py-1 rounded-pill shadow-sm border">
-                                    <img src="https://openweathermap.org/img/wn/{{ weather.icon }}.png" width="30" alt="meteo">
-                                    <span class="fw-bold">{{ weather.temp }}°C</span>
-                                    <small class="text-muted d-none d-sm-inline">{{ weather.city }}</small>
-                                </div>
-                            {% else %}
-                                <div class="weather-widget d-flex align-items-center gap-2 text-muted small">
-                                    <i class="fa-solid fa-cloud-sun"></i>
-                                    <span>{{ 'weather.unavailable'|trans }}</span>
-                                </div>
-                            {% endif %}
                             <div class="text-muted small">
-                                {{ 'user.welcome'|trans }}, {{ app.user.prenom }}
+                                {{ "now"|date("d F Y") }}
                             </div>
                         </div>
                     </div>
-
-                    {# ── Photo de profil manquante ── #}
-                    {% if app.user and app.user.photoProfil is null and app.request.get('_route') != 'app_psychologue_profile_photo' %}
-                        <div class="alert alert-warning d-flex align-items-center gap-3 mb-4 rounded-3 shadow-sm" role="alert">
-                            <i class="fa-solid fa-triangle-exclamation fa-lg flex-shrink-0"></i>
-                            <div class="flex-grow-1">
-                                <strong>Photo de profil manquante.</strong>
-                                Elle est requise pour confirmer vos rendez-vous via la vérification faciale.
-                            </div>
-                            <a href="{{ path('app_psychologue_profile_photo') }}" class="btn btn-warning btn-sm fw-semibold text-nowrap">
-                                <i class="fa-solid fa-camera me-1"></i> Ajouter ma photo
-                            </a>
-                        </div>
-                    {% endif %}
 
                     {% block psychologue_body %}{% endblock %}
                 </div>

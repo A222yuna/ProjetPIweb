@@ -1,0 +1,29 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier le commentaire — Forum{% endblock %}
+
+{% block body %}
+    <p class="muted back-link">
+        <a href="{{ path('app_post_show', { id: comment.post.id }) }}">← Retour à la publication</a>
+    </p>
+
+    <div class="card" style="max-width: 800px; margin: 0 auto;">
+        <h1>Modifier votre commentaire</h1>
+        
+        {{ form_start(form, { attr: { class: 'stack-form', novalidate: 'novalidate' } }) }}
+            <div class="emoji-btn-wrapper">
+                {{ form_label(form.contenu) }}
+                <button type="button" class="emoji-trigger-btn" data-emoji-picker data-emoji-target="{{ form.contenu.vars.id }}">
+                    😊 <span>Emojis</span>
+                </button>
+            </div>
+            {{ form_widget(form.contenu) }}
+            {{ form_errors(form.contenu) }}
+            
+            <div class="stack-form-actions">
+                <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+                <a href="{{ path('app_post_show', { id: comment.post.id }) }}" class="btn btn-outline">Annuler</a>
+            </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

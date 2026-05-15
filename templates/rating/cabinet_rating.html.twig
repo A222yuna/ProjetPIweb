@@ -1,0 +1,183 @@
+{% extends 'front.html.twig' %}
+
+{% block title %}Avis — {{ cabinet.ville }}{% endblock %}
+
+{% block front_body %}
+<div class="rating-page-container">
+
+    {# ===== STATS ===== #}
+    <div class="rating-stats-section">
+        <h2 class="rating-page-title">📊 Avis — Cabinet {{ cabinet.ville }}</h2>
+
+        <div class="stats-overview">
+            <div class="overall-score-block">
+                <span class="big-score">{{ stats.moyenne_globale }}</span>
+                <span class="big-score-max">/5</span>
+                <div class="stars-display">
+                    {% for i in 1..5 %}
+                        <span style="color:{{ i <= stats.moyenne_globale ? '#F59E0B' : '#E5E7EB' }}">★</span>
+                    {% endfor %}
+                </div>
+                <p class="total-avis">{{ stats.total_avis }} avis</p>
+                {% if stats.pourcentage_positif > 0 %}
+                    <span class="positif-badge">✅ {{ stats.pourcentage_positif }}% positifs</span>
+                {% endif %}
+            </div>
+
+            <div class="criteria-bars">
+                {% for c in [
+                    {label:'🎧 Écoute',        key:'moyenne_ecoute',        weight:'30%'},
+                    {label:'🎓 Compétence',    key:'moyenne_competence',    weight:'35%'},
+                    {label:'⏰ Ponctualité',   key:'moyenne_ponctualite',   weight:'20%'},
+                    {label:'🏠 Environnement', key:'moyenne_environnement', weight:'15%'}
+                ] %}
+                <div class="criteria-bar-row">
+                    <span class="criteria-label">{{ c.label }}</span>
+                    <div class="bar-track">
+                        <div class="bar-fill" style="width:{{ (attribute(stats, c.key) / 5 * 100)|round }}%"></div>
+                    </div>
+                    <span class="criteria-value">{{ attribute(stats, c.key) }}/5</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if stats.total_avis > 0 %}
+        <div class="distribution-section">
+            <h4>Distribution des notes</h4>
+            {% for star in 5..1 %}
+            <div class="dist-row">
+                <span class="dist-star">{{ star }}★</span>
+                <div class="dist-bar-track">
+                    <div class="dist-bar-fill" style="width:{{ ((stats.distribution[star] / stats.total_avis) * 100)|round }}%"></div>
+                </div>
+                <span class="dist-count">{{ stats.distribution[star] }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    {# ===== FORMULAIRE ===== #}
+    <div class="rating-form-card">
+        <a href="{{ path('app_cabinet_front_show', {'id': cabinet.id}) }}" class="btn-back-rating">
+            ← Retour au cabinet
+        </a>
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label == 'success' ? 'success' : 'danger' }} mb-3">{{ message }}</div>
+            {% endfor %}
+        {% endfor %}
+
+        {% if not app.user %}
+            {# Not logged in #}
+            <div class="gate-block">
+                <div class="gate-icon">🔒</div>
+                <h3>Connexion requise</h3>
+                <p>Connectez-vous pour laisser un avis.</p>
+                <a href="{{ path('app_login') }}" class="btn-submit-rating" style="display:inline-block;text-decoration:none;text-align:center;">
+                    Se connecter
+                </a>
+            </div>
+
+        {% elseif not can_rate %}
+            {# Logged in but no real consultation — business rule gate #}
+            <div class="gate-block gate-block--locked">
+                <div class="gate-icon">🏥</div>
+                <h3>Consultation requise</h3>
+                <p>
+                    Vous pouvez noter ce cabinet uniquement après y avoir effectué
+                    une consultation réelle.
+                </p>
+                <a href="{{ path('app_cabinet_front_index') }}" class="cab-btn cab-btn-outline" style="margin-top:12px;display:inline-block;">
+                    ← Retour aux cabinets
+                </a>
+            </div>
+
+        {% else %}
+            {# Patient has consulted (or system has no consultation data yet) #}
+            {% if existing_rating %}
+                <div class="already-rated-banner">
+                    ✅ Vous avez déjà donné votre avis{% if consult_count > 0 %} ({{ consult_count }} consultation(s) vérifiée(s)){% endif %}. Vous pouvez le modifier.
+                </div>
+            {% elseif consult_count > 0 %}
+                <div class="consult-info-banner">
+                    ✔ {{ consult_count }} consultation(s) vérifiée(s) — vous pouvez noter ce cabinet.
+                </div>
+            {% endif %}
+
+            <h3>{{ existing_rating ? 'Modifier votre avis' : 'Donnez votre avis' }}</h3>
+
+            <form method="POST" action="{{ path('cabinet_rating_submit', {'id': cabinet.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('rating_' ~ cabinet.id) }}">
+
+                {% for criterion in [
+                    {id:'ecoute',       label:"🎧 Qualité d'écoute", weight:'30%',
+                     default: existing_rating ? (existing_rating.noteEcoute ?? 0) : 0},
+                    {id:'competence',   label:'🎓 Compétence',       weight:'35%',
+                     default: existing_rating ? (existing_rating.noteCompetence ?? 0) : 0},
+                    {id:'ponctualite',  label:'⏰ Ponctualité',      weight:'20%',
+                     default: existing_rating ? (existing_rating.notePonctualite ?? 0) : 0},
+                    {id:'environnement',label:'🏠 Environnement',    weight:'15%',
+                     default: existing_rating ? (existing_rating.noteEnvironnement ?? 0) : 0}
+                ] %}
+                <div class="criterion-row">
+                    <label>{{ criterion.label }}</label>
+                    <div class="star-selector" data-criterion="{{ criterion.id }}" data-current="{{ criterion.default }}">
+                        {% for i in 1..5 %}
+                            <span class="star {{ i <= criterion.default ? 'active' : '' }}" data-value="{{ i }}">★</span>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="note_{{ criterion.id }}" id="note_{{ criterion.id }}" value="{{ criterion.default }}">
+                </div>
+                {% endfor %}
+
+                <div class="global-preview">
+                    Note globale calculée :
+                    <strong id="global-preview">{{ existing_rating and existing_rating.noteGlobale ? existing_rating.noteGlobale : '0.0' }}</strong>/5
+                </div>
+
+                <textarea name="commentaire" placeholder="Votre commentaire (optionnel)..." rows="4">{{ existing_rating ? existing_rating.commentaireRating }}</textarea>
+
+                <button type="submit" class="btn-submit-rating">
+                    ✅ {{ existing_rating ? 'Mettre à jour mon avis' : 'Soumettre mon avis' }}
+                </button>
+            </form>
+        {% endif %}
+    </div>
+
+</div>
+
+<script>
+document.querySelectorAll('.star-selector').forEach(selector => {
+    const stars     = selector.querySelectorAll('.star');
+    const criterion = selector.dataset.criterion;
+    const input     = document.getElementById('note_' + criterion);
+    let current     = parseInt(selector.dataset.current) || 0;
+
+    const paint = (n) => stars.forEach((s, i) => { s.style.color = i < n ? '#F59E0B' : '#E5E7EB'; });
+    paint(current);
+
+    stars.forEach((star, index) => {
+        star.addEventListener('click', () => {
+            current = index + 1;
+            input.value = current;
+            stars.forEach((s, i) => s.classList.toggle('active', i < current));
+            paint(current);
+            updatePreview();
+        });
+        star.addEventListener('mouseover', () => paint(index + 1));
+        selector.addEventListener('mouseleave', () => paint(current));
+    });
+});
+
+function updatePreview() {
+    const e = parseFloat(document.getElementById('note_ecoute')?.value)        || 0;
+    const c = parseFloat(document.getElementById('note_competence')?.value)    || 0;
+    const p = parseFloat(document.getElementById('note_ponctualite')?.value)   || 0;
+    const v = parseFloat(document.getElementById('note_environnement')?.value) || 0;
+    const el = document.getElementById('global-preview');
+    if (el) el.textContent = ((e*0.30)+(c*0.35)+(p*0.20)+(v*0.15)).toFixed(1);
+}
+</script>
+{% endblock %}

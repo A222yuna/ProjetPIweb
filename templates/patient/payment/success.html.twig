@@ -18,11 +18,17 @@
                 </div>
 
                 <div class="bg-light rounded-4 p-4 mb-4">
+                    {% if qrCode %}
                     <h6 class="fw-bold mb-3">Votre ticket d'accès (QR Code)</h6>
                     <div class="bg-white p-3 d-inline-block rounded-3 shadow-sm mb-3">
                         <img src="{{ qrCode }}" alt="QR Code de votre rendez-vous" class="img-fluid" style="max-width: 200px;">
                     </div>
                     <p class="small text-muted mb-0">Présentez ce code lors de votre consultation.</p>
+                    {% else %}
+                    <h6 class="fw-bold mb-3">Rendez-vous #{{ appointment.id }}</h6>
+                    <p class="text-muted mb-0">{{ appointment.plan.dayOfWeek }} — {{ appointment.plan.period }}</p>
+                    <span class="badge bg-success mt-2">PAYÉ</span>
+                    {% endif %}
                 </div>
 
                 <div class="d-grid gap-3">

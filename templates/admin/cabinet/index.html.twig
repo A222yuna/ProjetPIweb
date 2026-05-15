@@ -43,6 +43,10 @@
                                             <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill">Archiver</button>
                                         </form>
                                     {% endif %}
+                                    <form action="{{ path('app_admin_cabinets_reject', {id: cabinet.id}) }}" method="POST" onsubmit="return confirm('Rejeter et supprimer définitivement ce cabinet ?')">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('reject_cabinet_' ~ cabinet.id) }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">Rejeter</button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>

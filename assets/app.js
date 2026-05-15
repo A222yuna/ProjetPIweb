@@ -2,15 +2,9 @@ import './stimulus_bootstrap.js';
 import './styles/app.css';
 
 function initUi() {
-    // We use a custom property to avoid double initialization
-    // However, event listeners are normally cleared or replaced if we are not careful.
-    // In this simple implementation, we just attach them.
-    // To be perfectly safe with Turbo, we can use delegation or just remove old listeners if needed.
-    
     // Toggle navigation
     const navToggles = document.querySelectorAll('[data-nav-toggle]');
     navToggles.forEach((btn) => {
-        // Remove existing listener to avoid duplicates
         btn.removeEventListener('click', handleNavToggle);
         btn.addEventListener('click', handleNavToggle);
     });
@@ -28,6 +22,8 @@ function initUi() {
         btn.removeEventListener('click', handleModalClose);
         btn.addEventListener('click', handleModalClose);
     });
+
+    // Emoji picker is now handled in base.html.twig setupEmojiPicker()
 }
 
 function handleNavToggle(e) {

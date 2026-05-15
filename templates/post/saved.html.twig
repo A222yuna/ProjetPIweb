@@ -1,0 +1,54 @@
+{% extends (app.user and app.user.role == 'Psychologue') ? 'base_psychologue.html.twig' : 'base_patient.html.twig' %}
+
+{% block body_attr %} class="layout-saved-posts"{% endblock %}
+{% block title %}Mes favoris — Forum{% endblock %}
+
+{% block patient_title %}Mes publications enregistrées{% endblock %}
+{% block psychologue_title %}Mes publications enregistrées{% endblock %}
+
+{% block patient_body %}
+    <p class="text-muted mb-4">
+        <a href="{{ path('app_consultation') }}" class="text-decoration-none text-muted">← Retour au forum</a>
+    </p>
+
+    <p class="text-muted mb-4">Retrouvez ici les posts que vous avez sauvegardés.</p>
+
+    {% if saved is empty %}
+        <div class="card empty-state border-0 shadow-sm rounded-4 p-5 text-center" style="max-width: 600px; margin: 0 auto;">
+            <p class="text-muted mb-3">Aucun favori pour le moment.</p>
+            <a href="{{ path('app_consultation') }}" class="btn btn-outline-primary rounded-pill">Explorer le forum</a>
+        </div>
+    {% else %}
+        <div class="post-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem;">
+            {% for post in saved %}
+                <article class="post-card" style="background: #fff; border: 1px solid #dee2e6; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 1.1rem 1.25rem;">
+                    <div class="post-card-body">
+                        <h2 style="font-size: 1.05rem; margin: 0 0 0.4rem; line-height: 1.3;">
+                            <a href="{{ path('app_post_show', { id: post.id }) }}" style="color: #2a3b33; font-weight: 600; text-decoration: none;">{{ post.titre }}</a>
+                        </h2>
+                        <p class="post-card-meta" style="font-size: 0.85rem; color: #6c757d; margin-bottom: 0.5rem;">
+                            {{ post.categorie }} · {{ post.auteurRole }}
+                            {% if post.auteur %} · {{ post.auteur.prenom }} {{ post.auteur.nom }}{% endif %}
+                        </p>
+                        <p class="post-card-snippet" style="font-size: 0.9rem; color: #6c757d; line-height: 1.55; margin-bottom: 0.85rem;">{{ post.contenu|length > 220 ? post.contenu|slice(0, 220) ~ '…' : post.contenu }}</p>
+                        <div class="post-card-footer" style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8125rem; color: #6c757d; padding-top: 0.75rem; border-top: 1px solid #dee2e6; margin-bottom: 0.75rem;">
+                            <span>{{ post.date|date('d/m/Y H:i') }}</span>
+                            <span>{{ post.nbLikes }} j'aime</span>
+                        </div>
+                        <div class="post-card-actions" style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+                            <a href="{{ path('app_post_show', { id: post.id }) }}" class="btn btn-outline-primary btn-sm rounded-pill">👁️ Voir</a>
+                            <form method="post" action="{{ path('app_post_save_toggle', { id: post.id }) }}" style="display:inline-block">
+                                <input type="hidden" name="_token" value="{{ csrf_token('save_post_' ~ post.id) }}">
+                                <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill">★ Retirer</button>
+                            </form>
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block psychologue_body %}
+    {{ block('patient_body') }}
+{% endblock %}

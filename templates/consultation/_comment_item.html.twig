@@ -1,0 +1,46 @@
+<div class="comment-item {% if level > 0 %}is-reply{% endif %}" {% if level > 0 %}style="margin-left:{{ level * 1.25 }}rem; border-left: 2px solid var(--accent-soft);"{% endif %}>
+    <div class="comment-author-row">
+        <div class="comment-avatar" aria-hidden="true">
+            {% if comment.auteur %}{{ comment.auteur.prenom|slice(0,1)|upper }}{% else %}?{% endif %}
+        </div>
+        <div>
+            <div class="comment-author-name">
+                {% if comment.auteur %}{{ comment.auteur.prenom }} {{ comment.auteur.nom }}{% else %}Anonyme{% endif %}
+            </div>
+            <div class="comment-author-role">{{ comment.auteurRole }}</div>
+        </div>
+        <span class="comment-date">{{ comment.date|date('d/m/Y · H:i') }}</span>
+    </div>
+    <div class="comment-body">{{ comment.contenu }}</div>
+    <div class="comment-actions">
+        <span style="font-size:0.8125rem; color:var(--muted)">
+            <span id="comment-{{ comment.id }}" class="likes-count">{{ comment.nbLikes }}</span> j'aime
+        </span>
+        <button type="button" class="comment-action-btn like-btn"
+                data-like-url="{{ path('app_comment_like', { id: comment.id }) }}"
+                data-likes-counter="comment-{{ comment.id }}">♥ J'aime</button>
+        {% if level < 4 %}
+            <a href="{{ path('app_post_show', { id: comment.post.id, reply_to: comment.id }) }}" class="comment-action-btn">↩ Répondre</a>
+        {% endif %}
+        <a href="{{ path('app_comment_report', { id: comment.id }) }}" class="comment-action-btn">🚩 Signaler</a>
+        {% if app.user and comment.auteur and app.user.id == comment.auteur.id %}
+            <a href="{{ path('app_comment_edit', { id: comment.id }) }}" class="comment-action-btn" style="margin-left:auto">✏️ Modifier</a>
+            <form method="post" action="{{ path('app_comment_delete', {id: comment.id}) }}"
+                  onsubmit="return confirm('Supprimer ce commentaire ?');" style="display:contents">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ comment.id) }}">
+                <button type="submit" class="comment-action-btn danger">🗑️</button>
+            </form>
+        {% elseif is_granted('ROLE_ADMIN') %}
+            <form method="post" action="{{ path('app_admin_forum_comment_delete', {id: comment.id}) }}"
+                  onsubmit="return confirm('Supprimer ce commentaire ?');" style="display:contents; margin-left:auto">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete_comment_' ~ comment.id) }}">
+                <button type="submit" class="comment-action-btn danger" style="margin-left:auto">🗑️ Admin</button>
+            </form>
+        {% endif %}
+    </div>
+    {% if comment.replies is not empty %}
+        {% for child in comment.replies %}
+            {% include 'consultation/_comment_item.html.twig' with { comment: child, level: level + 1 } only %}
+        {% endfor %}
+    {% endif %}
+</div>

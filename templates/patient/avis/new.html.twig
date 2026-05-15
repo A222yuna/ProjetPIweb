@@ -1,0 +1,31 @@
+{% extends 'base_patient.html.twig' %}
+
+{% block title %}Laisser un avis{% endblock %}
+{% block patient_title %}Laisser un avis{% endblock %}
+
+{% block patient_body %}
+<div class="card border-0 shadow-sm rounded-4 p-4" style="max-width:600px">
+    <p class="text-muted mb-4">Donnez votre avis sur le programme <strong>{{ programme.nom }}</strong>.</p>
+
+    {{ form_start(form, { attr: { novalidate: 'novalidate' } }) }}
+
+    <div class="mb-3">
+        {{ form_label(form.note, 'Note', { label_attr: { class: 'form-label fw-semibold' } }) }}
+        {{ form_widget(form.note, { attr: { class: 'form-select rounded-3' } }) }}
+        {{ form_errors(form.note) }}
+    </div>
+
+    <div class="mb-4">
+        {{ form_label(form.commentaire, 'Commentaire', { label_attr: { class: 'form-label fw-semibold' } }) }}
+        {{ form_widget(form.commentaire, { attr: { class: 'form-control rounded-3', rows: 5 } }) }}
+        {{ form_errors(form.commentaire) }}
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary rounded-pill px-4">Publier mon avis</button>
+        <a href="{{ path('app_patient_programme_show', {id: programme.id}) }}" class="btn btn-light rounded-pill px-4">Annuler</a>
+    </div>
+
+    {{ form_end(form) }}
+</div>
+{% endblock %}

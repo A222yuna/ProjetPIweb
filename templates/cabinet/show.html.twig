@@ -1,0 +1,201 @@
+{% extends 'base_admin.html.twig' %}
+
+{% block title %}Details cabinet{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+{% endblock %}
+
+{% block admin_body %}
+    <div class="cab-hero mb-4">
+        <div>
+            <h2>{{ cabinet.adresse }}</h2>
+            <p>{{ cabinet.ville }} - {{ cabinet.valide ? 'Cabinet valide' : (cabinet.archive ? 'Cabinet rejete' : 'Validation en attente') }}</p>
+        </div>
+        <div class="cab-hero-icon">📍</div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mb-3">
+        <a href="{{ path('api_cabinet_rapport_pdf', {'id': cabinet.id}) }}"
+           class="btn-download-pdf" target="_blank">
+            📄 Télécharger Rapport PDF
+        </a>
+        <a href="{{ path(index_route|default('app_cabinet_index')) }}" class="cab-btn cab-btn-outline">Retour</a>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="cab-table-card p-4 h-100">
+                <h4 class="mb-3">Details du cabinet</h4>
+                <p><strong>Adresse:</strong> {{ cabinet.adresse }}</p>
+                <p><strong>Ville:</strong> {{ cabinet.ville }}</p>
+                <p><strong>Horaires:</strong> {{ cabinet.horaires ?: '-' }}</p>
+                <p class="mb-0"><strong>Description:</strong> {{ cabinet.description ?: '-' }}</p>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="cab-table-card p-4 h-100">
+                <h4 class="mb-3">Statut</h4>
+                {% if cabinet.archive %}
+                    <span class="status-pill status-rejected">Rejete</span>
+                {% elseif cabinet.valide %}
+                    <span class="status-pill status-valid">Valide</span>
+                {% else %}
+                    <span class="status-pill status-pending">En attente</span>
+                {% endif %}
+                <hr>
+                <p class="mb-0 text-muted">Ce panneau affiche rapidement l etat de validation et les informations de suivi.</p>
+            </div>
+
+            <div class="reputation-card mt-3">
+                <h4 class="rep-title">Score de Réputation</h4>
+                <div class="rep-badge-display">
+                    <span class="rep-emoji">
+                        {% if cabinet.reputationBadge == 'Excellence' %}💎
+                        {% elseif cabinet.reputationBadge == 'Expert' %}🥇
+                        {% elseif cabinet.reputationBadge == 'Confirmé' %}🥈
+                        {% else %}⭐{% endif %}
+                    </span>
+                    <span class="rep-badge-name">{{ cabinet.reputationBadge ?? 'Non calculé' }}</span>
+                </div>
+                <div class="rep-score-bar">
+                    <div class="rep-score-fill" style="width: {{ cabinet.reputationScore ?? 0 }}%"></div>
+                </div>
+                <span class="rep-score-value">{{ cabinet.reputationScore ?? 0 }}/100</span>
+                {% if cabinet.scoreUpdatedAt %}
+                    <p class="rep-updated">Mis à jour le {{ cabinet.scoreUpdatedAt|date('d/m/Y') }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="cabinet-location-card cab-table-card p-0 mb-4">
+        <div class="location-header p-4 border-bottom">
+            <h4 class="mb-0">📍 Localisation du cabinet</h4>
+        </div>
+        <div
+            id="cabinet-detail-map"
+            data-lat="{{ cabinet.latitude ?? '33.8869' }}"
+            data-lng="{{ cabinet.longitude ?? '9.5375' }}"
+            data-name="{{ cabinet.adresse }}"
+        ></div>
+    </div>
+
+    <div class="cab-table-card p-4">
+        <h4 class="mb-3">Disponibilites</h4>
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Jour</th>
+                        <th>Heure debut</th>
+                        <th>Heure fin</th>
+                        <th>Duree</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for d in disponibilites %}
+                    <tr>
+                        <td>{{ d.jour }}</td>
+                        <td>{{ d.heureDebut ? d.heureDebut|date('H:i') : '-' }}</td>
+                        <td>{{ d.heureFin ? d.heureFin|date('H:i') : '-' }}</td>
+                        <td>{{ d.dureeConsultation }} min</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="4" class="text-center">Aucune disponibilite.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+    </div>
+
+    {# ===== AVIS PATIENTS ===== #}
+    {% set ratingsList = ratings ?? cabinet.ratings %}
+    <div class="cab-table-card p-4 mt-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h4 class="mb-0">⭐ Avis patients ({{ ratingsList|length }})</h4>
+            {% if ratingsList|length > 0 %}
+                {% set avgGlobal = 0 %}
+                {% for r in ratingsList %}
+                    {% set avgGlobal = avgGlobal + (r.noteGlobale ?? r.note) %}
+                {% endfor %}
+                {% set avgGlobal = (avgGlobal / ratingsList|length)|round(1) %}
+                <span class="status-pill status-valid">Moyenne : {{ avgGlobal }}/5</span>
+            {% endif %}
+        </div>
+
+        {% if ratingsList|length == 0 %}
+            <p class="text-muted text-center py-3">Aucun avis pour ce cabinet.</p>
+        {% else %}
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Écoute</th>
+                            <th>Compétence</th>
+                            <th>Ponctualité</th>
+                            <th>Environnement</th>
+                            <th>Note globale</th>
+                            <th>Commentaire</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for r in ratingsList %}
+                        <tr>
+                            <td>
+                                {{ r.patient ? r.patient.prenom ~ ' ' ~ r.patient.nom : '—' }}
+                                {% if r.isVerified %}<span class="status-pill status-valid" style="font-size:10px;">✔ Vérifié</span>{% endif %}
+                            </td>
+                            <td>{{ r.noteEcoute ?? '—' }}/5</td>
+                            <td>{{ r.noteCompetence ?? '—' }}/5</td>
+                            <td>{{ r.notePonctualite ?? '—' }}/5</td>
+                            <td>{{ r.noteEnvironnement ?? '—' }}/5</td>
+                            <td>
+                                <strong style="color:#6B3FA0;">{{ r.noteGlobale ?? r.note }}/5</strong>
+                                <div style="display:inline-block;margin-left:4px;">
+                                    {% set noteVal = (r.noteGlobale ?? r.note)|round %}
+                                    {% for i in 1..5 %}
+                                        <span style="color:{{ i <= noteVal ? '#F59E0B' : '#E5E7EB' }};font-size:14px;">★</span>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td style="max-width:200px;font-size:13px;color:#6B7280;">
+                                {{ r.commentaireRating ?: '—' }}
+                            </td>
+                            <td style="font-size:12px;color:#9CA3AF;">
+                                {{ r.createdAt ? r.createdAt|date('d/m/Y') : '—' }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mapEl = document.getElementById('cabinet-detail-map');
+            if (!mapEl || typeof L === 'undefined') {
+                return;
+            }
+
+            const lat = parseFloat(mapEl.dataset.lat || '33.8869');
+            const lng = parseFloat(mapEl.dataset.lng || '9.5375');
+            const map = L.map('cabinet-detail-map').setView([lat, lng], 15);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+
+            L.marker([lat, lng]).addTo(map)
+                .bindPopup('🏥 ' + (mapEl.dataset.name || 'Cabinet'))
+                .openPopup();
+        });
+    </script>
+{% endblock %}

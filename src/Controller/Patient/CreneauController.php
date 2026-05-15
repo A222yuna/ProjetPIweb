@@ -156,6 +156,11 @@ final class CreneauController extends AbstractController
             $period    = ((int)$heure->format('H') < 18) ? 'DAY' : 'NIGHT';
 
             $plan = $plans->findOneForPsychologueDayPeriod($psy, $dayOfWeek, $period);
+            // Fallback: try the other period if no exact match
+            if (!$plan) {
+                $fallbackPeriod = $period === 'DAY' ? 'NIGHT' : 'DAY';
+                $plan = $plans->findOneForPsychologueDayPeriod($psy, $dayOfWeek, $fallbackPeriod);
+            }
             if (!$plan) {
                 $this->addFlash('error', 'Aucun planning trouvé pour ce psychologue sur ce jour/période.');
                 return $this->redirectToRoute('app_patient_creneaux_book');

@@ -21,14 +21,18 @@ security:
             logout:
                 path: app_logout
                 target: app_login
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 604800   # 7 days
+                always_remember_me: true
 
     access_control:
-        - { path: ^/(en|fr|ar)/admin, roles: ROLE_ADMIN }
-        - { path: ^/(en|fr|ar)/psychologue, roles: ROLE_PSYCHOLOGUE }
-        - { path: ^/(en|fr|ar)/patient, roles: ROLE_PATIENT }
-        - { path: ^/(en|fr|ar)/consultation, roles: [ROLE_PATIENT, ROLE_PSYCHOLOGUE] }
-        - { path: ^/(en|fr|ar)/posts, roles: [ROLE_PATIENT, ROLE_PSYCHOLOGUE] }
-        - { path: ^/(en|fr|ar)/logout, roles: ROLE_USER }
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/psychologue, roles: ROLE_PSYCHOLOGUE }
+        - { path: ^/patient, roles: ROLE_PATIENT }
+        - { path: ^/consultation, roles: [ROLE_PATIENT, ROLE_PSYCHOLOGUE, ROLE_ADMIN] }
+        - { path: ^/posts, roles: [ROLE_PATIENT, ROLE_PSYCHOLOGUE, ROLE_ADMIN] }
+        - { path: ^/logout, roles: ROLE_USER }
 
 when@test:
     security:

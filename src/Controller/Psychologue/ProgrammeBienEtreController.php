@@ -21,7 +21,7 @@ class ProgrammeBienEtreController extends AbstractController
     #[Route('/', name: 'app_psychologue_programmes_index', methods: ['GET'])]
     public function index(ProgrammeBienEtreRepository $repo): Response
     {
-        return $this->render('psychologue/programme/index.html.twig', [
+        return $this->render('psychologue/programme_bien_etre/index.html.twig', [
             'programmes' => $repo->findBy(['psychologue' => $this->getUser()]),
         ]);
     }
@@ -42,7 +42,7 @@ class ProgrammeBienEtreController extends AbstractController
             return $this->redirectToRoute('app_psychologue_programmes_index');
         }
 
-        return $this->render('psychologue/programme/new.html.twig', [
+        return $this->render('psychologue/programme_bien_etre/new.html.twig', [
             'programme' => $programme,
             'form' => $form,
         ]);
@@ -55,7 +55,7 @@ class ProgrammeBienEtreController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        return $this->render('psychologue/programme/show.html.twig', [
+        return $this->render('psychologue/programme_bien_etre/show.html.twig', [
             'programme' => $programme,
         ]);
     }
@@ -76,7 +76,7 @@ class ProgrammeBienEtreController extends AbstractController
             return $this->redirectToRoute('app_psychologue_programmes_index');
         }
 
-        return $this->render('psychologue/programme/edit.html.twig', [
+        return $this->render('psychologue/programme_bien_etre/edit.html.twig', [
             'programme' => $programme,
             'form' => $form,
         ]);
@@ -102,8 +102,9 @@ class ProgrammeBienEtreController extends AbstractController
             return $this->redirectToRoute('app_psychologue_programmes_show', ['id' => $programme->getId()]);
         }
 
-        return $this->render('psychologue/programme/activite_new.html.twig', [
+        return $this->render('psychologue/activite_programme/new.html.twig', [
             'programme' => $programme,
+            'activite' => $activite,
             'form' => $form,
         ]);
     }

@@ -1,0 +1,75 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Details cabinet{% endblock %}
+
+{% block body %}
+    <div class="cab-hero mb-4" style="min-height:200px;">
+        <div>
+            <h2>{{ cabinet.ville }}</h2>
+            <p>{{ cabinet.adresse }}</p>
+        </div>
+        <div class="cab-hero-icon">🏥</div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="cab-table-card p-4 mb-4">
+                <h4>A propos du cabinet</h4>
+                <p class="mb-1"><strong>Adresse:</strong> {{ cabinet.adresse }}</p>
+                <p class="mb-1"><strong>Horaires:</strong> {{ cabinet.horaires ?: '-' }}</p>
+                <p class="mb-0"><strong>Description:</strong> {{ cabinet.description ?: '-' }}</p>
+            </div>
+
+            <div class="cab-table-card p-4 mb-4">
+                <h4>Planning</h4>
+                <div class="row g-2">
+                    <div class="col-md-4"><div class="status-pill status-valid">Lun 09:00</div></div>
+                    <div class="col-md-4"><div class="status-pill status-valid">Mar 11:30</div></div>
+                    <div class="col-md-4"><div class="status-pill status-valid">Jeu 15:00</div></div>
+                </div>
+            </div>
+
+            <div class="cab-table-card p-4">
+                <h4>Avis patients</h4>
+                <p class="text-muted mb-3">Section de retours patients (design pret pour integration de contenu dynamique).</p>
+                <a href="{{ path('cabinet_rating', {'id': cabinet.id}) }}" class="btn-rate-cabinet">
+                    ⭐ Voir les avis / Donner mon avis
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="cab-table-card p-4 mb-3" style="border:2px solid var(--primary); position:sticky; top:96px;">
+                <h4 class="mb-3">Reservation rapide</h4>
+                <p class="text-muted">Prochains creneaux disponibles:</p>
+                <ul class="mb-4">
+                    <li>Demain - 09:00</li>
+                    <li>Demain - 11:30</li>
+                    <li>Vendredi - 15:00</li>
+                </ul>
+                <a href="{{ path('app_patient_rendezvous_index') }}" class="cab-btn cab-btn-accent w-100">Prendre RDV</a>
+                <a href="{{ path('app_cabinet_front_index') }}" class="btn cab-btn cab-btn-outline w-100 mt-2">Retour</a>
+            </div>
+
+            {# Reputation card #}
+            <div class="reputation-card">
+                <h4 class="rep-title">Score de Réputation</h4>
+                <div class="rep-badge-display">
+                    <span class="rep-emoji">
+                        {% if cabinet.reputationBadge == 'Excellence' %}💎
+                        {% elseif cabinet.reputationBadge == 'Expert' %}🥇
+                        {% elseif cabinet.reputationBadge == 'Confirmé' %}🥈
+                        {% else %}⭐{% endif %}
+                    </span>
+                    <span class="rep-badge-name">{{ cabinet.reputationBadge ?? 'Non calculé' }}</span>
+                </div>
+                <div class="rep-score-bar">
+                    <div class="rep-score-fill" style="width:{{ cabinet.reputationScore ?? 0 }}%"></div>
+                </div>
+                <span class="rep-score-value">{{ cabinet.reputationScore ?? 0 }}/100</span>
+                {% if cabinet.scoreUpdatedAt %}
+                    <p class="rep-updated">Mis à jour le {{ cabinet.scoreUpdatedAt|date('d/m/Y') }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

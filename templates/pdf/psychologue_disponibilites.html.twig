@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; color: #333; }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #34495e; padding-bottom: 10px; }
+        .title { color: #2c3e50; font-size: 24px; margin-bottom: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background-color: #34495e; color: white; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+        .footer { position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 10px; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">Rapport des Disponibilités</div>
+        <div>Praticien : Dr. {{ psychologue.prenom }} {{ psychologue.nom }}</div>
+        <div>Généré le : {{ generatedAt|date('d/m/Y H:i') }}</div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Jour</th>
+                <th>Cabinet</th>
+                <th>Heure Début</th>
+                <th>Heure Fin</th>
+                <th>Durée</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in disponibilites %}
+                <tr>
+                    <td>
+                        {% if d.jour == 1 %}Lundi{% elseif d.jour == 2 %}Mardi{% elseif d.jour == 3 %}Mercredi
+                        {% elseif d.jour == 4 %}Jeudi{% elseif d.jour == 5 %}Vendredi{% elseif d.jour == 6 %}Samedi
+                        {% else %}Dimanche{% endif %}
+                    </td>
+                    <td>{{ d.cabinet ? d.cabinet.ville ~ ' (' ~ d.cabinet.adresse ~ ')' : '-' }}</td>
+                    <td>{{ d.heureDebut|date('H:i') }}</td>
+                    <td>{{ d.heureFin|date('H:i') }}</td>
+                    <td>{{ d.dureeConsultation }} min</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        © {{ "now"|date("Y") }} PsyConnect - Rapport confidentiel
+    </div>
+</body>
+</html>

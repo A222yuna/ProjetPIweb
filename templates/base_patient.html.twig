@@ -30,12 +30,6 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ path('app_patient_calendar') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') == 'app_patient_calendar' ? 'active bg-dark bg-opacity-25' : '' }}">
-                            <i class="fa-solid fa-calendar-days"></i>
-                            <span class="d-none d-md-inline">{{ 'nav.calendar'|trans }}</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <a href="{{ path('app_patient_creneaux_index') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') starts with 'app_patient_creneaux' ? 'active bg-dark bg-opacity-25' : '' }}">
                             <i class="fa-solid fa-calendar-plus"></i>
                             <span class="d-none d-md-inline">{{ 'appointment.book'|trans }}</span>
@@ -50,11 +44,11 @@
                     <li class="nav-item">
                         <a href="{{ path('app_patient_programmes_index') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') starts with 'app_patient_programmes' ? 'active bg-dark bg-opacity-25' : '' }}">
                             <i class="fa-solid fa-leaf"></i>
-                            <span class="d-none d-md-inline">{{ 'nav.programmes'|trans }}</span>
+                            <span class="d-none d-md-inline">{{ 'nav.programs'|trans }}</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ path('app_messages_index') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') starts with 'app_messages' ? 'active bg-dark bg-opacity-25' : '' }}">
+                        <a href="{{ path('app_chat_inbox') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') starts with 'app_messages' or app.request.get('_route') starts with 'app_chat' ? 'active bg-dark bg-opacity-25' : '' }}">
                             <i class="fa-solid fa-envelope"></i>
                             <span class="d-none d-md-inline">{{ 'nav.messages'|trans }}</span>
                         </a>
@@ -63,6 +57,12 @@
                         <a href="{{ path('app_consultation') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') == 'app_consultation' ? 'active bg-dark bg-opacity-25' : '' }}">
                             <i class="fa-solid fa-comments"></i>
                             <span class="d-none d-md-inline">{{ 'nav.forum'|trans }}</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ path('app_patient_calendar') }}" class="nav-link text-white d-flex align-items-center gap-3 p-2 rounded {{ app.request.get('_route') starts with 'app_patient_calendar' ? 'active bg-dark bg-opacity-25' : '' }}">
+                            <i class="fa-solid fa-calendar-days"></i>
+                            <span class="d-none d-md-inline">{{ 'nav.calendar'|trans }}</span>
                         </a>
                     </li>
                 </ul>
@@ -75,9 +75,10 @@
                         <strong class="d-none d-md-inline">{{ app.user.prenom }}</strong>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
-                        <li><a class="dropdown-item" href="{{ path('app_account_profile') }}">{{ 'nav.profile'|trans }}</a></li>
+                        <li><a class="dropdown-item" href="{{ path('app_patient_account_pdf') }}" target="_blank" rel="noopener">Fiche compte (PDF)</a></li>
+                        <li><a class="dropdown-item" href="{{ path('app_account_profile') }}">Mon Profil</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ path('app_logout', {'_locale': app.request.locale}) }}">{{ 'nav.logout'|trans }}</a></li>
+                        <li><a class="dropdown-item" href="{{ path('app_logout') }}">Déconnexion</a></li>
                     </ul>
                 </div>
             </aside>
@@ -87,39 +88,38 @@
                 <div class="bg-light min-vh-100 p-4 rounded-3 shadow-sm">
                     <!-- Top Bar in Content -->
                     <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-                        <h2 class="h4 mb-0 fw-bold">{% block patient_title %}{{ 'nav.dashboard'|trans }}{% endblock %}</h2>
+                        <h2 class="h4 mb-0 fw-bold">{% block patient_title %}Espace Patient{% endblock %}</h2>
                         <div class="d-flex align-items-center gap-4">
-                            <!-- Lang Switcher -->
-                            <div class="lang-switcher d-flex gap-1 bg-white p-1 rounded-pill shadow-sm border">
+                            {% set weather = get_weather('Tunis') %}
+                            {% if weather %}
+                                <div class="weather-widget d-flex align-items-center gap-2 bg-white px-3 py-1 rounded-pill shadow-sm border">
+                                    <img src="https://openweathermap.org/img/wn/{{ weather.icon }}.png" width="35" alt="meteo">
+                                    <div class="d-flex flex-column" style="line-height: 1;">
+                                        <span class="fw-bold" style="font-size: 0.9rem;">{{ weather.temp }}°C</span>
+                                        <small class="text-muted" style="font-size: 0.7rem;">{{ weather.city }}</small>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <small class="text-muted italic">{{ 'weather.unavailable'|trans }}</small>
+                            {% endif %}
+
+                            <div class="lang-switcher d-flex gap-1 bg-white p-1 rounded-pill border shadow-sm">
                                 <a href="{{ path(app.request.get('_route'), app.request.get('_route_params')|merge({'_locale': 'fr'})) }}" 
-                                   class="btn btn-sm py-0 px-2 rounded-pill {{ app.request.locale == 'fr' ? 'btn-primary' : 'btn-outline-secondary border-0' }}">
-                                   FR
+                                   class="btn btn-sm py-0 px-2 rounded-pill {{ app.request.locale == 'fr' ? 'btn-primary' : 'btn-light' }}" title="Français">
+                                    FR
                                 </a>
                                 <a href="{{ path(app.request.get('_route'), app.request.get('_route_params')|merge({'_locale': 'en'})) }}" 
-                                   class="btn btn-sm py-0 px-2 rounded-pill {{ app.request.locale == 'en' ? 'btn-primary' : 'btn-outline-secondary border-0' }}">
-                                   EN
+                                   class="btn btn-sm py-0 px-2 rounded-pill {{ app.request.locale == 'en' ? 'btn-primary' : 'btn-light' }}" title="English">
+                                    EN
                                 </a>
                                 <a href="{{ path(app.request.get('_route'), app.request.get('_route_params')|merge({'_locale': 'ar'})) }}" 
-                                   class="btn btn-sm py-0 px-2 rounded-pill {{ app.request.locale == 'ar' ? 'btn-primary' : 'btn-outline-secondary border-0' }}">
-                                   AR
+                                   class="btn btn-sm py-0 px-2 rounded-pill {{ app.request.locale == 'ar' ? 'btn-primary' : 'btn-light' }}" title="العربية">
+                                    AR
                                 </a>
                             </div>
 
-                            {% set weather = weather_service.getWeather('Tunis') %}
-                            {% if weather %}
-                                <div class="weather-widget d-flex align-items-center gap-2 bg-white px-3 py-1 rounded-pill shadow-sm border">
-                                    <img src="https://openweathermap.org/img/wn/{{ weather.icon }}.png" width="30" alt="meteo">
-                                    <span class="fw-bold">{{ weather.temp }}°C</span>
-                                    <small class="text-muted d-none d-sm-inline">{{ weather.city }}</small>
-                                </div>
-                            {% else %}
-                                <div class="weather-widget d-flex align-items-center gap-2 text-muted small">
-                                    <i class="fa-solid fa-cloud-sun"></i>
-                                    <span>{{ 'weather.unavailable'|trans }}</span>
-                                </div>
-                            {% endif %}
-                            <div class="text-muted small">
-                                {{ 'user.welcome'|trans }}, {{ app.user.prenom }}
+                            <div class="text-muted small d-none d-md-block">
+                                Bienvenue, {{ app.user.prenom }}
                             </div>
                         </div>
                     </div>

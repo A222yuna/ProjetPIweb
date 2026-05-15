@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html dir="{{ app.request.locale == 'ar' ? 'rtl' : 'ltr' }}" lang="{{ app.request.locale }}">
+<html dir="{{ app.request.locale == 'ar' ? 'rtl' : 'ltr' }}" 
+      lang="{{ app.request.locale }}">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -98,6 +99,56 @@
                 background: var(--accent-soft);
                 color: var(--accent);
                 font-weight: 600;
+            }
+
+            /* Forum Modern Styles */
+            .btn-accent {
+                background-color: var(--accent);
+                color: white !important;
+                border: none;
+                transition: all 0.2s;
+                padding: 0.6rem 1.5rem;
+                border-radius: 999px;
+                font-weight: 600;
+            }
+            .btn-accent:hover {
+                background-color: var(--accent-hover);
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(42, 111, 91, 0.2);
+            }
+            
+            .stack-form {
+                display: flex;
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            .stack-form input, .stack-form textarea, .stack-form select {
+                border: 1px solid var(--border);
+                padding: 0.85rem 1.15rem;
+                border-radius: var(--radius-sm);
+                background: #fcfcfc;
+                font-family: inherit;
+                width: 100%;
+            }
+            .stack-form input:focus, .stack-form textarea:focus, .stack-form select:focus {
+                border-color: var(--accent);
+                outline: none;
+                box-shadow: 0 0 0 4px var(--accent-soft);
+                background: #fff;
+            }
+            .stack-form label {
+                font-weight: 600;
+                font-size: 0.9rem;
+                color: var(--text);
+                margin-bottom: 0.25rem;
+                display: block;
+            }
+            .stack-form-actions {
+                display: flex;
+                gap: 1rem;
+                align-items: center;
+                margin-top: 1rem;
+            }
                 border-color: rgba(42, 111, 91, 0.25);
             }
             .admin-menu-item--muted {
@@ -1025,18 +1076,8 @@
         </style>
         {% block stylesheets %}
         {% endblock %}
-
-        {% block javascripts %}
-            {% block importmap %}{{ importmap('app') }}{% endblock %}
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-        {% endblock %}
-
-        {% set frankenphpHotReload = app.request.server.get('FRANKENPHP_HOT_RELOAD') %}
-        {% if frankenphpHotReload %}
-        <meta name="frankenphp-hot-reload:url" content="{{ frankenphpHotReload }}">
-        <script src="https://cdn.jsdelivr.net/npm/idiomorph"></script>
-        <script src="https://cdn.jsdelivr.net/npm/frankenphp-hot-reload/+esm" type="module"></script>
-        {% endif %}
+        {# FullCalendar CSS global #}
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/main.min.css">
     </head>
     <body{% block body_attr %}{% endblock %}>
         {% block header %}
@@ -1079,53 +1120,168 @@
         {% block footer %}
         <footer class="site-footer">
             <div class="wrap site-footer-inner">
-                <strong>Cabinet de psychologie</strong> — Forum &amp; échanges. Pour toute urgence, contactez les services d’urgence ou votre médecin traitant.
+                <strong>Cabinet de psychologie</strong> — Espace d’information et de partage. Pour toute urgence, contactez les services d’urgence ou votre médecin traitant.
                 <div class="site-footer-links">
                     <a href="{{ path('app_mentions_legales') }}">Mentions légales</a>
                 </div>
             </div>
         </footer>
         {% endblock %}
-        <script>
-            function applyStoredLocale() {
-                const currentPath = window.location.pathname;
-                const match = currentPath.match(/^\/(fr|en|ar)(\/|$)/);
-                const currentLocale = match ? match[1] : null;
-                const storedLocale = localStorage.getItem('_locale');
-                const validLocales = ['fr', 'en', 'ar'];
 
-                if (storedLocale && validLocales.includes(storedLocale) && storedLocale !== currentLocale) {
-                    let newPath;
-                    if (currentLocale) {
-                        newPath = currentPath.replace(/^\/(fr|en|ar)/, '/' + storedLocale);
-                    } else {
-                        newPath = '/' + storedLocale + currentPath;
+        {% block javascripts %}
+            {% block importmap %}{{ importmap('app') }}{% endblock %}
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+            {# FullCalendar JS global #}
+            <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+            
+            <script>
+                (function() {
+                    // 1. Initialisation des calendriers
+                    function initCalendars() {
+                        const calendarElements = document.querySelectorAll('[data-calendar]');
+                        calendarElements.forEach(el => {
+                            if (el.dataset.initialized === '1') return;
+                            
+                            const eventsUrl = el.dataset.calendarEvents;
+                            if (!eventsUrl) return;
+
+                            if (typeof FullCalendar === 'undefined') {
+                                setTimeout(initCalendars, 200);
+                                return;
+                            }
+
+                            el.dataset.initialized = '1';
+                            const calendar = new FullCalendar.Calendar(el, {
+                                initialView: 'dayGridMonth',
+                                locale: 'fr',
+                                headerToolbar: {
+                                    left: 'prev,next today',
+                                    center: 'title',
+                                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
+                                },
+                                buttonText: {
+                                    today: 'Aujourd\'hui', month: 'Mois', week: 'Semaine', day: 'Jour', list: 'Liste'
+                                },
+                                events: eventsUrl,
+                                eventClick: function(info) {
+                                    const eventModalEl = document.getElementById('eventModal');
+                                    if (!eventModalEl) return;
+                                    
+                                    const props = info.event.extendedProps;
+                                    
+                                    // Mapping dynamique pour Patient ou Psy
+                                    const fields = {
+                                        'patientNameDisplay': info.event.title,
+                                        'psyNameDisplay': info.event.title,
+                                        'patientEmailDisplay': props.patientEmail || '',
+                                        'cabinetNameDisplay': props.cabinet || '',
+                                        'eventStartDisplay': info.event.start.toLocaleString('fr-FR'),
+                                        'eventPlanDisplay': props.plan || '',
+                                        'eventAddressDisplay': props.adresse || ''
+                                    };
+
+                                    for (const [id, val] of Object.entries(fields)) {
+                                        const fieldEl = document.getElementById(id);
+                                        if (fieldEl) fieldEl.textContent = val;
+                                    }
+
+                                    const statusBadge = document.getElementById('eventStatusDisplay');
+                                    if (statusBadge) {
+                                        statusBadge.textContent = props.status || 'CONFIRMED';
+                                        statusBadge.className = 'badge rounded-pill bg-primary';
+                                    }
+
+                                    const btn = document.getElementById('viewAppointmentBtn');
+                                    if (btn) btn.href = el.dataset.viewUrl || '#';
+
+                                    const modal = new bootstrap.Modal(eventModalEl);
+                                    modal.show();
+                                },
+                                eventMouseEnter: (info) => info.el.style.cursor = 'pointer'
+                            });
+                            calendar.render();
+
+                            document.addEventListener('turbo:before-cache', () => {
+                                calendar.destroy();
+                                delete el.dataset.initialized;
+                            }, { once: true });
+                        });
                     }
-                    window.location.href = newPath + window.location.search + window.location.hash;
-                    return false;
-                } else if (storedLocale && validLocales.includes(storedLocale) && !currentLocale) {
-                    localStorage.setItem('_locale', storedLocale);
-                } else if (!currentLocale && !storedLocale) {
-                    localStorage.setItem('_locale', 'fr');
-                }
-                return true;
-            }
 
-            document.addEventListener('DOMContentLoaded', function() {
-                applyStoredLocale();
-            });
+                    // 2. Event Delegation pour les Likes
+                    document.addEventListener('click', function(e) {
+                        const likeBtn = e.target.closest('.like-btn');
+                        if (!likeBtn) return;
 
-            document.querySelectorAll('.lang-switcher a').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const url = new URL(this.href);
-                    const locale = url.pathname.split('/')[1];
-                    if (['fr', 'en', 'ar'].includes(locale)) {
-                        localStorage.setItem('_locale', locale);
-                        window.location.href = this.href;
-                    }
-                });
-            });
-        </script>
+                        e.preventDefault();
+                        const url = likeBtn.getAttribute('data-like-url');
+                        const counterId = likeBtn.getAttribute('data-likes-counter');
+                        const counter = document.getElementById(counterId);
+
+                        likeBtn.style.opacity = '0.5';
+                        likeBtn.style.pointerEvents = 'none';
+
+                        fetch(url, {
+                            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (counter && typeof data.nbLikes !== 'undefined') counter.textContent = data.nbLikes;
+                            likeBtn.classList.toggle('active', data.liked);
+                        })
+                        .catch(err => console.error('Error:', err))
+                        .finally(() => {
+                            likeBtn.style.opacity = '1';
+                            likeBtn.style.pointerEvents = 'auto';
+                        });
+                    });
+
+                    // 3. Event Delegation pour les Emojis
+                    document.addEventListener('click', function(e) {
+                        const trigger = e.target.closest('[data-emoji-picker]');
+                        if (!trigger) {
+                            // Fermer les pickers si on clique ailleurs
+                            document.querySelectorAll('.emoji-picker-container').forEach(p => p.style.display = 'none');
+                            return;
+                        }
+
+                        const targetId = trigger.dataset.emojiTarget;
+                        const targetInput = document.getElementById(targetId);
+                        if (!targetInput) return;
+
+                        let pickerContainer = trigger.parentElement.querySelector('.emoji-picker-container');
+                        if (pickerContainer) {
+                            pickerContainer.style.display = pickerContainer.style.display === 'none' ? 'block' : 'none';
+                            return;
+                        }
+
+                        pickerContainer = document.createElement('div');
+                        pickerContainer.className = 'emoji-picker-container';
+                        pickerContainer.style.position = 'absolute';
+                        pickerContainer.style.zIndex = '1000';
+                        trigger.parentElement.appendChild(pickerContainer);
+
+                        import('https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js').then((m) => {
+                            const picker = new m.Picker({
+                                onEmojiSelect: (emoji) => {
+                                    const start = targetInput.selectionStart, end = targetInput.selectionEnd, text = targetInput.value;
+                                    targetInput.value = text.slice(0, start) + emoji.native + text.slice(end);
+                                    targetInput.focus();
+                                    targetInput.setSelectionRange(start + emoji.native.length, start + emoji.native.length);
+                                    pickerContainer.style.display = 'none';
+                                },
+                                locale: 'fr', theme: 'light'
+                            });
+                            pickerContainer.appendChild(picker);
+                        });
+                    });
+
+                    // Initialisation globale
+                    document.addEventListener('turbo:load', initCalendars);
+                    if (document.readyState !== 'loading') initCalendars();
+                    else document.addEventListener('DOMContentLoaded', initCalendars);
+                })();
+            </script>
+        {% endblock %}
     </body>
 </html>

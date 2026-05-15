@@ -3,7 +3,7 @@
 {% block title %}{{ post.titre }} — Cabinet de psychologie{% endblock %}
 
 {% block body %}
-    <p class="muted back-link"><a href="{{ path('app_consultation') }}">← Retour au forum</a></p>
+    <p class="muted back-link"><a href="{{ path('app_consultation') }}">← Retour aux consultations</a></p>
 
     <article class="card">
         <h1>{{ post.titre }}</h1>
@@ -13,24 +13,6 @@
             · {{ post.date|date('d/m/Y H:i') }}
         </p>
         <div class="post-body">{{ post.contenu }}</div>
-        <div class="post-actions" style="display:flex;gap:0.75rem;flex-wrap:wrap;margin:1rem 0; align-items: center;">
-            <a href="{{ path('app_post_like', { id: post.id }) }}" 
-               class="btn btn-outline btn-sm" 
-               data-turbo="false">
-                ❤️ J'aime
-            </a>
-            <a href="#comment-form" class="btn btn-outline btn-sm">💬 Commenter</a>
-
-            {% if post.auteur and post.auteur.id == app.user.id %}
-                <div style="margin-left: auto; display: flex; gap: 0.5rem;">
-                    <a href="{{ path('app_post_edit', { id: post.id }) }}" class="btn btn-outline btn-sm">✏️ Modifier</a>
-                    <form method="post" action="{{ path('app_post_delete', { id: post.id }) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette publication ?');" style="display: inline-block;">
-                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ post.id) }}">
-                        <button type="submit" class="btn btn-outline btn-sm" style="color: #d32f2f; border-color: #d32f2f;">🗑️ Supprimer</button>
-                    </form>
-                </div>
-            {% endif %}
-        </div>
         <p class="muted likes-line">{{ post.nbLikes }} j’aime</p>
     </article>
 
@@ -60,7 +42,7 @@
                 <a href="{{ path('app_post_show', { id: post.id }) }}">Annuler la réponse</a>
             </p>
         {% endif %}
-        {{ form_start(commentForm, { attr: { class: 'stack-form', id: 'comment-form' } }) }}
+        {{ form_start(commentForm, { attr: { class: 'stack-form' } }) }}
             {{ form_row(commentForm.contenu) }}
             <div class="stack-form-actions">
                 <button type="submit" class="btn btn-primary">Publier</button>

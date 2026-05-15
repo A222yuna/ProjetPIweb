@@ -17,12 +17,14 @@ final class PatientAppointmentType extends AbstractType
         $builder->add('plan', EntityType::class, [
             'class' => PsychologuePlan::class,
             'choice_label' => static fn (PsychologuePlan $p) => sprintf(
-                '%s - %s (%d max)',
+                'Dr. %s %s — %s %s (max %d)',
+                $p->getPsychologue()?->getPrenom() ?? '',
+                $p->getPsychologue()?->getNom() ?? '',
                 $p->getDayOfWeek(),
                 $p->getPeriod(),
                 $p->getMaxAppointments()
             ),
-            'placeholder' => 'Choisir...',
+            'placeholder' => 'Choisir un psychologue et un créneau...',
             'constraints' => [new NotBlank(message: 'Veuillez choisir un planning')],
         ]);
     }

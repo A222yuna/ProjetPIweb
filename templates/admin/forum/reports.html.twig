@@ -1,0 +1,139 @@
+{% extends 'base_admin.html.twig' %}
+
+{% block title %}Gestion du Forum — Signalements{% endblock %}
+
+{% block admin_body %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Gestion du Forum : Signalements</h1>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ path('app_admin_module_forum') }}" class="btn btn-outline-primary">Publications</a>
+            <a href="{{ path('app_admin_forum_comments') }}" class="btn btn-outline-primary">Commentaires</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" name="q" value="{{ q }}" placeholder="Rechercher (motif, détails, contenu)..." class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <select name="status" class="form-select">
+                        <option value="open" {{ status == 'open' ? 'selected' : '' }}>Ouverts</option>
+                        <option value="resolved" {{ status == 'resolved' ? 'selected' : '' }}>Résolus</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="type" class="form-select">
+                        <option value="" {{ type == '' ? 'selected' : '' }}>Tous</option>
+                        <option value="post" {{ type == 'post' ? 'selected' : '' }}>Publications</option>
+                        <option value="comment" {{ type == 'comment' ? 'selected' : '' }}>Commentaires</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1">Filtrer</button>
+                    {% if q or type or status != 'open' %}
+                        <a href="{{ path('app_admin_forum_reports') }}" class="btn btn-link">Reset</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Motif</th>
+                            <th>Signalé par</th>
+                            <th>Cible</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in reports %}
+                            {% set isPost = report.targetPost is not null %}
+                            {% set targetPost = isPost ? report.targetPost : (report.targetComment ? report.targetComment.post : null) %}
+                            <tr>
+                                <td class="small">{{ report.createdAt|date('d/m/Y H:i') }}</td>
+                                <td>
+                                    {% if isPost %}
+                                        <span class="badge text-bg-secondary">Post</span>
+                                    {% else %}
+                                        <span class="badge text-bg-info">Comment</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">{{ report.reason }}</div>
+                                    {% if report.details %}
+                                        <div class="small text-muted">{{ report.details|length > 140 ? report.details|slice(0, 140) ~ '…' : report.details }}</div>
+                                    {% endif %}
+                                </td>
+                                <td class="small">
+                                    {% if report.reporter %}
+                                        {{ report.reporter.prenom }} {{ report.reporter.nom }}
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="small">
+                                    {% if targetPost %}
+                                        <a href="{{ path('app_post_show', {id: targetPost.id}) }}" target="_blank" class="text-decoration-none">
+                                            {{ targetPost.titre|length > 40 ? targetPost.titre|slice(0, 40) ~ '…' : targetPost.titre }}
+                                        </a>
+                                        {% if report.targetComment %}
+                                            <div class="text-muted">
+                                                {{ report.targetComment.contenu|length > 80 ? report.targetComment.contenu|slice(0, 80) ~ '…' : report.targetComment.contenu }}
+                                            </div>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">Contenu supprimé</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if report.status == 'resolved' %}
+                                        <span class="badge text-bg-success">Résolu</span>
+                                        <div class="small text-muted">
+                                            {% if report.resolutionAction %}{{ report.resolutionAction }}{% endif %}
+                                        </div>
+                                    {% else %}
+                                        <form method="post" action="{{ path('app_admin_forum_report_resolve', {id: report.id}) }}" class="d-flex gap-1 flex-wrap" onsubmit="return confirm('Confirmer cette action ?');">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('resolve_report_' ~ report.id) }}">
+                                            <button class="btn btn-sm btn-outline-secondary" name="action" value="dismissed">Dismiss</button>
+                                            <button class="btn btn-sm btn-outline-warning" name="action" value="hidden">Hide</button>
+                                            <button class="btn btn-sm btn-outline-success" name="action" value="unhidden">Unhide</button>
+                                            <button class="btn btn-sm btn-outline-danger" name="action" value="deleted">Delete</button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">Aucun signalement.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if total_pages > 1 %}
+            <div class="card-footer bg-white">
+                <nav aria-label="Pagination">
+                    <ul class="pagination pagination-sm mb-0 justify-content-center">
+                        {% for p in 1..total_pages %}
+                            <li class="page-item {{ p == page ? 'active' : '' }}">
+                                <a class="page-link" href="{{ path('app_admin_forum_reports', {page: p, q: q, status: status, type: type}) }}">{{ p }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
+

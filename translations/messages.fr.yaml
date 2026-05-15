@@ -1,23 +1,24 @@
 nav:
-  calendar: "Calendrier"
-  appointments: "Mes Rendez-vous"
+  dashboard: "Tableau de bord"
   planning: "Planning"
   availability: "Disponibilités"
+  plans: "Plans"
+  cabinets: "Mes Cabinets"
+  programs: "Programmes"
+  messages: "Messages"
+  forum: "Forum"
+  statistics: "Statistiques"
+  calendar: "Calendrier"
   logout: "Déconnexion"
   profile: "Mon Profil"
-  dashboard: "Tableau de bord"
-  forum: "Forum"
-  messages: "Messages"
-  programmes: "Programmes"
-  cabinets: "Mes Cabinets"
-  plans: "Plans"
+  appointments: "Rendez-vous"
 
 appointment:
   book: "Réserver"
   cancel: "Annuler"
   confirm: "Confirmer"
   accept: "Accepter"
-  reject: "Rejeter"
+  reject: "Refuser"
   complete: "Terminer"
   status_scheduled: "Prévu"
   status_confirmed: "Confirmé"
@@ -35,25 +36,21 @@ user:
   role: "Rôle"
   active: "Actif"
   inactive: "Inactif"
-  welcome: "Bienvenue"
 
 flash:
-  booking_success: "Rendez-vous réservé avec succès !"
+  booking_success: "Rendez-vous réservé avec succès."
   booking_error: "Erreur lors de la réservation."
   cancel_success: "Rendez-vous annulé."
-  plan_created: "Planning créé."
-  plan_deleted: "Planning supprimé."
-  payment_success: "Paiement réussi !"
+  plan_created: "Plan créé avec succès."
+  plan_deleted: "Plan supprimé."
+  payment_success: "Paiement effectué."
 
 pdf:
   download: "Télécharger PDF"
-  history: "Mon Historique PDF"
-  rdv_pdf: "PDF"
-
+  history: "Historique"
 qr:
   scan: "Scanner"
   generate: "Générer"
-
 weather:
   temperature: "Température"
   humidity: "Humidité"

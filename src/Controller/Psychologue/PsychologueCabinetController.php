@@ -20,6 +20,7 @@ class PsychologueCabinetController extends AbstractController
     #[Route('/', name: 'app_psychologue_cabinets_index', methods: ['GET'])]
     public function index(PsyCabinetRepository $repo): Response
     {
+        // Reviews removed as requested
         return $this->render('psychologue/cabinet/index.html.twig', [
             'psyCabinets' => $repo->findBy(['psychologue' => $this->getUser()]),
         ]);

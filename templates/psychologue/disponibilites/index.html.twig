@@ -6,6 +6,12 @@
     <h1 class="h4 mb-3">Mes disponibilités</h1>
     <div class="d-flex gap-2 mb-3">
         <a class="btn btn-sm btn-primary" href="{{ path('app_psychologue_disponibilites_new') }}">Nouvelle disponibilité</a>
+        <a class="btn btn-sm btn-success" href="{{ path('app_psychologue_disponibilites_export_excel') }}">
+            <i class="fa-solid fa-file-excel me-1"></i> Export Excel
+        </a>
+        <a class="btn btn-sm btn-danger" href="{{ path('app_psychologue_disponibilites_export_pdf') }}" target="_blank">
+            <i class="fa-solid fa-file-pdf me-1"></i> Export PDF
+        </a>
         <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_psychologue_plans_index') }}">Voir mes plans</a>
         <a class="btn btn-sm btn-outline-secondary" href="{{ path('app_psychologue_appointments_index') }}">Voir mes appointments</a>
     </div>

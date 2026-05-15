@@ -3,6 +3,9 @@
 {% block title %}Connexion{% endblock %}
 
 {% block body %}
+    {% set failedAttempts = app.session.get('login_failed_attempts', 0) %}
+    {% set showCaptcha = failedAttempts >= 1 %}
+
     <div class="card" style="max-width:560px;margin:2rem auto;">
         <h1 style="margin-top:0">Connexion</h1>
         <p class="muted">Accedez a votre espace en fonction de votre role (Admin, Psychologue, Patient).</p>
@@ -12,12 +15,37 @@
         <form method="post" class="stack-form">
             <div>
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" value="{{ last_username }}" required autocomplete="email">
+                <input type="email" id="email" name="email" value="{{ last_username|default('') }}" required autocomplete="email">
             </div>
             <div>
                 <label for="password">Mot de passe</label>
                 <input type="password" id="password" name="password" required autocomplete="current-password">
             </div>
+
+            {# CAPTCHA: displayed after 1 failed attempt #}
+            {% if showCaptcha %}
+                <div class="alert alert-warning mt-3">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <strong>Vérification de sécurité</strong>
+                    </div>
+                    <p class="small mb-2">Veuillez résoudre ce calcul simple pour continuer :</p>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-secondary">{{ captcha_a }} + {{ captcha_b }} = ?</span>
+                        <input type="text"
+                               id="captcha"
+                               name="captcha"
+                               class="form-control form-control-sm"
+                               style="width:80px"
+                               placeholder="?"
+                               required
+                               autocomplete="off">
+                        <input type="hidden" name="captcha_a" value="{{ captcha_a }}">
+                        <input type="hidden" name="captcha_b" value="{{ captcha_b }}">
+                    </div>
+                </div>
+            {% endif %}
+
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
             <div class="stack-form-actions">
                 <button class="btn btn-primary" type="submit">Se connecter</button>

@@ -90,8 +90,8 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="badge rounded-pill {% if appointment.status == 'CONFIRMED' %}bg-success{% elseif appointment.status == 'PENDING' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
-                                                {{ appointment.status }}
+                                            <span class="badge rounded-pill {% if appointment.status == 'CONFIRMED' or appointment.status == '' %}bg-info{% elseif appointment.status == 'SCHEDULED' %}bg-warning text-dark{% elseif appointment.status == 'COMPLETED' %}bg-success{% elseif appointment.status == 'PAID' %}bg-primary{% elseif appointment.status == 'CANCELLED' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                                {{ appointment.status == '' ? 'CONFIRMED' : appointment.status }}
                                             </span>
                                         </td>
                                         <td class="text-end">

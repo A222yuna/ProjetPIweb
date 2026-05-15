@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Programme : {{ programme.nom }}</title>
+    <style>
+        body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; line-height: 1.6; padding: 20px; }
+        .header { border-bottom: 2px solid #2a6f5b; padding-bottom: 20px; margin-bottom: 30px; }
+        .title { color: #2a6f5b; font-size: 28px; font-weight: bold; margin: 0; }
+        .subtitle { color: #666; font-size: 14px; margin-top: 5px; }
+        .section { margin-bottom: 25px; }
+        .section-title { background: #f4f2ee; padding: 8px 15px; border-radius: 5px; font-weight: bold; color: #2a6f5b; margin-bottom: 15px; }
+        .info-grid { display: table; width: 100%; margin-bottom: 20px; }
+        .info-item { display: table-cell; width: 33%; }
+        .label { font-size: 12px; color: #777; text-transform: uppercase; }
+        .value { font-weight: bold; font-size: 16px; }
+        .activity-card { border: 1px solid #eee; padding: 15px; border-radius: 10px; margin-bottom: 10px; page-break-inside: avoid; }
+        .activity-header { display: flex; justify-content: space-between; border-bottom: 1px solid #f9f9f9; padding-bottom: 5px; margin-bottom: 10px; }
+        .day-badge { background: #2a6f5b; color: white; padding: 2px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; }
+        .activity-title { font-weight: bold; font-size: 16px; color: #333; }
+        .footer { text-align: center; font-size: 10px; color: #999; margin-top: 50px; position: fixed; bottom: 20px; width: 100%; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">{{ programme.nom }}</h1>
+        <div class="subtitle">Accompagnement personnalisé par Dr. {{ programme.psychologue.prenom }} {{ programme.psychologue.nom }}</div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Objectif du programme</div>
+        <p>{{ programme.objectif ?: 'Aucun objectif spécifique défini.' }}</p>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-item">
+            <div class="label">Durée totale</div>
+            <div class="value">{{ programme.duree }} jours</div>
+        </div>
+        <div class="info-item">
+            <div class="label">Difficulté</div>
+            <div class="value">{{ programme.niveauDifficulte ?: 'N/A' }}</div>
+        </div>
+        <div class="info-item">
+            <div class="label">Date de génération</div>
+            <div class="value">{{ "now"|date('d/m/Y') }}</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Planning des activités</div>
+        {% if programme.activites is empty %}
+            <p>Aucune activité n'est programmée pour ce parcours.</p>
+        {% else %}
+            {% for a in programme.activites|sort((a, b) => a.jour <=> b.jour) %}
+                <div class="activity-card">
+                    <div class="activity-header">
+                        <span class="day-badge">Jour {{ a.jour }}</span>
+                        <span style="font-size: 12px; color: #888;">
+                            {% if a.heureDebut %}{{ a.heureDebut|date('H:i') }}{% endif %}
+                            {% if a.dureeMinutes %} ({{ a.dureeMinutes }} min){% endif %}
+                        </span>
+                    </div>
+                    <div class="activity-title">{{ a.titre }}</div>
+                    {% if a.typeActivite %}
+                        <div style="font-size: 11px; color: #2a6f5b; font-style: italic; margin-bottom: 5px;">Type : {{ a.typeActivite }}</div>
+                    {% endif %}
+                    <div style="font-size: 13px; color: #555;">{{ a.description }}</div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="footer">
+        Document confidentiel généré par PsyConnect &copy; {{ "now"|date("Y") }}
+    </div>
+</body>
+</html>

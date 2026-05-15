@@ -1,0 +1,68 @@
+    <p class="text-muted mb-4">
+        Gérez vos conversations et messages sécurisés.
+    </p>
+
+    {% if conversations|length > 0 %}
+        <div class="stats-row mb-4" style="display: flex; gap: 1.5rem;">
+            <div class="stat-item" style="display: flex; align-items: baseline; gap: 0.5rem;">
+                <span class="stat-number" style="font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: #2a3b33;">{{ conversations|length }}</span>
+                <span class="stat-label" style="font-size: 0.8rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500;">Total</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" style="font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: #1b7a43;">{{ conversations|filter(c => c.statutConversation == 'active')|length }}</span>
+                <span class="stat-label" style="font-size: 0.8rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500;">Actives</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" style="font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: #6c757d;">{{ conversations|filter(c => c.statutConversation != 'active')|length }}</span>
+                <span class="stat-label" style="font-size: 0.8rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500;">Inactives</span>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="conversations-list" style="display: flex; flex-direction: column;">
+        {% for conversation in conversations %}
+            <div class="conversation-item" style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid #dee2e6;">
+                <a href="{{ path('app_chat_view', {'id': conversation.id}) }}" class="conversation-main" style="display: flex; align-items: center; gap: 1rem; flex: 1; text-decoration: none; color: inherit;">
+                    <div class="conversation-info" style="flex: 1;">
+                        <h3 class="conversation-name" style="font-family: 'Playfair Display', serif; font-size: 1.05rem; font-weight: 600; margin: 0 0 0.3rem; color: #2a3b33;">
+                            Conversation #{{ '%03d'|format(conversation.id) }}
+                        </h3>
+                        <div class="conversation-details" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="detail-text" style="font-size: 0.8rem; color: #6c757d;">Sécurisé end-to-end</span>
+                            <span class="detail-separator" style="width: 3px; height: 3px; background: #dee2e6; border-radius: 50%;"></span>
+                            <span class="detail-text" style="font-size: 0.8rem; color: #6c757d;">
+                                {{ conversation.dateCreation|date('d/m/Y') }}
+                            </span>
+                        </div>
+                    </div>
+                    <span class="conversation-status-badge" style="font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 999px; text-transform: uppercase; white-space: nowrap; background: {{ conversation.statutConversation == 'active' ? '#e7f5ed' : '#f1f3f5' }}; color: {{ conversation.statutConversation == 'active' ? '#1b7a43' : '#6c757d' }};">
+                        {{ conversation.statutConversation|default('inactive')|capitalize }}
+                    </span>
+                </a>
+                
+                <div class="conversation-actions" style="display: flex; align-items: center; gap: 1.5rem; margin-left: 1.5rem;">
+                    <a href="{{ path('app_chat_toggle_status', {'id': conversation.id}) }}" class="action-btn" style="font-size: 0.8rem; font-weight: 500; color: #6c757d; text-decoration: none; padding: 0.3rem 0;">
+                        {{ conversation.statutConversation == 'active' ? 'Désactiver' : 'Activer' }}
+                    </a>
+                    <a href="{{ path('app_chat_delete', {'id': conversation.id}) }}" 
+                       class="action-btn delete-btn" 
+                       onclick="return confirm('Supprimer cette conversation ?')" style="font-size: 0.8rem; font-weight: 500; color: #6c757d; text-decoration: none; padding: 0.3rem 0;">
+                        Supprimer
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <div class="card empty-state border-0 shadow-sm rounded-4 p-5 text-center" style="max-width: 600px; margin: 0 auto;">
+                <p class="text-muted mb-3">Aucune conversation pour le moment</p>
+                <a href="{{ path('app_chat_new_search') }}" class="btn btn-primary rounded-pill">
+                    Commencer une conversation
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ path('app_chat_new_search') }}" class="btn btn-primary rounded-pill">
+            + Nouvelle conversation
+        </a>
+    </div>

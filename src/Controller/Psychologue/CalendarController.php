@@ -17,22 +17,48 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_PSYCHOLOGUE')]
 final class CalendarController extends AbstractController
 {
-    #[Route('/', name: 'app_psychologue_calendar', methods: ['GET'])]
+    #[Route('/', name: 'app_psychologue_calendar_index', methods: ['GET'])]
     public function index(): Response
     {
         return $this->render('psychologue/calendar/index.html.twig');
     }
 
     #[Route('/events', name: 'app_psychologue_calendar_events', methods: ['GET'])]
-    public function events(AppointmentRepository $appointments, CreneauRepository $creneaux): JsonResponse
+    public function events(AppointmentRepository $appRepo, CreneauRepository $creneauRepo): JsonResponse
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
             return new JsonResponse(['error' => 'User not found'], 403);
         }
 
-        // Get all creneaux where the cabinet is linked to this psychologue
-        $allCreneaux = $creneaux->createQueryBuilder('c')
+        $events = [];
+
+        // 1. Get Appointments via Plans (Old system)
+        $appointments = $appRepo->findForPsychologue($user->getId());
+        foreach ($appointments as $app) {
+            $period = $app->getPlan()->getPeriod(); // e.g., "14:00 - 15:00"
+            $times = explode(' - ', $period);
+            if (count($times) === 2) {
+                $events[] = [
+                    'id' => 'app_' . $app->getId(),
+                    'title' => 'RDV: ' . $app->getPatient()->getNom() . ' ' . $app->getPatient()->getPrenom(),
+                    'start' => $app->getPlan()->getDayOfWeek() . 'T' . $times[0],
+                    'end' => $app->getPlan()->getDayOfWeek() . 'T' . $times[1],
+                    'backgroundColor' => '#2a6f5b',
+                    'borderColor' => '#2a6f5b',
+                    'textColor' => '#ffffff',
+                    'extendedProps' => [
+                        'type' => 'appointment',
+                        'status' => $app->getStatus(),
+                        'patientEmail' => $app->getPatient()->getEmail(),
+                        'plan' => $app->getPlan()->getDayOfWeek() . ' ' . $app->getPlan()->getPeriod()
+                    ]
+                ];
+            }
+        }
+
+        // 2. Get Creneaux (New system)
+        $allCreneaux = $creneauRepo->createQueryBuilder('c')
             ->join('c.disponibilite', 'd')
             ->join('d.cabinet', 'cab')
             ->join('cab.psyCabinets', 'pc')
@@ -41,72 +67,30 @@ final class CalendarController extends AbstractController
             ->getQuery()
             ->getResult();
 
-        $events = [];
         foreach ($allCreneaux as $creneau) {
-            /** @var Creneau $creneau */
-            $patient = $creneau->getPatient();
-            if (!$patient) continue;
+            if (!$creneau->getPatient()) continue;
 
-            $heure = $creneau->getHeure();
-            $date = $creneau->getDateCreneau();
+            $start = $creneau->getDateCreneau()->format('Y-m-d') . 'T' . $creneau->getHeure()->format('H:i:s');
+            // Assume 1 hour duration if not specified
+            $end = $creneau->getDateCreneau()->format('Y-m-d') . 'T' . $creneau->getHeure()->modify('+1 hour')->format('H:i:s');
             
-            if (!$date || !$heure) continue;
-
-            // Find matching appointment to get real status
-            $dayMap = [
-                'MONDAY' => 'MONDAY', 'TUESDAY' => 'TUESDAY', 'WEDNESDAY' => 'WEDNESDAY',
-                'THURSDAY' => 'THURSDAY', 'FRIDAY' => 'FRIDAY', 'SATURDAY' => 'SATURDAY', 'SUNDAY' => 'SUNDAY'
-            ];
-            $dayOfWeek = $dayMap[strtoupper($date->format('l'))] ?? 'MONDAY';
-            $period = ((int)$heure->format('H') < 18) ? 'DAY' : 'NIGHT';
-
-            $appointment = $appointments->createQueryBuilder('a')
-                ->join('a.plan', 'p')
-                ->where('a.patient = :patient')
-                ->andWhere('p.psychologue = :psy')
-                ->andWhere('p.dayOfWeek = :day')
-                ->andWhere('p.period = :period')
-                ->setParameter('patient', $patient)
-                ->setParameter('psy', $user)
-                ->setParameter('day', $dayOfWeek)
-                ->setParameter('period', $period)
-                ->orderBy('a.id', 'DESC')
-                ->setMaxResults(1)
-                ->getQuery()
-                ->getOneOrNullResult();
-
-            $start = $date->format('Y-m-d') . 'T' . $heure->format('H:i:s');
-            
-            $status = $creneau->getStatut();
-            $color = '#5B9BD5'; // Blue default
-
-            if ($appointment) {
-                $status = $appointment->getStatus();
-                $color = match($status) {
-                    Appointment::STATUS_PAID => '#2ecc71', // Bright Green
-                    Appointment::STATUS_CONFIRMED => '#3498db', // Blue
-                    Appointment::STATUS_SCHEDULED => '#f1c40f', // Yellow
-                    Appointment::STATUS_COMPLETED => '#95a5a6', // Gray
-                    Appointment::STATUS_CANCELLED => '#e74c3c', // Red
-                    default => '#5B9BD5'
-                };
-            } elseif ($creneau->getStatut() === Creneau::STATUT_ANNULE) {
-                $color = '#e74c3c';
-            }
-
             $events[] = [
-                'id' => $creneau->getId(),
-                'title' => $patient->getPrenom() . ' ' . $patient->getNom(),
+                'id' => 'creneau_' . $creneau->getId(),
+                'title' => 'RDV: ' . $creneau->getPatient()->getNom(),
                 'start' => $start,
-                'color' => $color,
+                'end' => $end,
+                'backgroundColor' => '#3498db',
+                'borderColor' => '#2980b9',
+                'textColor' => '#ffffff',
                 'extendedProps' => [
-                    'status' => $status,
-                    'patientEmail' => $patient->getEmail(),
-                    'plan' => $dayOfWeek . ' (' . $period . ')'
+                    'type' => 'creneau',
+                    'cabinet' => $creneau->getDisponibilite()->getCabinet()->getNom(),
+                    'patientEmail' => $creneau->getPatient()->getEmail(),
+                    'status' => 'CONFIRMED'
                 ]
             ];
         }
 
-        return new JsonResponse($events);
+        return $this->json($events);
     }
 }

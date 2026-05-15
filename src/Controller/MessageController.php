@@ -38,6 +38,8 @@ class MessageController extends AbstractController
             return $this->redirectToRoute('app_messages_index');
         }
 
+        \assert($user instanceof User);
+
         if ($request->isMethod('POST')) {
             $contenu = $request->request->get('message');
             if ($contenu) {

@@ -52,6 +52,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(name: 'statut_validation', length: 20, options: ['default' => 'approuve'])]
     private string $statutValidation = 'approuve';
 
+    #[ORM\Column(name: 'failed_attempts', options: ['default' => 0])]
+    private int $failedAttempts = 0;
+
+    #[ORM\Column(name: 'locked_at', type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $lockedAt = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $presentation = null;
+
     #[ORM\Column(name: 'photo_profil', length: 255, nullable: true)]
     private ?string $photoProfil = null;
 
@@ -59,9 +68,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'auteur')]
     private Collection $posts;
 
+    /** @var Collection<int, Post> */
+    #[ORM\ManyToMany(targetEntity: Post::class)]
+    #[ORM\JoinTable(name: 'user_saved_post')]
+    #[ORM\JoinColumn(name: 'id_user', referencedColumnName: 'id_user', onDelete: 'CASCADE')]
+    #[ORM\InverseJoinColumn(name: 'id_post', referencedColumnName: 'id_post', onDelete: 'CASCADE')]
+    private Collection $savedPosts;
+
     public function __construct()
     {
         $this->posts = new ArrayCollection();
+        $this->savedPosts = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -201,6 +218,61 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getFailedAttempts(): int
+    {
+        return $this->failedAttempts;
+    }
+
+    public function setFailedAttempts(int $failedAttempts): static
+    {
+        $this->failedAttempts = $failedAttempts;
+
+        return $this;
+    }
+
+    public function incrementFailedAttempts(): static
+    {
+        $this->failedAttempts++;
+
+        return $this;
+    }
+
+    public function resetFailedAttempts(): static
+    {
+        $this->failedAttempts = 0;
+
+        return $this;
+    }
+
+    public function getLockedAt(): ?\DateTimeInterface
+    {
+        return $this->lockedAt;
+    }
+
+    public function setLockedAt(?\DateTimeInterface $lockedAt): static
+    {
+        $this->lockedAt = $lockedAt;
+
+        return $this;
+    }
+
+    public function isLocked(): bool
+    {
+        return $this->lockedAt !== null;
+    }
+
+    public function getPresentation(): ?string
+    {
+        return $this->presentation;
+    }
+
+    public function setPresentation(?string $presentation): static
+    {
+        $this->presentation = $presentation;
+
+        return $this;
+    }
+
     public function getPhotoProfil(): ?string
     {
         return $this->photoProfil;
@@ -217,6 +289,31 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getPosts(): Collection
     {
         return $this->posts;
+    }
+
+    /** @return Collection<int, Post> */
+    public function getSavedPosts(): Collection
+    {
+        return $this->savedPosts;
+    }
+
+    public function hasSavedPost(Post $post): bool
+    {
+        return $this->savedPosts->contains($post);
+    }
+
+    public function addSavedPost(Post $post): static
+    {
+        if (!$this->savedPosts->contains($post)) {
+            $this->savedPosts->add($post);
+        }
+        return $this;
+    }
+
+    public function removeSavedPost(Post $post): static
+    {
+        $this->savedPosts->removeElement($post);
+        return $this;
     }
 
     public function getUserIdentifier(): string

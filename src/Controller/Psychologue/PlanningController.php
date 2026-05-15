@@ -100,8 +100,8 @@ final class PlanningController extends AbstractController
             return $this->redirectToRoute('app_psychologue_planning_index');
         }
 
-        if ($appointment->getStatus() !== Appointment::STATUS_SCHEDULED) {
-            $this->addFlash('warning', 'Seuls les rendez-vous SCHEDULED peuvent être modifiés.');
+        if (!in_array($appointment->getStatus(), [Appointment::STATUS_SCHEDULED, Appointment::STATUS_CONFIRMED, Appointment::STATUS_PAID, ''], true)) {
+            $this->addFlash('warning', 'Ce rendez-vous ne peut pas être modifié dans son état actuel.');
             return $this->redirectToRoute('app_psychologue_planning_index');
         }
 

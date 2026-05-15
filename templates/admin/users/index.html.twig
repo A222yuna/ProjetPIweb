@@ -5,36 +5,21 @@
 {% block admin_title %}Gestion des comptes{% endblock %}
 
 {% block admin_body %}
-    <div class="row g-4 mb-4">
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
-                <small class="text-muted text-uppercase fw-bold ls-1 small">Total comptes</small>
-                <div class="h4 mb-0 fw-bold text-primary">{{ users|length }}</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
-                <small class="text-muted text-uppercase fw-bold ls-1 small">Filtre role</small>
-                <div class="h5 mb-0 fw-bold">{{ role_filter ?: 'Tous' }}</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
-                <small class="text-muted text-uppercase fw-bold ls-1 small">Filtre actif</small>
-                <div class="h5 mb-0 fw-bold">{{ active_filter is same as('1') ? 'Oui' : (active_filter is same as('0') ? 'Non' : 'Tous') }}</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white text-center">
-                <small class="text-muted text-uppercase fw-bold ls-1 small">Page</small>
-                <div class="h5 mb-0 fw-bold text-success">{{ page }} / {{ total_pages }}</div>
-            </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h4 mb-0">Gestion des comptes</h1>
+        <div class="d-flex gap-2">
+            <a href="{{ path('app_admin_statistics') }}" class="btn btn-primary rounded-pill">
+                <i class="fa-solid fa-chart-pie me-2"></i>Statistiques
+            </a>
+            <a href="{{ path('app_admin_users_connections') }}" class="btn btn-outline-primary rounded-pill">
+                <i class="fa-solid fa-clock-rotate-left me-2"></i>Historique des connexions
+            </a>
         </div>
     </div>
 
     <!-- Filter & Search Bar -->
     <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
-        <form method="get" action="{{ path('app_admin_users_index') }}" class="row g-3 align-items-end">
+        <form method="get" id="users-filter-form" action="{{ path('app_admin_users_index') }}" class="row g-3 align-items-end">
             <div class="col-md-4">
                 <label class="form-label fw-bold small text-muted text-uppercase ls-1" for="q-search">Rechercher</label>
                 <div class="input-group rounded-pill overflow-hidden border">
@@ -54,108 +39,224 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label fw-bold small text-muted text-uppercase ls-1" for="active-filter">Statut Actif</label>
+                <label class="form-label fw-bold small text-muted text-uppercase ls-1" for="active-filter">Statut</label>
                 <select id="active-filter" class="form-select rounded-pill border p-2" name="active">
                     <option value="">Tous les statuts</option>
-                    <option value="1" {% if active_filter == '1' %}selected{% endif %}>Actif (Oui)</option>
-                    <option value="0" {% if active_filter == '0' %}selected{% endif %}>Inactif (Non)</option>
+                    <option value="1" {% if active_filter == '1' %}selected{% endif %}>Actif</option>
+                    <option value="0" {% if active_filter == '0' %}selected{% endif %}>Bloqué</option>
                 </select>
-            </div>
-            <div class="col-md-2 d-grid">
-                <button type="submit" class="btn btn-primary rounded-pill fw-bold p-2 shadow-sm">
-                    <i class="fa-solid fa-filter me-1"></i> Filtrer
-                </button>
             </div>
         </form>
     </div>
 
-    <div class="card border-0 shadow-sm rounded-4 p-4">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle border-0">
-                <thead class="bg-light">
-                    <tr>
-                        <th class="border-0 rounded-start">Utilisateur</th>
-                        <th class="border-0">Role</th>
-                        <th class="border-0">Email</th>
-                        <th class="border-0">Statut</th>
-                        <th class="border-0">Vérifié</th>
-                        <th class="border-0 rounded-end text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for u in users %}
-                    <tr>
-                        <td>
-                            <div class="fw-bold">{{ u.prenom }} {{ u.nom }}</div>
-                            <div class="small text-muted">Inscrit le {{ u.dateInscription ? u.dateInscription|date('d/m/Y') : '-' }}</div>
-                        </td>
-                        <td>
-                            <span class="badge rounded-pill {% if u.role == 'Admin' %}bg-dark{% elseif u.role == 'Psychologue' %}bg-primary{% else %}bg-info text-dark{% endif %}">
-                                {{ u.role }}
-                            </span>
-                        </td>
-                        <td>{{ u.email }}</td>
-                        <td>
-                            {% if u.estActif %}
-                                <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3">Actif</span>
-                            {% else %}
-                                <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-3">Inactif</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if u.emailVerifie %}
-                                <i class="fa-solid fa-circle-check text-success fs-5"></i>
-                            {% else %}
-                                <i class="fa-solid fa-circle-xmark text-warning fs-5"></i>
-                            {% endif %}
-                        </td>
-                        <td class="text-end">
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-white border rounded-circle shadow-sm" data-bs-toggle="dropdown">
-                                    <i class="fa-solid fa-ellipsis-vertical"></i>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
-                                    <li>
-                                        <form method="post" action="{{ path('app_admin_users_toggle_active', { id: u.id }) }}">
-                                            <input type="hidden" name="_token" value="{{ csrf_token('toggle_active_' ~ u.id) }}">
-                                            <button class="dropdown-item d-flex align-items-center gap-2" type="submit">
-                                                <i class="fa-solid fa-power-off text-warning"></i>
-                                                {% if u.estActif %}Désactiver{% else %}Activer{% endif %}
-                                            </button>
-                                        </form>
-                                    </li>
-                                    <li>
-                                        <form method="post" action="{{ path('app_admin_users_toggle_verified', { id: u.id }) }}">
-                                            <input type="hidden" name="_token" value="{{ csrf_token('toggle_verified_' ~ u.id) }}">
-                                            <button class="dropdown-item d-flex align-items-center gap-2" type="submit">
-                                                <i class="fa-solid fa-envelope-circle-check text-info"></i>
-                                                Toggle vérification
-                                            </button>
-                                        </form>
-                                    </li>
-                                </ul>
-                            </div>
-                        </td>
-                    </tr>
-                {% else %}
-                    <tr><td colspan="6" class="text-center py-5 text-muted">Aucun utilisateur trouvé.</td></tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <div id="users-results">
+        {% include 'admin/users/_results.html.twig' with {
+            users: users,
+            role_filter: role_filter,
+            active_filter: active_filter,
+            search_term: search_term
+        } only %}
     </div>
 
-    {% if total_pages > 1 %}
-        <nav class="mt-4">
-            <ul class="pagination pagination-sm justify-content-center gap-2 border-0">
-                {% for p in 1..total_pages %}
-                    <li class="page-item {{ p == page ? 'active' : '' }}">
-                        <a class="page-link rounded-circle border shadow-sm d-flex align-items-center justify-content-center" 
-                           style="width: 35px; height: 35px;"
-                           href="{{ path('app_admin_users_index', { page: p, role: role_filter, active: active_filter, q: search_term }) }}">{{ p }}</a>
-                    </li>
-                {% endfor %}
-            </ul>
-        </nav>
-    {% endif %}
+    <!-- AI Report Modal -->
+    <div class="modal fade" id="aiReportModal" tabindex="-1" aria-labelledby="aiReportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="aiReportModalLabel">
+                        <i class="fa-solid fa-robot text-primary"></i>
+                        Analyse IA : <span id="ai-user-name"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <div id="ai-report-content" class="p-3 bg-light rounded-3" style="min-height: 200px; white-space: pre-line;">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                            <p class="mt-2 text-muted">L'IA analyse le profil, veuillez patienter...</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Fermer</button>
+                    <a id="ai-validate-btn" href="#" class="btn btn-success rounded-pill px-4">
+                        Valider ce psychologue
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        const initAiReport = () => {
+            const modal = document.getElementById('aiReportModal');
+            if (!modal) return;
+
+            const nameSpan = document.getElementById('ai-user-name');
+            const contentDiv = document.getElementById('ai-report-content');
+            const validateBtn = document.getElementById('ai-validate-btn');
+
+            document.querySelectorAll('.ai-report-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const userId = this.dataset.userId;
+                    const userName = this.dataset.userName;
+
+                    nameSpan.textContent = userName;
+                    contentDiv.innerHTML = `
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Chargement...</span>
+                            </div>
+                            <p class="mt-2 text-muted">L'IA analyse le profil, veuillez patienter...</p>
+                        </div>
+                    `;
+
+                    // Hide validate button initially
+                    validateBtn.style.display = 'none';
+
+                    fetch(`/admin/users/${userId}/ai-report`)
+                        .then(response => response.json())
+                        .then(data => {
+                            contentDiv.textContent = data.report;
+
+                            // Setup validation button
+                            validateBtn.style.display = 'inline-block';
+                            // Note: We'll use the toggle_active route which also validates psychologues
+                            validateBtn.onclick = function(e) {
+                                e.preventDefault();
+                                const form = document.createElement('form');
+                                form.method = 'POST';
+                                form.action = `/admin/users/${userId}/toggle-active`;
+
+                                // We need the CSRF token. We can try to find it in the page's existing forms
+                                const existingForm = document.querySelector(`form[action="/admin/users/${userId}/toggle-active"]`);
+                                if (existingForm) {
+                                    const tokenInput = existingForm.querySelector('input[name="_token"]');
+                                    if (tokenInput) {
+                                        const newTokenInput = document.createElement('input');
+                                        newTokenInput.type = 'hidden';
+                                        newTokenInput.name = '_token';
+                                        newTokenInput.value = tokenInput.value;
+                                        form.appendChild(newTokenInput);
+                                    }
+                                }
+
+                                document.body.appendChild(form);
+                                form.submit();
+                            };
+                        })
+                        .catch(error => {
+                            contentDiv.innerHTML = `<div class="alert alert-danger">Erreur lors de la génération du rapport.</div>`;
+                        });
+                });
+            });
+        };
+
+        const initUsersAjaxFilter = () => {
+            const form = document.getElementById('users-filter-form');
+            const results = document.getElementById('users-results');
+            if (!form || !results) {
+                return;
+            }
+            if (form.dataset.ajaxBound === '1') {
+                return;
+            }
+            form.dataset.ajaxBound = '1';
+
+            let debounceTimer = null;
+            let controller = null;
+
+            const buildQuery = (extra = {}) => {
+                const params = new URLSearchParams(new FormData(form));
+                Object.entries(extra).forEach(([key, value]) => {
+                    if (value === null || value === undefined || value === '') {
+                        params.delete(key);
+                    } else {
+                        params.set(key, value);
+                    }
+                });
+                return params.toString();
+            };
+
+            const loadResults = (extra = {}) => {
+                if (controller) {
+                    controller.abort();
+                }
+                controller = new AbortController();
+                const query = buildQuery(extra);
+                const url = `${form.action}?${query}`;
+
+                fetch(url, {
+                    headers: {'X-Requested-With': 'XMLHttpRequest'},
+                    signal: controller.signal
+                })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error('Failed to load users');
+                    }
+                    return response.text();
+                })
+                .then((html) => {
+                    results.innerHTML = html;
+                    history.replaceState({}, '', url);
+                    initAiReport(); // Re-initialize buttons after AJAX load
+                })
+                .catch((error) => {
+                    if (error.name !== 'AbortError') {
+                        console.error(error);
+                    }
+                });
+            };
+
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                loadResults({page: 1});
+            });
+
+            form.addEventListener('input', (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLInputElement) || target.name !== 'q') {
+                    return;
+                }
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => loadResults({page: 1}), 300);
+            });
+
+            form.addEventListener('change', () => loadResults({page: 1}));
+
+            results.addEventListener('click', (event) => {
+                const link = event.target.closest('a.page-link');
+                if (!(link instanceof HTMLAnchorElement)) {
+                    return;
+                }
+                event.preventDefault();
+                const url = new URL(link.href);
+                const page = url.searchParams.get('page') || '1';
+                loadResults({page});
+            });
+
+            results.addEventListener('DOMNodeInserted', () => {
+                initAiReport();
+            });
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                initAiReport();
+                initUsersAjaxFilter();
+            });
+        } else {
+            initAiReport();
+            initUsersAjaxFilter();
+        }
+        document.addEventListener('turbo:load', () => {
+            initAiReport();
+            initUsersAjaxFilter();
+        });
+    </script>
 {% endblock %}

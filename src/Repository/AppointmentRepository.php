@@ -186,6 +186,23 @@ class AppointmentRepository extends ServiceEntityRepository
         return $count > 0;
     }
 
+    public function countByMonthForPsy(int $psyId): array
+    {
+        $date = new \DateTimeImmutable('-12 months');
+        $qb = $this->createQueryBuilder('a');
+        return $qb->select('SUBSTRING(a.createdAt, 1, 7) as month, COUNT(a.id) as count')
+            ->leftJoin('a.plan', 'p')
+            ->leftJoin('p.psychologue', 'psy')
+            ->andWhere('psy.id = :id')
+            ->andWhere('a.createdAt >= :date')
+            ->setParameter('id', $psyId)
+            ->setParameter('date', $date->format('Y-m-d H:i:s'))
+            ->groupBy('month')
+            ->orderBy('month', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function countByStatusForPsy(int $psyId): array
     {
         return $this->createQueryBuilder('a')
@@ -195,23 +212,6 @@ class AppointmentRepository extends ServiceEntityRepository
             ->andWhere('psy.id = :id')
             ->setParameter('id', $psyId)
             ->groupBy('a.status')
-            ->getQuery()
-            ->getResult();
-    }
-
-    public function countByMonthForPsy(int $psyId): array
-    {
-        $date = new \DateTimeImmutable('-12 months');
-        return $this->createQueryBuilder('a')
-            ->select('SUBSTRING(a.createdAt, 1, 7) as month, COUNT(a.id) as count')
-            ->leftJoin('a.plan', 'p')
-            ->leftJoin('p.psychologue', 'psy')
-            ->andWhere('psy.id = :id')
-            ->andWhere('a.createdAt >= :date')
-            ->setParameter('id', $psyId)
-            ->setParameter('date', $date)
-            ->groupBy('month')
-            ->orderBy('month', 'ASC')
             ->getQuery()
             ->getResult();
     }

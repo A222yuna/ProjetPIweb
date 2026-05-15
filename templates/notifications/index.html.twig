@@ -1,0 +1,57 @@
+{% extends app.user and app.user.role == 'Psychologue' ? 'base_psychologue.html.twig' : 'base_patient.html.twig' %}
+
+{% block title %}Mes notifications{% endblock %}
+
+{% block psychologue_body %}{{ block('notif_body') }}{% endblock %}
+{% block patient_body %}{{ block('notif_body') }}{% endblock %}
+
+{% block notif_body %}
+<div style="max-width:700px;margin:0 auto;">
+    <h2 style="font-size:20px;font-weight:800;color:#1A1A2E;margin-bottom:20px;">
+        🔔 Mes notifications
+    </h2>
+
+    {% if notifications|length == 0 %}
+        <div style="text-align:center;padding:60px 20px;color:#6B7280;">
+            <div style="font-size:48px;">🔔</div>
+            <h3 style="margin:12px 0 6px;color:#1A1A2E;">Aucune notification</h3>
+            <p>Vous n'avez pas encore de notifications.</p>
+        </div>
+    {% else %}
+        <div style="display:flex;flex-direction:column;gap:10px;">
+        {% for n in notifications %}
+            {% set icons = {
+                'rdv_new':           '📅',
+                'rdv_cancelled':     '❌',
+                'rdv_reminder':      '⏰',
+                'cabinet_validated': '🎉',
+                'new_message':       '💬',
+                'new_avis':          '⭐',
+                'info':              '🔔'
+            } %}
+            <div style="background:white;border-radius:12px;padding:16px 20px;
+                        box-shadow:0 2px 8px rgba(107,63,160,.08);
+                        border-left:4px solid {{ n.isRead ? '#E5E7EB' : '#6B3FA0' }};
+                        display:flex;gap:14px;align-items:flex-start;">
+                <span style="font-size:24px;flex-shrink:0;">{{ icons[n.type] ?? '🔔' }}</span>
+                <div style="flex:1;">
+                    <div style="font-weight:700;font-size:14px;color:#1A1A2E;margin-bottom:3px;">
+                        {{ n.title }}
+                        {% if not n.isRead %}
+                            <span style="background:#EDE9FE;color:#6B3FA0;font-size:10px;padding:2px 8px;border-radius:999px;margin-left:6px;">Nouveau</span>
+                        {% endif %}
+                    </div>
+                    <div style="font-size:13px;color:#6B7280;margin-bottom:4px;">{{ n.message }}</div>
+                    <div style="font-size:11px;color:#9CA3AF;">{{ n.createdAt|date('d/m/Y à H:i') }}</div>
+                </div>
+                {% if n.link %}
+                    <a href="{{ n.link }}" style="color:#6B3FA0;font-size:12px;font-weight:600;white-space:nowrap;text-decoration:none;">
+                        Voir →
+                    </a>
+                {% endif %}
+            </div>
+        {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

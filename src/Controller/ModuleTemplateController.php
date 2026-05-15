@@ -36,9 +36,9 @@ final class ModuleTemplateController extends AbstractController
     #[IsGranted('ROLE_ADMIN')]
     public function adminMessages(): Response { return $this->renderModule('admin', 'messages'); }
 
-    #[Route('/admin/modules/forum', name: 'app_admin_module_forum')]
-    #[IsGranted('ROLE_ADMIN')]
-    public function adminForum(): Response { return $this->renderModule('admin', 'forum'); }
+    // #[Route('/admin/modules/forum', name: 'app_admin_module_forum')]
+    // #[IsGranted('ROLE_ADMIN')]
+    // public function adminForum(): Response { return $this->renderModule('admin', 'forum'); }
 
     #[Route('/psychologue/modules/comptes', name: 'app_psy_module_comptes')]
     #[IsGranted('ROLE_PSYCHOLOGUE')]

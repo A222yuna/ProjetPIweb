@@ -1,0 +1,40 @@
+    <p class="text-muted mb-4">
+        <a href="{{ path('app_chat_inbox') }}" class="text-decoration-none text-muted">← Retour à la boîte de réception</a>
+    </p>
+
+    <p class="text-muted mb-4">Sélectionnez un utilisateur pour commencer à discuter.</p>
+
+    {% if users|length > 0 %}
+        <div class="row g-3">
+            {% for user in users %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="flex-shrink-0 rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: #d4e9e2; color: #1abc9c; font-weight: 600; font-size: 1.2rem;">
+                                    {{ user.prenom|first|upper }}{{ user.nom|first|upper }}
+                                </div>
+                                <div class="ms-3 overflow-hidden">
+                                    <h5 class="mb-1 text-truncate" style="font-size: 1.05rem;">{{ user.prenom }} {{ user.nom }}</h5>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-light text-dark">{{ user.role }}</span>
+                                        <small class="text-muted text-truncate">{{ user.email }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <a href="{{ path('app_chat_create', {'recipientId': user.id}) }}" class="btn btn-primary rounded-pill w-100">
+                                Commencer la conversation
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card empty-state border-0 shadow-sm rounded-4 p-5 text-center" style="max-width: 600px; margin: 0 auto;">
+            <p class="text-muted mb-3">Aucun utilisateur disponible</p>
+            <a href="{{ path('app_chat_inbox') }}" class="btn btn-outline-primary rounded-pill">
+                Retour
+            </a>
+        </div>
+    {% endif %}

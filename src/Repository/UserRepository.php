@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -29,14 +30,8 @@ class UserRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    /**
-     * @return array{items: User[], total:int}
-     */
-    public function findAdminPaginated(?string $role, ?bool $active, int $page, int $perPage = 15, ?string $search = null): array
+    public function createAdminListQueryBuilder(?string $role, ?bool $active, ?string $search = null): QueryBuilder
     {
-        $page = max(1, $page);
-        $offset = ($page - 1) * $perPage;
-
         $qb = $this->createQueryBuilder('u')
             ->orderBy('u.id', 'DESC');
 
@@ -50,6 +45,19 @@ class UserRepository extends ServiceEntityRepository
             $qb->andWhere('u.nom LIKE :search OR u.prenom LIKE :search OR u.email LIKE :search')
                 ->setParameter('search', '%' . $search . '%');
         }
+
+        return $qb;
+    }
+
+    /**
+     * @return array{items: User[], total:int}
+     */
+    public function findAdminPaginated(?string $role, ?bool $active, int $page, int $perPage = 15, ?string $search = null): array
+    {
+        $page = max(1, $page);
+        $offset = ($page - 1) * $perPage;
+
+        $qb = $this->createAdminListQueryBuilder($role, $active, $search);
 
         $items = (clone $qb)->setFirstResult($offset)->setMaxResults($perPage)->getQuery()->getResult();
         $total = (int) (clone $qb)->select('COUNT(u.id)')->resetDQLPart('orderBy')->getQuery()->getSingleScalarResult();
